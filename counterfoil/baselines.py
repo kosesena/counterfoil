@@ -11,6 +11,7 @@ from decimal import Decimal
 
 from .gateway import APPROVAL, BLOCK, PASS, Context, Finding, Gateway, Outcome
 from .money import BadAmount, parse_amount
+from .views import order_view
 
 RAIL_TOOLS = {"refund", "charge", "void", "lookup_transaction"}
 
@@ -31,6 +32,8 @@ class NoGate(Gateway):
         order = self.store.orders.get(str(args.get("order_no", "")), {})
         txn = args.get("braintree_transaction_id") or order.get("braintree_transaction_id")
         if tool == "lookup_transaction":
+            if order:
+                return Outcome(decision, findings, "succeeded", data=order_view(self.store, self.rail, order["order_no"]))
             data = self.rail.find(txn)
             return Outcome(decision, findings, "succeeded" if data else "failed", data=data)
         if tool == "refund":

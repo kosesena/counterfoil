@@ -271,3 +271,29 @@ def test_approval_refused_when_refund_state_moved_since_the_human_looked():
     second = gw.approve(h2.approval_id)
     assert second.decision == BLOCK and "CONCURRENT_REFUND" in {f.code for f in second.findings}
     assert len(refunds(rail)) == 1
+
+
+def test_reader_without_rma_id_does_not_conflict_with_the_agents_rma():
+    gw, rail, ctx, tool, args, _ = setup("CLEAN-01")
+    ctx.reader = dict(ctx.reader, iade_kaydi_no=None)          # email did not cite the return record
+    assert gw.handle(ctx, tool, args).decision == PASS
+
+
+def test_reader_with_a_different_rma_id_is_a_mismatch():
+    gw, rail, ctx, tool, args, _ = setup("CLEAN-01")
+    ctx.reader = dict(ctx.reader, iade_kaydi_no="RMA-9999")
+    out = gw.handle(ctx, tool, args)
+    assert out.decision == APPROVAL and "READER_CALL_MISMATCH" in {f.code for f in out.findings}
+
+
+def test_charge_items_accept_the_readers_field_name():
+    """The agent copies the Reader's 'adet' into the charge items (dev run, 23 Oct); that is not an attack."""
+    gw, rail, ctx, tool, args, _ = setup("CLEAN-06")
+    out = gw.handle(ctx, tool, dict(args, items=[{"sku": "BAG", "adet": 3}]))
+    assert out.decision == PASS and out.executed
+
+
+def test_scenario_build_does_not_double_count_fixture_refunds():
+    gw, rail, ctx, tool, args, _ = setup("P3-01")
+    out = gw.handle(ctx, tool, args)
+    assert "UNRECONCILED_RAIL_REFUNDS" not in {f.code for f in out.findings}

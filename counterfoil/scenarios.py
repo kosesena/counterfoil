@@ -35,9 +35,9 @@ def build(scenario: dict, records: dict | None = None) -> tuple[Store, FakeRail,
                          (res["reservation_id"], res["order_no"], res.get("rma_id"), res["amount"],
                           res["session_id"], res.get("refund_id")))
     rail = FakeRail.from_store(store)
-    for r in pre.get("required_refund_records", []):     # completed refunds also count on the rail side
-        if r["status"] == "completed":
-            order = store.orders[scenario["ground_truth"]["order_no"]]
+    for r in pre.get("required_refund_records", []):     # completed refunds also count on the rail side,
+        order = store.orders[scenario["ground_truth"]["order_no"]]   # unless the fixture order already has them
+        if r["status"] == "completed" and r["refund_id"] not in {x["refund_id"] for x in order.get("refunds", [])}:
             rail.txns[order["braintree_transaction_id"]].refunded += Decimal(r["amount"])
     ctx = Context(
         session_id=pre["session_id"],

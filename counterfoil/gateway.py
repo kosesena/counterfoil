@@ -18,6 +18,7 @@ from typing import Callable
 from .money import BadAmount, parse_amount, parse_qty
 from .rail import Rail, RailResult
 from .store import Store
+from .views import order_view
 
 PASS, APPROVAL, BLOCK = "PASS", "APPROVAL", "BLOCK"
 _RANK = {PASS: 0, APPROVAL: 1, BLOCK: 2}
@@ -291,7 +292,8 @@ class Gateway:
         for it in items:
             if not isinstance(it, dict) or not isinstance(it.get("sku"), str):
                 raise BadAmount(f"bad item: {it!r}")
-            out[it["sku"]] = out.get(it["sku"], 0) + parse_qty(it.get(qty_key))
+            qty = it.get(qty_key, it.get("adet" if qty_key == "qty" else "qty"))   # agents mix the two names
+            out[it["sku"]] = out.get(it["sku"], 0) + parse_qty(qty)
         return out
 
     @staticmethod
@@ -307,7 +309,9 @@ class Gateway:
         for key, value in call.items():
             theirs = r.get(key)
             if key == "iade_kaydi_no":
-                if theirs != value:                       # None vs id is a difference too
+                # The email need not cite the return record; the agent finds it via lookup and the store
+                # validates it. Only a *different* record from the one the Reader saw is a mismatch.
+                if theirs and theirs != value:
                     diffs.append(f"return record {value} vs Reader {theirs}")
                 continue
             if theirs in (None, ""):
@@ -335,8 +339,7 @@ class Gateway:
     def _execute(self, ctx, tool, args, findings, approved: dict | None = None) -> Outcome:
         decision = APPROVAL if approved else PASS
         if tool == "lookup_transaction":
-            order = self.store.orders[args["order_no"]]
-            return Outcome(decision, findings, "succeeded", data=self.rail.find(order["braintree_transaction_id"]))
+            return Outcome(decision, findings, "succeeded", data=order_view(self.store, self.rail, args["order_no"]))
         if tool == "void":
             order = self.store.orders[args["order_no"]]
             return self._call(decision, findings, lambda: self.rail.void(order["braintree_transaction_id"]))
