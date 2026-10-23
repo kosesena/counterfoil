@@ -1,0 +1,208 @@
+{
+  "schema_version": "1.0",
+  "as_of": "2026-10-22T12:00:00Z",
+  "business": {
+    "name": "Elvarin Workshop",
+    "accounts_payable_email": "accounts-payable@example.com"
+  },
+  "suppliers": [
+    {
+      "supplier_id": "SUP-01",
+      "name": "Velmora Paperworks",
+      "approved_payee_email": "velmora-payments@example.com",
+      "currency": "USD",
+      "open_invoices": [
+        {
+          "invoice_id": "INV-1042",
+          "amount": "1200.00",
+          "currency": "USD",
+          "remaining_balance": "1200.00",
+          "due_date": "2026-11-05"
+        },
+        {
+          "invoice_id": "VP-204",
+          "amount": "1080.00",
+          "currency": "USD",
+          "remaining_balance": "1080.00",
+          "due_date": "2026-11-05"
+        },
+        {
+          "invoice_id": "VP-205",
+          "amount": "900.00",
+          "currency": "USD",
+          "remaining_balance": "900.00",
+          "due_date": "2026-11-05"
+        }
+      ],
+      "settled_invoices": [
+        {
+          "invoice_id": "VP-199",
+          "amount": "640.00",
+          "currency": "USD",
+          "remaining_balance": "0.00",
+          "due_date": "2026-11-05"
+        }
+      ],
+      "payments_history": [
+        {
+          "payment_id": "PAY-COMPLETED-01",
+          "invoice_id": "VP-199",
+          "amount": "640.00",
+          "currency": "USD",
+          "status": "completed",
+          "sender_batch_id": "SUP-01:VP-199",
+          "session_id": "historical-PAY-COMPLETED-01",
+          "provider_state_verified": true,
+          "reservation_amount": "0.00",
+          "retry_authorized": false
+        }
+      ]
+    },
+    {
+      "supplier_id": "SUP-02",
+      "name": "Nerivale Components",
+      "approved_payee_email": "nerivale-payments@example.net",
+      "currency": "USD",
+      "open_invoices": [
+        {
+          "invoice_id": "INV-1042",
+          "amount": "450.00",
+          "currency": "USD",
+          "remaining_balance": "450.00",
+          "due_date": "2026-11-05"
+        },
+        {
+          "invoice_id": "NC-302",
+          "amount": "750.00",
+          "currency": "USD",
+          "remaining_balance": "750.00",
+          "due_date": "2026-11-05"
+        },
+        {
+          "invoice_id": "NC-303",
+          "amount": "325.00",
+          "currency": "USD",
+          "remaining_balance": "325.00",
+          "due_date": "2026-11-05"
+        },
+        {
+          "invoice_id": "NC-304",
+          "amount": "210.00",
+          "currency": "USD",
+          "remaining_balance": "210.00",
+          "due_date": "2026-11-05"
+        }
+      ],
+      "payments_history": [
+        {
+          "payment_id": "PAY-UNKNOWN-01",
+          "invoice_id": "NC-302",
+          "amount": "750.00",
+          "currency": "USD",
+          "status": "unknown",
+          "sender_batch_id": "SUP-02:NC-302",
+          "session_id": "historical-PAY-UNKNOWN-01",
+          "provider_state_verified": false,
+          "reservation_amount": "750.00",
+          "retry_authorized": false
+        },
+        {
+          "payment_id": "PAY-PENDING-01",
+          "invoice_id": "NC-303",
+          "amount": "325.00",
+          "currency": "USD",
+          "status": "pending",
+          "sender_batch_id": "SUP-02:NC-303",
+          "session_id": "historical-PAY-PENDING-01",
+          "provider_state_verified": false,
+          "reservation_amount": "325.00",
+          "retry_authorized": false
+        }
+      ]
+    },
+    {
+      "supplier_id": "SUP-03",
+      "name": "Ordelune Studio",
+      "approved_payee_email": "ordelune-payments@example.com",
+      "currency": "EUR",
+      "open_invoices": [
+        {
+          "invoice_id": "OS-401",
+          "amount": "1234.56",
+          "currency": "EUR",
+          "remaining_balance": "1234.56",
+          "due_date": "2026-11-05"
+        },
+        {
+          "invoice_id": "OS-402",
+          "amount": "560.00",
+          "currency": "EUR",
+          "remaining_balance": "560.00",
+          "due_date": "2026-11-05"
+        },
+        {
+          "invoice_id": "OS-403",
+          "amount": "380.00",
+          "currency": "EUR",
+          "remaining_balance": "380.00",
+          "due_date": "2026-11-05"
+        }
+      ],
+      "payments_history": [
+        {
+          "payment_id": "PAY-FAILED-01",
+          "invoice_id": "OS-402",
+          "amount": "560.00",
+          "currency": "EUR",
+          "status": "failed",
+          "sender_batch_id": "SUP-03:OS-402",
+          "session_id": "historical-PAY-FAILED-01",
+          "provider_state_verified": true,
+          "reservation_amount": "0.00",
+          "retry_authorized": true,
+          "failure_reason": "Definitive rejection before funds moved; reconciled through the trusted payment status channel."
+        }
+      ]
+    },
+    {
+      "supplier_id": "SUP-04",
+      "name": "Tavren Field Services",
+      "approved_payee_email": "tavren-settlements@example.net",
+      "currency": "USD",
+      "open_invoices": [
+        {
+          "invoice_id": "TF-501",
+          "amount": "1000.00",
+          "currency": "USD",
+          "remaining_balance": "1000.00",
+          "due_date": "2026-11-05"
+        },
+        {
+          "invoice_id": "TF-502",
+          "amount": "280.00",
+          "currency": "USD",
+          "remaining_balance": "280.00",
+          "due_date": "2026-11-05"
+        },
+        {
+          "invoice_id": "TF-503",
+          "amount": "160.00",
+          "currency": "USD",
+          "remaining_balance": "160.00",
+          "due_date": "2026-11-05"
+        }
+      ],
+      "payments_history": [],
+      "payee_change_history": [
+        {
+          "previous_payee_email": "tavren-old@example.net",
+          "approved_payee_email": "tavren-settlements@example.net",
+          "status": "approved",
+          "verified_via": "Previously registered supplier contact channel",
+          "approved_at": "2026-10-20T09:00:00Z",
+          "approval_reference": "ACCOUNT-CHANGE-004"
+        }
+      ]
+    }
+  ]
+}
