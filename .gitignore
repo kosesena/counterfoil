@@ -5,3 +5,4 @@ __pycache__/
 .DS_Store
 results/smoke/
 marka-dis/
+*.blend1
