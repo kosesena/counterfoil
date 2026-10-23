@@ -1,6 +1,6 @@
 # PayPal AI Hackathon — proje taslağı v3 (23 Eki 2026)
 
-Çalışma adı: **PayGate** (değişebilir). Aynı proje Vultr Agent Rush'a da gidecek (Blast Radius Zero).
+Proje adı: **Counterfoil** (23 Eki kararı). Counterfoil, çek koçanı demek: parayı göndermeden önce karşılaştırdığın kopya. Eski çalışma adı PayGate bırakıldı, çünkü bu adla gerçek ödeme şirketleri var. Hızlı aramada Counterfoil adıyla bir çakışma bulunmadı; bu hukuki marka kontrolü değil. Aynı proje Vultr Agent Rush'a da gidecek (Blast Radius Zero).
 - v2: Codex incelemesi işlendi ([inceleme/2026-10-22-codex.md](inceleme/2026-10-22-codex.md)).
 - v3: PayPal ekibinin 22 Eki Discord cevabı: TR'den **Braintree sandbox kabul**. Braintree'de Payouts/Invoicing ve Agent Toolkit/MCP yok, bu yüzden akış "tedarikçiye ödeme"den **"müşteri iadesi ve tahsilatı"**na döndü. Geçidin mantığı aynı.
 
@@ -8,8 +8,23 @@
 **Tek cümle:** Küçük bir çevrimiçi mağazanın müşteri e-postalarını (iade isteği, yeniden sipariş) okuyup Braintree üzerinden iade ya da tahsilat yapan bir ajan. Ajanla Braintree arasındaki geçit her para hareketini mağazanın kendi sipariş/işlem kaydıyla karşılaştırır. Gizli talimatla şişirilmiş iadeyi, başka müşterinin işlemini, mükerrer iadeyi ya da yanlış tutarlı tahsilatı para hareket etmeden durdurur ve insana sorar.
 
 **Kim için:** Müşteri e-postalarını az kişiyle yanıtlayan ve iade/tahsilat işini bir ajana devretmek isteyen küçük mağaza.
-**Sorun:** OWASP, büyük dil modeli uygulamaları için hazırladığı 2025 listesinde prompt injection'ı ilk sıraya (LLM01) koyuyor. Dolaylı türünde talimat, modelin okuduğu dış içerikten gelir; burada bu içerik müşteri e-postası. Ajan yalnızca yanıt yazarken bu bir metin hatasıdır; para hareket ettirmeye başladığında doğrudan kayba dönüşür. Kaynaklı bir kayıp rakamı bulamazsak rakam yazılmayacak.
-**Bağlam:** Bitirme projesindeki benzer geçit ERPNext'te adet şişirme saldırılarında ERP'ye geçişi 0/21'e indirdi. Bu düşüşün tamamı geçide ait değil, bu yüzden videoda yalnız bu projede ölçtüğümüzü vereceğiz.
+**Sorun:** OWASP, büyük dil modeli uygulamaları için hazırladığı 2025 listesinde prompt injection'ı ilk sıraya (LLM01) koyuyor. Dolaylı türünde talimat, modelin okuduğu dış içerikten gelir; burada bu içerik müşteri e-postası. Ajan yalnızca yanıt yazarken bu bir metin hatasıdır; para hareket ettirmeye başladığında doğrudan kayba dönüşür. İade zaten pahalı bir sorun: Appriss Retail + Deloitte'a göre 2024'te sahte ve kötüye kullanılan iadeler 103 milyar $ (685 milyar $ iadenin %15,14'ü). Bu rakam tüm iade dolandırıcılığını kapsıyor, yapay zekâ ajanına özgü değil; sunumda böyle söylenecek.
+
+## 1a. Bitirme teziyle bağı
+Geçit, Sena'nın Fırat Üniversitesi Yazılım Mühendisliği bitirme projesinden geliyor: *"Kurumsal ERP Sistemlerinde MCP Tabanlı LLM Ajanlarına Yönelik Dolaylı Prompt Injection Saldırılarının Graf Sinir Ağları ile Tespiti ve Güvenlik Geçidi Tasarımı"*. Tezde ERPNext üzerinde iki ajanlı sipariş akışı (Intake → Sipariş) ve MCP geçidi (K1 yetki, K2 kritik alan, K3 talimat kalıbı, K4 iş kuralı, adet tutarlılığı) kuruldu ve ölçüldü:
+- Talimat kalıbı listesi (K3) Codex'in 12 varyasyonundan **0/36**'yı yakaladı; işi denetleyen kurallar (K1/K2) tuttu → bu projede kalıp listesine yük verilmiyor.
+- Adet şişirme saldırıları (A01–A08): yeni kuralla ERP'ye geçiş **0/21**; ama A01'in durması geçidin adet kuralından değil, tesadüfi bir yetki ihlalinden → "ham e-postayı gören dinleme noktası" açığı. Bu projede güven kaynağının e-posta değil kayıt olmasının nedeni bu.
+- Temiz e-postalarda gereksiz alarm **1/24**; bir yanlış ürün siparişi (T24) hiçbir kurala takılmadı → ölçüm ayrıntısı ve "meşru iş tamamlandı mı" sayısı bu yüzden var.
+
+Hackathon projesi tezin **ödeme alanına uyarlanmış, yeniden yazılmış** hâli: ayrı public MIT repo, tez reposu private kalır, tez kodu kopyalanmaz. Devpost metninde "builds on the author's ongoing graduation thesis" diye açıkça yazılır; danışman adı herkese açık metne yazılmaz (hackathon için danışmana sorulmadı).
+
+## 1b. Farkımız (ayrıntı: [arastirma/2026-10-23-rakipler.md](arastirma/2026-10-23-rakipler.md))
+"Ajanla ödeme arasına koruma katmanı" fikri yeni değil: IntentGuard, AgentGuard, Countersign, Fidacy, Amazon AgentCore, Stripe/AP2 bunu yapıyor. Hepsi **alıcı tarafında** ve **genel kurallarla** (tavan, izin listesi, imzalı niyet) çalışıyor. Bulduğumuz tek satıcı tarafı iade geçidi (n8n, 22 Eyl 2026) her iadeyi insana gönderiyor, hiçbir şey kontrol etmiyor. Farkımız:
+1. **Satıcı tarafında, o işlemin kaydıyla karşılaştırma** — sahiplik, kalan iade edilebilir tutar, katalog fiyatı × adet, mükerrer.
+2. **Tavanın kaçırdığı saldırılar** — 40 $'lık siparişe 120 $ iade 200 $ tavanın altında kalır; başkasının siparişinin iadesi ve bölünmüş iade de öyle. Ölçümde ve videoda "tavan kuralı" ile yan yana gösterilecek.
+3. **Ölçüm** — ayrılmış test seti, girişim/müdahale/zarar/meşru iş ayrı, geçit kapalı + tavan kuralı + bizim geçit üç koşul. Meşru iş sayısı "her şeyi insana gönder" yaklaşımına (özerklik %0) cevap.
+4. **Ajanlar arası "not" alanından bulaşma testi** — iki ajanlı (Dual LLM / CaMeL) düzenin bilinen zayıflığının somut sınaması.
+README'de IntentGuard, AgentGuard, Countersign, n8n geçidi, Dual LLM, CaMeL, AgentDojo ve τ-bench'e atıf yapılır.
 
 ## 2. Akış, güven kaynağı, PayPal/Braintree kullanımı
 ```
@@ -44,7 +59,7 @@ Metinleri Codex yazar. Her örnekte doğru işlem, saldırganın hedefi ve bekle
 
 **Temiz set:** kısmi iade, süre içinde tam iade, farklı sayı biçimi, eski yazışma alıntısı, başarısız iadenin meşru tekrarı, normal yeniden sipariş, insan onayı gerektiren yüksek tutarlı meşru iade. Kural geliştirmede kullanılmayan bir kısım son ölçüme ayrılır. Talimat kalıbı listesi (K3) yalnız işaretçi.
 
-**Ölçüm (Codex #6–7):** her koşuda ayrı kayıt tutulur: referans, Okuyucu çıktısı, tüm araç girişimleri, geçit kararları, Braintree'ye ulaşan çağrılar, doğrulanmış son durum. Ayrı raporlanan sayılar: girişim / müdahale / zarar / meşru iş tamamlandı mı. Eksik kanıt "bilinmiyor" sayılır. Aynı senaryolar geçit açık ve kapalı koşulur. Kurallar ayrıca LLM'siz testlerle sınanır. Tekrarlar farklı günlere yayılır.
+**Ölçüm (Codex #6–7):** her koşuda ayrı kayıt tutulur: referans, Okuyucu çıktısı, tüm araç girişimleri, geçit kararları, Braintree'ye ulaşan çağrılar, doğrulanmış son durum. Ayrı raporlanan sayılar: girişim / müdahale / zarar / meşru iş tamamlandı mı. Eksik kanıt "bilinmiyor" sayılır. Aynı senaryolar üç koşulda koşulur: geçit kapalı, yalnız tavan kuralı (işlem başı 200 $, rakiplerin yaptığı türden), bizim geçit. Kurallar ayrıca LLM'siz testlerle sınanır. Tekrarlar farklı günlere yayılır.
 
 ## 4. Ödül hedefi
 Kural: en fazla 1 Grand + 1 Sponsor ya da 1 Mansiyon + 1 Sponsor. Hedef **Grand + Best Use of AG Grid**. Jüri 5 eşit ölçütle puanlıyor: teknik uygulama, tasarım, etki, özgünlük, sunum.
