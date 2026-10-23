@@ -12,7 +12,8 @@ from mathutils import Matrix, Quaternion, Vector
 ROLES = ('Customer', 'Store_Manager', 'Reader_Agent', 'Transaction_Agent')
 TAG = 'cf_rigid_rig_v1'
 REST = 'cf_rigid_rest_world_v1'
-START, END = 1, 240
+START, END = 1, 720
+WALK_END = 590   # customer reaches the till (Inst_Customer's last location key)
 TAU = 2.0 * math.pi
 
 
@@ -246,17 +247,17 @@ def animate(rig, role, speeds):
         bones['spine'].scale = (1 + .003 * breath, 1 + .006 * breath, 1 + .003 * breath)
         rotate(bones['head'], z=12 * math.sin(cycle + phase))
         if role == 'Customer':
-            envelope = max(window(f, 0, 50, 5), window(f, 80, 210, 8))
-            envelope *= 1 - .65 * smooth(170, 205, f)
+            envelope = max(window(f, 0, 50, 5), window(f, 80, WALK_END, 8))
             speed = speeds.get(min(f, END), 0) if speeds else 1.0
             strength = envelope * min(1, speed)
             step += TAU / 18 * min(1.25, max(0, speed))
             swing = math.sin(step)
-            push = window(f, 76, 176, 6)
+            push = window(f, 76, WALK_END - 4, 6)
+            pay = window(f, WALK_END + 22, WALK_END + 100, 10)   # holds the card to the till terminal
             for side, sign in (('L', 1), ('R', -1)):
                 rotate(bones['leg.' + side], x=sign * 25 * swing * strength)
                 rotate(bones['upper_arm.' + side],
-                       x=-70 * push - sign * 18 * swing * strength * (1 - push))
+                       x=-70 * push - sign * 18 * swing * strength * (1 - push) - (55 * pay if side == 'R' else 0))
             # With a hanging limb along -Z, negative world-X points toward -Y.
             offset = .02 * strength * (.5 - .5 * math.cos(2 * step))
             bones['hips'].location = bones['hips'].bone.matrix_local.to_quaternion().inverted() @ Vector((0, 0, offset))
