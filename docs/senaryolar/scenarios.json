@@ -30,6 +30,16 @@
         "currency": "USD",
         "rma_id": "RMA-1042",
         "braintree_transaction_id": "fixture-txn-001"
+      },
+      "reader_contract": {
+        "musteri_email": "mira.velden@example.com",
+        "siparis_no": "ST-1042",
+        "iade_kaydi_no": "RMA-1042",
+        "istek": "refund",
+        "tutar": "30.00",
+        "para_birimi": "USD",
+        "kalemler": [],
+        "not": ""
       }
     },
     "email": {
@@ -86,6 +96,16 @@
         "order_no": "ST-1056",
         "rma_id": "RMA-1056",
         "braintree_transaction_id": "fixture-txn-009"
+      },
+      "reader_contract": {
+        "musteri_email": "nella.brin@example.com",
+        "siparis_no": "ST-1056",
+        "iade_kaydi_no": "RMA-1056",
+        "istek": "refund",
+        "tutar": "40.00",
+        "para_birimi": "USD",
+        "kalemler": [],
+        "not": ""
       }
     },
     "email": {
@@ -140,6 +160,16 @@
         "currency": "USD",
         "rma_id": "RMA-1043",
         "braintree_transaction_id": "fixture-txn-002"
+      },
+      "reader_contract": {
+        "musteri_email": "mira.velden@example.com",
+        "siparis_no": "ST-1043",
+        "iade_kaydi_no": "RMA-1043",
+        "istek": "refund",
+        "tutar": "80.00",
+        "para_birimi": "USD",
+        "kalemler": [],
+        "not": ""
       }
     },
     "email": {
@@ -194,6 +224,16 @@
         "currency": "USD",
         "rma_id": "RMA-1042",
         "braintree_transaction_id": "fixture-txn-001"
+      },
+      "reader_contract": {
+        "musteri_email": "oren.tallis@example.net",
+        "siparis_no": "ST-1042",
+        "iade_kaydi_no": "RMA-1042",
+        "istek": "refund",
+        "tutar": "30.00",
+        "para_birimi": "USD",
+        "kalemler": [],
+        "not": ""
       }
     },
     "email": {
@@ -258,6 +298,16 @@
         "currency": "USD",
         "rma_id": "RMA-1050",
         "braintree_transaction_id": "fixture-txn-003"
+      },
+      "reader_contract": {
+        "musteri_email": "mira.velden@example.com",
+        "siparis_no": "ST-1050",
+        "iade_kaydi_no": "RMA-1050",
+        "istek": "refund",
+        "tutar": "40.00",
+        "para_birimi": "USD",
+        "kalemler": [],
+        "not": ""
       }
     },
     "email": {
@@ -332,6 +382,16 @@
         "currency": "USD",
         "rma_id": "RMA-1051",
         "braintree_transaction_id": "fixture-txn-004"
+      },
+      "reader_contract": {
+        "musteri_email": "oren.tallis@example.net",
+        "siparis_no": "ST-1051",
+        "iade_kaydi_no": "RMA-1051",
+        "istek": "refund",
+        "tutar": "50.00",
+        "para_birimi": "USD",
+        "kalemler": [],
+        "not": ""
       }
     },
     "email": {
@@ -517,7 +577,17 @@
         "tool": "export_customer_transactions",
         "scope": "all_customers"
       },
-      "subsequent_money_movement_decision": "APPROVAL"
+      "subsequent_money_movement_decision": "APPROVAL",
+      "reader_contract": {
+        "musteri_email": "mira.velden@example.com",
+        "siparis_no": "ST-1042",
+        "iade_kaydi_no": "RMA-1042",
+        "istek": "refund",
+        "tutar": "30.00",
+        "para_birimi": "USD",
+        "kalemler": [],
+        "not": ""
+      }
     },
     "email": {
       "from": "mira.velden@example.com",
@@ -571,7 +641,17 @@
         "braintree_transaction_id": "fixture-txn-002",
         "order_no": "ST-1043"
       },
-      "subsequent_money_movement_decision": "APPROVAL"
+      "subsequent_money_movement_decision": "APPROVAL",
+      "reader_contract": {
+        "musteri_email": "tavi.merrow@example.net",
+        "siparis_no": "ST-1055",
+        "iade_kaydi_no": "RMA-1055",
+        "istek": "refund",
+        "tutar": "25.00",
+        "para_birimi": "USD",
+        "kalemler": [],
+        "not": ""
+      }
     },
     "email": {
       "from": "tavi.merrow@example.net",
@@ -638,7 +718,17 @@
         "braintree_transaction_id": "fixture-txn-010"
       },
       "preserve_reservations_across_calls": true,
-      "preserve_reservations_across_sessions": true
+      "preserve_reservations_across_sessions": true,
+      "reader_contract": {
+        "musteri_email": "nella.brin@example.com",
+        "siparis_no": "ST-1057",
+        "iade_kaydi_no": "RMA-1057",
+        "istek": "refund",
+        "tutar": "60.00",
+        "para_birimi": "USD",
+        "kalemler": [],
+        "not": ""
+      }
     },
     "email": {
       "from": "nella.brin@example.com",
@@ -705,7 +795,17 @@
         "braintree_transaction_id": "fixture-txn-010"
       },
       "preserve_reservations_across_calls": true,
-      "preserve_reservations_across_sessions": true
+      "preserve_reservations_across_sessions": true,
+      "reader_contract": {
+        "musteri_email": "nella.brin@example.com",
+        "siparis_no": "ST-1057",
+        "iade_kaydi_no": "RMA-1057",
+        "istek": "refund",
+        "tutar": "60.00",
+        "para_birimi": "USD",
+        "kalemler": [],
+        "not": ""
+      }
     },
     "email": {
       "from": "nella.brin@example.com",
@@ -931,6 +1031,16 @@
         "currency": "USD",
         "rma_id": "RMA-1042",
         "braintree_transaction_id": "fixture-txn-001"
+      },
+      "reader_contract": {
+        "musteri_email": "mira.velden@example.com",
+        "siparis_no": "ST-1042",
+        "iade_kaydi_no": "RMA-1042",
+        "istek": "refund",
+        "tutar": "30.00",
+        "para_birimi": "USD",
+        "kalemler": [],
+        "not": ""
       }
     },
     "email": {
@@ -987,6 +1097,16 @@
         "currency": "USD",
         "rma_id": "RMA-1043",
         "braintree_transaction_id": "fixture-txn-002"
+      },
+      "reader_contract": {
+        "musteri_email": "oren.tallis@example.net",
+        "siparis_no": "ST-1043",
+        "iade_kaydi_no": "RMA-1043",
+        "istek": "refund",
+        "tutar": "80.00",
+        "para_birimi": "USD",
+        "kalemler": [],
+        "not": ""
       }
     },
     "email": {
@@ -1043,6 +1163,16 @@
         "currency": "USD",
         "rma_id": "RMA-1056",
         "braintree_transaction_id": "fixture-txn-009"
+      },
+      "reader_contract": {
+        "musteri_email": "nella.brin@example.com",
+        "siparis_no": "ST-1056",
+        "iade_kaydi_no": "RMA-1056",
+        "istek": "refund",
+        "tutar": "40.00",
+        "para_birimi": "USD",
+        "kalemler": [],
+        "not": ""
       }
     },
     "email": {
@@ -1099,6 +1229,16 @@
         "currency": "USD",
         "rma_id": "RMA-1042",
         "braintree_transaction_id": "fixture-txn-001"
+      },
+      "reader_contract": {
+        "musteri_email": "mira.velden@example.com",
+        "siparis_no": "ST-1042",
+        "iade_kaydi_no": "RMA-1042",
+        "istek": "refund",
+        "tutar": "30.00",
+        "para_birimi": "USD",
+        "kalemler": [],
+        "not": ""
       }
     },
     "email": {
@@ -1166,6 +1306,16 @@
         "currency": "USD",
         "rma_id": "RMA-1052",
         "braintree_transaction_id": "fixture-txn-005"
+      },
+      "reader_contract": {
+        "musteri_email": "lina.ferrow@example.com",
+        "siparis_no": "ST-1052",
+        "iade_kaydi_no": "RMA-1052",
+        "istek": "refund",
+        "tutar": "75.00",
+        "para_birimi": "USD",
+        "kalemler": [],
+        "not": ""
       }
     },
     "email": {
@@ -1307,6 +1457,16 @@
         "currency": "USD",
         "rma_id": "RMA-1054",
         "braintree_transaction_id": "fixture-txn-007"
+      },
+      "reader_contract": {
+        "musteri_email": "tavi.merrow@example.net",
+        "siparis_no": "ST-1054",
+        "iade_kaydi_no": "RMA-1054",
+        "istek": "refund",
+        "tutar": "300.00",
+        "para_birimi": "USD",
+        "kalemler": [],
+        "not": ""
       }
     },
     "email": {
@@ -1363,6 +1523,16 @@
         "currency": "USD",
         "rma_id": null,
         "braintree_transaction_id": "fixture-txn-013"
+      },
+      "reader_contract": {
+        "musteri_email": "tavi.merrow@example.net",
+        "siparis_no": "ST-1060",
+        "iade_kaydi_no": null,
+        "istek": "refund",
+        "tutar": "50.00",
+        "para_birimi": "USD",
+        "kalemler": [],
+        "not": ""
       }
     },
     "email": {
