@@ -26,6 +26,24 @@
       "name": "Dawnpetal desk lamp",
       "unit_price": "150.00",
       "currency": "USD"
+    },
+    {
+      "sku": "TRAY",
+      "name": "Mistvale tray",
+      "unit_price": "30.00",
+      "currency": "USD"
+    },
+    {
+      "sku": "BOWL",
+      "name": "Riverfern bowl",
+      "unit_price": "30.00",
+      "currency": "USD"
+    },
+    {
+      "sku": "VASE",
+      "name": "Cloudreed vase",
+      "unit_price": "30.00",
+      "currency": "USD"
     }
   ],
   "customers": [
@@ -86,17 +104,42 @@
       "customer_id": "CUS-01",
       "items": [
         {
-          "sku": "CUP",
-          "qty": 4
+          "sku": "TRAY",
+          "qty": 1,
+          "unit_price": "30.00"
+        },
+        {
+          "sku": "BOWL",
+          "qty": 1,
+          "unit_price": "30.00"
+        },
+        {
+          "sku": "VASE",
+          "qty": 1,
+          "unit_price": "30.00"
         }
       ],
-      "total": "100.00",
+      "total": "90.00",
       "currency": "USD",
       "braintree_transaction_id": "fixture-txn-001",
       "payment_method_type": "paypal",
       "status": "settled",
       "created_at": "2026-10-10T12:00:00Z",
-      "refunds": []
+      "refunds": [],
+      "returns": [
+        {
+          "rma_id": "RMA-1042",
+          "items": [
+            {
+              "sku": "TRAY",
+              "qty": 1
+            }
+          ],
+          "approved_refund_amount": "30.00",
+          "status": "open",
+          "created_at": "2026-10-20T12:00:00Z"
+        }
+      ]
     },
     {
       "order_no": "ST-1043",
@@ -104,7 +147,8 @@
       "items": [
         {
           "sku": "BAG",
-          "qty": 2
+          "qty": 2,
+          "unit_price": "40.00"
         }
       ],
       "total": "80.00",
@@ -113,7 +157,21 @@
       "payment_method_type": "paypal",
       "status": "settled",
       "created_at": "2026-10-10T12:00:00Z",
-      "refunds": []
+      "refunds": [],
+      "returns": [
+        {
+          "rma_id": "RMA-1043",
+          "items": [
+            {
+              "sku": "BAG",
+              "qty": 2
+            }
+          ],
+          "approved_refund_amount": "80.00",
+          "status": "open",
+          "created_at": "2026-10-20T12:00:00Z"
+        }
+      ]
     },
     {
       "order_no": "ST-1050",
@@ -121,10 +179,11 @@
       "items": [
         {
           "sku": "BAG",
-          "qty": 1
+          "qty": 3,
+          "unit_price": "40.00"
         }
       ],
-      "total": "40.00",
+      "total": "120.00",
       "currency": "USD",
       "braintree_transaction_id": "fixture-txn-003",
       "payment_method_type": "paypal",
@@ -134,7 +193,22 @@
         {
           "refund_id": "rf-completed-01",
           "amount": "40.00",
-          "status": "completed"
+          "status": "completed",
+          "rma_id": "RMA-1050"
+        }
+      ],
+      "returns": [
+        {
+          "rma_id": "RMA-1050",
+          "items": [
+            {
+              "sku": "BAG",
+              "qty": 1
+            }
+          ],
+          "approved_refund_amount": "40.00",
+          "status": "refunded",
+          "created_at": "2026-10-20T12:00:00Z"
         }
       ]
     },
@@ -144,10 +218,11 @@
       "items": [
         {
           "sku": "CUP",
-          "qty": 2
+          "qty": 6,
+          "unit_price": "25.00"
         }
       ],
-      "total": "50.00",
+      "total": "150.00",
       "currency": "USD",
       "braintree_transaction_id": "fixture-txn-004",
       "payment_method_type": "paypal",
@@ -157,7 +232,22 @@
         {
           "refund_id": "rf-unknown-01",
           "amount": "50.00",
-          "status": "unknown"
+          "status": "unknown",
+          "rma_id": "RMA-1051"
+        }
+      ],
+      "returns": [
+        {
+          "rma_id": "RMA-1051",
+          "items": [
+            {
+              "sku": "CUP",
+              "qty": 2
+            }
+          ],
+          "approved_refund_amount": "50.00",
+          "status": "open",
+          "created_at": "2026-10-20T12:00:00Z"
         }
       ]
     },
@@ -167,7 +257,8 @@
       "items": [
         {
           "sku": "CUP",
-          "qty": 3
+          "qty": 3,
+          "unit_price": "25.00"
         }
       ],
       "total": "75.00",
@@ -180,7 +271,22 @@
         {
           "refund_id": "rf-failed-01",
           "amount": "75.00",
-          "status": "failed"
+          "status": "failed",
+          "rma_id": "RMA-1052"
+        }
+      ],
+      "returns": [
+        {
+          "rma_id": "RMA-1052",
+          "items": [
+            {
+              "sku": "CUP",
+              "qty": 3
+            }
+          ],
+          "approved_refund_amount": "75.00",
+          "status": "open",
+          "created_at": "2026-10-20T12:00:00Z"
         }
       ]
     },
@@ -190,7 +296,8 @@
       "items": [
         {
           "sku": "BAG",
-          "qty": 2
+          "qty": 2,
+          "unit_price": "40.00"
         }
       ],
       "total": "80.00",
@@ -203,7 +310,22 @@
         {
           "refund_id": "rf-pending-01",
           "amount": "20.00",
-          "status": "pending"
+          "status": "pending",
+          "rma_id": "RMA-1053"
+        }
+      ],
+      "returns": [
+        {
+          "rma_id": "RMA-1053",
+          "items": [
+            {
+              "sku": "BAG",
+              "qty": 1
+            }
+          ],
+          "approved_refund_amount": "40.00",
+          "status": "open",
+          "created_at": "2026-10-20T12:00:00Z"
         }
       ]
     },
@@ -213,7 +335,8 @@
       "items": [
         {
           "sku": "LAMP",
-          "qty": 2
+          "qty": 2,
+          "unit_price": "150.00"
         }
       ],
       "total": "300.00",
@@ -222,7 +345,21 @@
       "payment_method_type": "paypal",
       "status": "settled",
       "created_at": "2026-10-10T12:00:00Z",
-      "refunds": []
+      "refunds": [],
+      "returns": [
+        {
+          "rma_id": "RMA-1054",
+          "items": [
+            {
+              "sku": "LAMP",
+              "qty": 2
+            }
+          ],
+          "approved_refund_amount": "300.00",
+          "status": "open",
+          "created_at": "2026-10-20T12:00:00Z"
+        }
+      ]
     },
     {
       "order_no": "ST-1055",
@@ -230,7 +367,8 @@
       "items": [
         {
           "sku": "CUP",
-          "qty": 2
+          "qty": 2,
+          "unit_price": "25.00"
         }
       ],
       "total": "50.00",
@@ -239,7 +377,21 @@
       "payment_method_type": "paypal",
       "status": "settled",
       "created_at": "2026-10-10T12:00:00Z",
-      "refunds": []
+      "refunds": [],
+      "returns": [
+        {
+          "rma_id": "RMA-1055",
+          "items": [
+            {
+              "sku": "CUP",
+              "qty": 1
+            }
+          ],
+          "approved_refund_amount": "25.00",
+          "status": "open",
+          "created_at": "2026-10-20T12:00:00Z"
+        }
+      ]
     },
     {
       "order_no": "ST-1056",
@@ -247,16 +399,31 @@
       "items": [
         {
           "sku": "BAG",
-          "qty": 1
+          "qty": 2,
+          "unit_price": "40.00"
         }
       ],
-      "total": "40.00",
+      "total": "80.00",
       "currency": "USD",
       "braintree_transaction_id": "fixture-txn-009",
       "payment_method_type": "card",
       "status": "settled",
       "created_at": "2026-10-10T12:00:00Z",
-      "refunds": []
+      "refunds": [],
+      "returns": [
+        {
+          "rma_id": "RMA-1056",
+          "items": [
+            {
+              "sku": "BAG",
+              "qty": 1
+            }
+          ],
+          "approved_refund_amount": "40.00",
+          "status": "open",
+          "created_at": "2026-10-20T12:00:00Z"
+        }
+      ]
     },
     {
       "order_no": "ST-1057",
@@ -264,16 +431,31 @@
       "items": [
         {
           "sku": "CUP",
-          "qty": 4
+          "qty": 8,
+          "unit_price": "25.00"
         }
       ],
-      "total": "100.00",
+      "total": "200.00",
       "currency": "USD",
       "braintree_transaction_id": "fixture-txn-010",
       "payment_method_type": "card",
       "status": "settled",
       "created_at": "2026-10-10T12:00:00Z",
-      "refunds": []
+      "refunds": [],
+      "returns": [
+        {
+          "rma_id": "RMA-1057",
+          "items": [
+            {
+              "sku": "CUP",
+              "qty": 4
+            }
+          ],
+          "approved_refund_amount": "100.00",
+          "status": "open",
+          "created_at": "2026-10-20T12:00:00Z"
+        }
+      ]
     },
     {
       "order_no": "ST-1058",
@@ -281,7 +463,8 @@
       "items": [
         {
           "sku": "CUP",
-          "qty": 2
+          "qty": 2,
+          "unit_price": "25.00"
         }
       ],
       "total": "50.00",
@@ -290,7 +473,21 @@
       "payment_method_type": "paypal",
       "status": "submitted_for_settlement",
       "created_at": "2026-10-10T12:00:00Z",
-      "refunds": []
+      "refunds": [],
+      "returns": [
+        {
+          "rma_id": "RMA-1058",
+          "items": [
+            {
+              "sku": "CUP",
+              "qty": 1
+            }
+          ],
+          "approved_refund_amount": "25.00",
+          "status": "open",
+          "created_at": "2026-10-20T12:00:00Z"
+        }
+      ]
     },
     {
       "order_no": "ST-1059",
@@ -298,7 +495,8 @@
       "items": [
         {
           "sku": "LAMP",
-          "qty": 1
+          "qty": 1,
+          "unit_price": "150.00"
         }
       ],
       "total": "150.00",
@@ -307,7 +505,40 @@
       "payment_method_type": "paypal",
       "status": "settled",
       "created_at": "2026-10-10T12:00:00Z",
-      "refunds": []
+      "refunds": [],
+      "returns": [
+        {
+          "rma_id": "RMA-1059",
+          "items": [
+            {
+              "sku": "LAMP",
+              "qty": 1
+            }
+          ],
+          "approved_refund_amount": "150.00",
+          "status": "open",
+          "created_at": "2026-10-20T12:00:00Z"
+        }
+      ]
+    },
+    {
+      "order_no": "ST-1060",
+      "customer_id": "CUS-04",
+      "items": [
+        {
+          "sku": "CUP",
+          "qty": 2,
+          "unit_price": "25.00"
+        }
+      ],
+      "total": "50.00",
+      "currency": "USD",
+      "braintree_transaction_id": "fixture-txn-013",
+      "payment_method_type": "paypal",
+      "status": "settled",
+      "created_at": "2026-10-10T12:00:00Z",
+      "refunds": [],
+      "returns": []
     }
   ]
 }
