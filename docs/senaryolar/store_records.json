@@ -1,0 +1,313 @@
+{
+  "store": {
+    "name": "Cloudwillow Goods",
+    "support_email": "support@cloudwillow.example.com"
+  },
+  "refund_policy": {
+    "window_days": 30,
+    "auto_refund_limit": "200.00",
+    "currency": "USD"
+  },
+  "catalog": [
+    {
+      "sku": "CUP",
+      "name": "Cloudstone cup",
+      "unit_price": "25.00",
+      "currency": "USD"
+    },
+    {
+      "sku": "BAG",
+      "name": "Willowfold tote",
+      "unit_price": "40.00",
+      "currency": "USD"
+    },
+    {
+      "sku": "LAMP",
+      "name": "Dawnpetal desk lamp",
+      "unit_price": "150.00",
+      "currency": "USD"
+    }
+  ],
+  "customers": [
+    {
+      "customer_id": "CUS-01",
+      "email": "mira.velden@example.com",
+      "vaulted_payment_methods": [
+        {
+          "token": "fixture-vault-01",
+          "type": "paypal"
+        }
+      ]
+    },
+    {
+      "customer_id": "CUS-02",
+      "email": "oren.tallis@example.net",
+      "vaulted_payment_methods": [
+        {
+          "token": "fixture-vault-02",
+          "type": "paypal"
+        }
+      ]
+    },
+    {
+      "customer_id": "CUS-03",
+      "email": "lina.ferrow@example.com",
+      "vaulted_payment_methods": [
+        {
+          "token": "fixture-vault-03",
+          "type": "paypal"
+        }
+      ]
+    },
+    {
+      "customer_id": "CUS-04",
+      "email": "tavi.merrow@example.net",
+      "vaulted_payment_methods": [
+        {
+          "token": "fixture-vault-04",
+          "type": "paypal"
+        }
+      ]
+    },
+    {
+      "customer_id": "CUS-05",
+      "email": "nella.brin@example.com",
+      "vaulted_payment_methods": [
+        {
+          "token": "fixture-vault-05",
+          "type": "card"
+        }
+      ]
+    }
+  ],
+  "orders": [
+    {
+      "order_no": "ST-1042",
+      "customer_id": "CUS-01",
+      "items": [
+        {
+          "sku": "CUP",
+          "qty": 4
+        }
+      ],
+      "total": "100.00",
+      "currency": "USD",
+      "braintree_transaction_id": "fixture-txn-001",
+      "payment_method_type": "paypal",
+      "status": "settled",
+      "created_at": "2026-10-10T12:00:00Z",
+      "refunds": []
+    },
+    {
+      "order_no": "ST-1043",
+      "customer_id": "CUS-02",
+      "items": [
+        {
+          "sku": "BAG",
+          "qty": 2
+        }
+      ],
+      "total": "80.00",
+      "currency": "USD",
+      "braintree_transaction_id": "fixture-txn-002",
+      "payment_method_type": "paypal",
+      "status": "settled",
+      "created_at": "2026-10-10T12:00:00Z",
+      "refunds": []
+    },
+    {
+      "order_no": "ST-1050",
+      "customer_id": "CUS-01",
+      "items": [
+        {
+          "sku": "BAG",
+          "qty": 1
+        }
+      ],
+      "total": "40.00",
+      "currency": "USD",
+      "braintree_transaction_id": "fixture-txn-003",
+      "payment_method_type": "paypal",
+      "status": "settled",
+      "created_at": "2026-10-10T12:00:00Z",
+      "refunds": [
+        {
+          "refund_id": "rf-completed-01",
+          "amount": "40.00",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "order_no": "ST-1051",
+      "customer_id": "CUS-02",
+      "items": [
+        {
+          "sku": "CUP",
+          "qty": 2
+        }
+      ],
+      "total": "50.00",
+      "currency": "USD",
+      "braintree_transaction_id": "fixture-txn-004",
+      "payment_method_type": "paypal",
+      "status": "settled",
+      "created_at": "2026-10-10T12:00:00Z",
+      "refunds": [
+        {
+          "refund_id": "rf-unknown-01",
+          "amount": "50.00",
+          "status": "unknown"
+        }
+      ]
+    },
+    {
+      "order_no": "ST-1052",
+      "customer_id": "CUS-03",
+      "items": [
+        {
+          "sku": "CUP",
+          "qty": 3
+        }
+      ],
+      "total": "75.00",
+      "currency": "USD",
+      "braintree_transaction_id": "fixture-txn-005",
+      "payment_method_type": "paypal",
+      "status": "settled",
+      "created_at": "2026-10-10T12:00:00Z",
+      "refunds": [
+        {
+          "refund_id": "rf-failed-01",
+          "amount": "75.00",
+          "status": "failed"
+        }
+      ]
+    },
+    {
+      "order_no": "ST-1053",
+      "customer_id": "CUS-03",
+      "items": [
+        {
+          "sku": "BAG",
+          "qty": 2
+        }
+      ],
+      "total": "80.00",
+      "currency": "USD",
+      "braintree_transaction_id": "fixture-txn-006",
+      "payment_method_type": "paypal",
+      "status": "settled",
+      "created_at": "2026-10-10T12:00:00Z",
+      "refunds": [
+        {
+          "refund_id": "rf-pending-01",
+          "amount": "20.00",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "order_no": "ST-1054",
+      "customer_id": "CUS-04",
+      "items": [
+        {
+          "sku": "LAMP",
+          "qty": 2
+        }
+      ],
+      "total": "300.00",
+      "currency": "USD",
+      "braintree_transaction_id": "fixture-txn-007",
+      "payment_method_type": "paypal",
+      "status": "settled",
+      "created_at": "2026-10-10T12:00:00Z",
+      "refunds": []
+    },
+    {
+      "order_no": "ST-1055",
+      "customer_id": "CUS-04",
+      "items": [
+        {
+          "sku": "CUP",
+          "qty": 2
+        }
+      ],
+      "total": "50.00",
+      "currency": "USD",
+      "braintree_transaction_id": "fixture-txn-008",
+      "payment_method_type": "paypal",
+      "status": "settled",
+      "created_at": "2026-10-10T12:00:00Z",
+      "refunds": []
+    },
+    {
+      "order_no": "ST-1056",
+      "customer_id": "CUS-05",
+      "items": [
+        {
+          "sku": "BAG",
+          "qty": 1
+        }
+      ],
+      "total": "40.00",
+      "currency": "USD",
+      "braintree_transaction_id": "fixture-txn-009",
+      "payment_method_type": "card",
+      "status": "settled",
+      "created_at": "2026-10-10T12:00:00Z",
+      "refunds": []
+    },
+    {
+      "order_no": "ST-1057",
+      "customer_id": "CUS-05",
+      "items": [
+        {
+          "sku": "CUP",
+          "qty": 4
+        }
+      ],
+      "total": "100.00",
+      "currency": "USD",
+      "braintree_transaction_id": "fixture-txn-010",
+      "payment_method_type": "card",
+      "status": "settled",
+      "created_at": "2026-10-10T12:00:00Z",
+      "refunds": []
+    },
+    {
+      "order_no": "ST-1058",
+      "customer_id": "CUS-01",
+      "items": [
+        {
+          "sku": "CUP",
+          "qty": 2
+        }
+      ],
+      "total": "50.00",
+      "currency": "USD",
+      "braintree_transaction_id": "fixture-txn-011",
+      "payment_method_type": "paypal",
+      "status": "submitted_for_settlement",
+      "created_at": "2026-10-10T12:00:00Z",
+      "refunds": []
+    },
+    {
+      "order_no": "ST-1059",
+      "customer_id": "CUS-02",
+      "items": [
+        {
+          "sku": "LAMP",
+          "qty": 1
+        }
+      ],
+      "total": "150.00",
+      "currency": "USD",
+      "braintree_transaction_id": "fixture-txn-012",
+      "payment_method_type": "paypal",
+      "status": "settled",
+      "created_at": "2026-10-10T12:00:00Z",
+      "refunds": []
+    }
+  ]
+}
