@@ -268,9 +268,9 @@ def animate(rig, role, speeds):
                 rotate(bones['head'], x=14 * gesture, z=12 * math.sin(cycle + phase) * (1 - .65 * gesture))
             elif role == 'Transaction_Agent':
                 rotate(bones['upper_arm.L'], x=-32 * gesture, y=-8 * gesture)
-            else:
-                rotate(bones['head'], x=18 * gesture, z=12 * math.sin(cycle + phase))
-                rotate(bones['upper_arm.R'], x=-12 * gesture)
+            else:   # Store_Manager: reads approvals on the tablet in her right hand
+                rotate(bones['head'], x=16 + 6 * gesture, z=6 * math.sin(cycle + phase))
+                rotate(bones['upper_arm.R'], x=-55 - 4 * gesture)
         for pb in bones:
             pb.keyframe_insert(data_path='rotation_quaternion', frame=f, group=pb.name)
         bones['spine'].keyframe_insert(data_path='scale', frame=f, group='spine')
