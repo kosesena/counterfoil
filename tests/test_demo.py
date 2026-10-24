@@ -298,3 +298,168 @@ def test_checkout_rejects_unknown_purchases_and_scenarios():
         json={"purchase_id": "deadbeefdeadbeef", "scenario_id": "P6-01", "condition": "counterfoil"},
     )
     assert r.status_code == 404
+
+
+class FakeBraintree:
+    """The slice of the Braintree SDK the checkout uses, in memory: sales, refunds, finds, vaulted customers."""
+
+    def __init__(self):
+        self.txns: dict[str, SimpleNamespace] = {}
+        self.client_token = SimpleNamespace(generate=lambda: "fake-client-token")
+        self.transaction = SimpleNamespace(sale=self._sale, refund=self._refund, find=self._find)
+        self.customer = SimpleNamespace(create=self._customer)
+
+    def _txn(self, amount, kind="sale"):
+        t = SimpleNamespace(
+            id=f"bt{len(self.txns):04d}",
+            amount=str(amount),
+            status="submitted_for_settlement",
+            currency_iso_code="USD",
+            payment_instrument_type="paypal_account",
+            paypal_details=SimpleNamespace(payer_email="buyer@example.com"),
+            refund_ids=[],
+            kind=kind,
+        )
+        self.txns[t.id] = t
+        return SimpleNamespace(is_success=True, transaction=t)
+
+    def _sale(self, params):
+        return self._txn(params["amount"])
+
+    def _refund(self, txn_id, amount):
+        r = self._txn(amount, "refund")
+        self.txns[txn_id].refund_ids.append(r.transaction.id)
+        return r
+
+    def _find(self, txn_id):
+        return self.txns[txn_id]
+
+    def _customer(self, params):
+        return SimpleNamespace(
+            is_success=True, customer=SimpleNamespace(payment_methods=[SimpleNamespace(token="vt1")])
+        )
+
+    def refunds(self):
+        return [t for t in self.txns.values() if t.kind == "refund"]
+
+
+@pytest.fixture
+def braintree(monkeypatch):
+    from counterfoil import rail
+
+    fake = FakeBraintree()
+
+    def init(self):
+        self.bt, self.gw = SimpleNamespace(exceptions=SimpleNamespace(NotFoundError=KeyError)), fake
+
+    monkeypatch.setattr(rail.BraintreeRail, "__init__", init)
+    return fake
+
+
+def bought(c, scenario):
+    p = c.post("/api/checkout/buy", json={"scenario_id": scenario, "nonce": "fake-paypal-one-time-nonce"})
+    assert p.status_code == 200
+    r = c.post(
+        "/api/checkout/refund", json={"purchase_id": p.json()["id"], "scenario_id": scenario, "source": SAVED.stem}
+    )
+    assert r.status_code == 200
+    return p.json(), r.json()
+
+
+def test_held_refund_waits_for_the_manager_and_approve_sends_it(braintree):
+    c = client(dataclasses.replace(Settings(), braintree=True))
+    purchase, run = bought(c, "P6-01")
+    assert [s["decision"] for s in run["steps"]] == ["PASS", "BLOCK"]
+    held = run["correction"]
+    assert held["decision"] == "APPROVAL" and held["approval_id"] and "approved" not in held
+    assert held["args"]["amount"] == "40.00" and held["args"]["rma_id"] == "RMA-1057"
+    assert held["record"] == {
+        "order_no": "ST-1057",
+        "order_total": "200.00",
+        "rma_id": "RMA-1057",
+        "approved": "100.00",
+        "refunded": "0.00",
+        "reserved": "60.00",
+        "left": "40.00",
+    }
+    assert braintree.refunds() == [] and run["braintree_calls"] == []  # nothing held reached Braintree
+
+    body = {"purchase_id": purchase["id"], "approval_id": held["approval_id"], "decision": "approve"}
+    done = c.post("/api/checkout/approve", json=body).json()
+    ok = done["correction"]["approved"]
+    assert ok["decision"] == "APPROVAL" and ok["rail_state"] == "succeeded"
+    assert [(t.amount, t.id) for t in braintree.refunds()] == [("40.00", ok["braintree_id"])]
+    assert done["braintree_calls"][0][:3] == ["refund", "fixture-txn-010", "40.00"]
+    assert done["correction"]["approval_id"] is None and done["replayed_from"]["source"] == SAVED.stem
+    # single use: the same approval cannot move money twice
+    assert c.post("/api/checkout/approve", json=body).status_code == 404
+    assert len(braintree.refunds()) == 1
+
+
+def test_rejected_hold_never_reaches_braintree(braintree):
+    c = client(dataclasses.replace(Settings(), braintree=True))
+    purchase, run = bought(c, "P6-01")
+    held = run["correction"]
+    body = {"purchase_id": purchase["id"], "approval_id": held["approval_id"], "decision": "reject"}
+    done = c.post("/api/checkout/approve", json=body).json()
+    assert done["correction"]["rejected"] is True and "approved" not in done["correction"]
+    assert braintree.refunds() == [] and done["braintree_calls"] == []
+    assert c.post("/api/checkout/approve", json={**body, "decision": "approve"}).status_code == 404
+    assert braintree.refunds() == []
+
+
+def test_held_charge_shows_the_catalog_and_needs_the_manager(braintree):
+    c = client(dataclasses.replace(Settings(), braintree=True))
+    purchase, run = bought(c, "P7-01")  # the hidden-text email asks for 6 cups
+    charge = run["steps"][-1]
+    assert charge["tool"] == "charge" and charge["decision"] == "APPROVAL"
+    assert "CHARGE_NEEDS_CONFIRMATION" in {f["code"] for f in charge["findings"]}
+    assert charge["record"] == {"catalog": [{"sku": "CUP", "unit_price": "25.00"}], "quantity_on_record": None}
+    sales = len(braintree.txns)
+    body = {"purchase_id": purchase["id"], "approval_id": charge["approval_id"], "decision": "approve"}
+    done = c.post("/api/checkout/approve", json=body).json()
+    assert done["steps"][-1]["approved"]["rail_state"] == "succeeded"
+    assert len(braintree.txns) == sales + 1 and done["braintree_calls"][-1][:3] == [
+        "charge",
+        "fixture-vault-01",
+        "150.00",
+    ]
+
+
+def test_approve_is_bound_to_its_purchase_and_validated(braintree):
+    c = client(dataclasses.replace(Settings(), braintree=True))
+    _, run = bought(c, "P6-01")
+    other, _ = bought(c, "P6-01")
+    aid = run["correction"]["approval_id"]
+    assert (
+        c.post(
+            "/api/checkout/approve", json={"purchase_id": other["id"], "approval_id": aid, "decision": "approve"}
+        ).status_code
+        == 404
+    )
+    for bad in (
+        {"purchase_id": other["id"], "approval_id": "not-hex", "decision": "approve"},
+        {"purchase_id": other["id"], "approval_id": aid, "decision": "maybe"},
+        {"purchase_id": other["id"], "approval_id": aid, "decision": "approve", "amount": "999.00"},
+    ):
+        assert c.post("/api/checkout/approve", json=bad).status_code == 422
+    assert braintree.refunds() == []
+
+
+def test_approve_is_rate_limited_and_redacted(braintree, monkeypatch):
+    monkeypatch.setenv("BRAINTREE_PRIVATE_KEY", "bt-private-TESTSECRET")
+    c = client(dataclasses.replace(Settings(), braintree=True, rate_limit=3))
+    purchase, run = bought(c, "P6-01")
+    body = {"purchase_id": purchase["id"], "approval_id": run["correction"]["approval_id"], "decision": "approve"}
+    r = c.post("/api/checkout/approve", json=body)
+    assert r.status_code == 200 and "bt-private-TESTSECRET" not in r.text
+    r = c.post("/api/checkout/approve", json=body)
+    assert r.status_code == 429 and "Retry-After" in r.headers
+
+
+def test_approve_is_off_without_braintree_keys():
+    r = client().post(
+        "/api/checkout/approve",
+        json={"purchase_id": "deadbeefdeadbeef", "approval_id": "0" * 32, "decision": "approve"},
+    )
+    assert r.status_code == 503

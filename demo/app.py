@@ -67,6 +67,13 @@ class RefundIn(BaseModel):
     source: str | None = Field(None, max_length=120)
 
 
+class ApproveIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    purchase_id: str = Field(min_length=8, max_length=64)
+    approval_id: str = Field(pattern=r"^[0-9a-f]{32}$")
+    decision: Literal["approve", "reject"]
+
+
 class RunIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
     scenario_id: str | None = Field(None, max_length=32)
@@ -180,10 +187,10 @@ def create_app(settings: Settings | None = None, llm_factory=None, results: Path
         return _live(body, request)
 
     # -- real PayPal purchase (Braintree sandbox) + the recorded agent calls replayed onto it ------------------
-    def _checkout_guard(request: Request, scenario_id: str):
+    def _checkout_guard(request: Request, scenario_id: str | None):
         if not checkout.enabled:
             raise HTTPException(503, "PayPal checkout is off: the server has no Braintree sandbox keys")
-        if scenario_id not in scenarios or "ground_truth" not in scenarios[scenario_id]:
+        if scenario_id is not None and (scenario_id not in scenarios or "ground_truth" not in scenarios[scenario_id]):
             raise HTTPException(404, "unknown scenario")
         wait = limiter.retry_after(_client_ip(request))
         if wait:
@@ -227,6 +234,19 @@ def create_app(settings: Settings | None = None, llm_factory=None, results: Path
             log.exception("checkout refund run failed")
             raise HTTPException(502, "the sandbox refund run failed on the server") from None
         out["replayed_from"] = {"source": source, "model": row.get("model")}
+        return redact(out, _secrets())
+
+    @app.post("/api/checkout/approve")
+    def checkout_approve(body: ApproveIn, request: Request):
+        """The store manager's answer to a held call; only "approve" can send it to Braintree."""
+        _checkout_guard(request, None)
+        try:
+            out = checkout.decide(body.purchase_id, body.approval_id, body.decision == "approve")
+        except KeyError as exc:
+            raise HTTPException(404, str(exc).strip("'\"")) from None
+        except Exception:
+            log.exception("checkout approval failed")
+            raise HTTPException(502, "the approved call failed on the server") from None
         return redact(out, _secrets())
 
     def _replay(body: RunIn) -> dict:
