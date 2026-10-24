@@ -330,6 +330,12 @@ async function glView() {
       for (const o of parts) g.attach(o);
       return g;
     };
+    // the .blend's three exit gates sit 0.9 m and 2.0 m apart; centre them on their mat, two equal 1.5 m lanes
+    const GATES = { 0: -14.06, 1: -12.56, 2: -11.06 }, BAKED = { 0: -14.45, 1: -13.55, 2: -11.55 };
+    root.traverse((o) => {
+      const m = /^SE_GateExit(\d)_/.exec(o.name);
+      if (o.isMesh && m && m[1] in GATES) o.position.x += GATES[m[1]] - BAKED[m[1]];
+    });
     walker = group(/^(PC_)?Customer/, -12.63, 9.65);
     cart = group(/^(Axle|Basket|Caster|Chassis|Folded_child|HOMI_Cart|Handle_|Hub_|Lower_shelf|Rear_|Rubber_wheel|Soft_grip|Wheel_hub)/, -12.28, 9.85);
     cups = group(/^(P6_ReturnCup|P6_CupHandle|PC_Label|PC_EAN)/, -13.38, 9.9);
@@ -363,18 +369,19 @@ async function glView() {
     // step 1: through the gates pushing the cart (cups in the basket); step 2: park the cart, step up to the
     // station, put the cups on the return tray
     const lerp = (a, b, t) => a + (b - a) * t;
+    const LANE = -11.81;            // the right-hand lane between the gates
     const t1 = ease(clamp01(s)), t2 = clamp01(s - 1);
     const walkZ = lerp(14.4, 11.0, t1);
     if (walker) {
       const k = ease(clamp01((t2 - 0.25) / 0.75));
-      walker.position.set(lerp(-12.55, -12.63, k), 0, s <= 1 ? walkZ : lerp(11.0, 9.65, k));
+      walker.position.set(lerp(LANE, -12.63, k), 0, s <= 1 ? walkZ : lerp(11.0, 9.65, k));
       walker.rotation.y = -Math.PI / 2 * (1 - ease(clamp01((t2 - 0.6) / 0.4)));
       const moving = (s > 0 && s < 1) || (t2 > 0.25 && t2 < 1);
       walker.position.y = moving ? Math.abs(Math.sin(s * 22)) * 0.02 : 0;
     }
     if (cart) {                       // handle towards the customer, 1.1 m ahead while walking; parked beside the station
       const k = ease(clamp01(t2 / 0.6));
-      cart.position.set(lerp(-12.55, -11.7, k), 0, lerp(walkZ - 1.1, 9.4, k));
+      cart.position.set(lerp(LANE, -11.7, k), 0, lerp(walkZ - 1.1, 9.4, k));
       cart.rotation.y = lerp(Math.PI / 2, 0, k);
     }
     if (cups && cart) {
