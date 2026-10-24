@@ -1,4 +1,5 @@
 """Money and quantity parsing. Values are validated, never coerced."""
+
 from decimal import Decimal, InvalidOperation
 
 CENT = Decimal("0.01")

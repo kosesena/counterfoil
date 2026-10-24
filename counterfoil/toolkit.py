@@ -11,6 +11,7 @@ transaction id is the capture id), the call becomes Counterfoil's `refund` tool,
 A missing `amount` means "refund the full capture" to PayPal; the gate sees exactly that, the order total.
 `rma_id` is not a Toolkit parameter; a merchant may add it to the tool schema, and it is passed on when present.
 """
+
 from __future__ import annotations
 
 from .gateway import BLOCK, Context, Finding, Gateway, Outcome

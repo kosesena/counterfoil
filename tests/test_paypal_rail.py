@@ -1,5 +1,6 @@
 """PayPal REST rail with the HTTP layer faked (no network): request shapes, error mapping, idempotency, unknown
 outcomes, the fixture mapping, and the gate in front of Agent Toolkit's create_refund."""
+
 import json
 import re
 from decimal import Decimal
@@ -39,15 +40,22 @@ class FakePayPal:
 
     def add_capture(self, value, currency="USD"):
         oid, cid = self._id("ORDER"), self._id("CAP")
-        self.captures[cid] = {"id": cid, "status": "COMPLETED", "amount": {"value": value, "currency_code": currency},
-                              "supplementary_data": {"related_ids": {"order_id": oid}}}
-        self.orders[oid] = {"id": oid, "status": "COMPLETED",
-                            "purchase_units": [{"payments": {"captures": [self.captures[cid]], "refunds": []}}]}
+        self.captures[cid] = {
+            "id": cid,
+            "status": "COMPLETED",
+            "amount": {"value": value, "currency_code": currency},
+            "supplementary_data": {"related_ids": {"order_id": oid}},
+        }
+        self.orders[oid] = {
+            "id": oid,
+            "status": "COMPLETED",
+            "purchase_units": [{"payments": {"captures": [self.captures[cid]], "refunds": []}}],
+        }
         return cid
 
     def __call__(self, method, url, headers, body, timeout):
         assert url.startswith(SANDBOX)
-        path = url[len(SANDBOX):]
+        path = url[len(SANDBOX) :]
         payload = json.loads(body) if body and headers.get("Content-Type") == "application/json" else None
         self.requests.append((method, path, headers, payload))
         if self.fail_next:
@@ -67,7 +75,9 @@ class FakePayPal:
             return 200, {"access_token": f"A21-token-{self.tokens_issued}", "expires_in": 32400}
         if m := re.fullmatch(r"/v2/payments/captures/(\w+)", path):
             c = self.captures.get(m[1])
-            return (200, c) if c else (404, {"name": "RESOURCE_NOT_FOUND", "details": [{"issue": "INVALID_RESOURCE_ID"}]})
+            return (
+                (200, c) if c else (404, {"name": "RESOURCE_NOT_FOUND", "details": [{"issue": "INVALID_RESOURCE_ID"}]})
+            )
         if m := re.fullmatch(r"/v2/checkout/orders/(\w+)", path):
             return 200, self.orders[m[1]]
         if m := re.fullmatch(r"/v2/payments/captures/(\w+)/refund", path):
@@ -98,18 +108,35 @@ class FakePayPal:
         done = sum((Decimal(r["amount"]["value"]) for r in refunds), Decimal("0"))
         total = Decimal(cap["amount"]["value"])
         if done >= total:
-            return 422, {"name": "UNPROCESSABLE_ENTITY", "details": [{"issue": "CAPTURE_FULLY_REFUNDED",
-                                                                       "description": "The capture has already been fully refunded"}]}
+            return 422, {
+                "name": "UNPROCESSABLE_ENTITY",
+                "details": [
+                    {"issue": "CAPTURE_FULLY_REFUNDED", "description": "The capture has already been fully refunded"}
+                ],
+            }
         if done + Decimal(p["amount"]["value"]) > total:
-            return 422, {"name": "UNPROCESSABLE_ENTITY", "details": [{"issue": "REFUND_AMOUNT_EXCEEDED",
-                                                                       "description": "The refund amount must be less than or equal to the capture amount that has not yet been refunded."}]}
-        r = {"id": self._id("REF"), "status": "COMPLETED", "amount": p["amount"],
-             "links": [{"rel": "up", "href": f"{SANDBOX}/v2/payments/captures/{cid}"}]}
+            return 422, {
+                "name": "UNPROCESSABLE_ENTITY",
+                "details": [
+                    {
+                        "issue": "REFUND_AMOUNT_EXCEEDED",
+                        "description": "The refund amount must be less than or equal to the capture amount that has not yet been refunded.",
+                    }
+                ],
+            }
+        r = {
+            "id": self._id("REF"),
+            "status": "COMPLETED",
+            "amount": p["amount"],
+            "links": [{"rel": "up", "href": f"{SANDBOX}/v2/payments/captures/{cid}"}],
+        }
         refunds.append(r)
         return 201, r
 
     def money_posts(self):
-        return [(m, path) for m, path, _, _ in self.requests if m == "POST" and "/refund" in path or path.endswith("/void")]
+        return [
+            (m, path) for m, path, _, _ in self.requests if m == "POST" and "/refund" in path or path.endswith("/void")
+        ]
 
 
 def rail():
@@ -132,7 +159,7 @@ def test_refuses_live_environment(monkeypatch):
 
 def test_secret_never_in_repr_or_errors():
     r, pp = rail()
-    r.find("CAP9999")                                             # token fetched
+    r.find("CAP9999")  # token fetched
     pp.fail_next = 503
     with pytest.raises(PayPalUnknown) as exc:
         r.find("CAP9999")
@@ -198,6 +225,7 @@ def test_5xx_and_network_errors_are_unknown_not_failed():
 
     def down(*a):
         raise PayPalUnknown("POST /v2/payments/captures: TimeoutError")
+
     r.send = down
     with pytest.raises(PayPalUnknown):
         r.refund(cid, Decimal("1.00"))
@@ -217,9 +245,12 @@ def test_charge_uses_the_vault_id_and_captures():
     assert out.ok and out.id.startswith("CAP")
     _, _, headers, payload = next(x for x in pp.requests if x[1] == "/v2/checkout/orders")
     assert payload["payment_source"] == {"paypal": {"vault_id": "VAULT-PAYPAL-1"}}
-    assert payload["intent"] == "CAPTURE" and payload["purchase_units"][0]["amount"] == {"currency_code": "USD", "value": "25.00"}
+    assert payload["intent"] == "CAPTURE" and payload["purchase_units"][0]["amount"] == {
+        "currency_code": "USD",
+        "value": "25.00",
+    }
     assert headers["PayPal-Request-Id"] == "cf-charge-session-1:charge"
-    assert r.charge("VAULT-PAYPAL-1", Decimal("25.00"), "session-1:charge").id == out.id   # same request, no 2nd sale
+    assert r.charge("VAULT-PAYPAL-1", Decimal("25.00"), "session-1:charge").id == out.id  # same request, no 2nd sale
 
 
 def test_void_an_authorization():
@@ -257,10 +288,12 @@ def test_attacks_stop_before_paypal(sid):
 
 
 def test_setup_replays_completed_refunds_so_reconciliation_agrees():
-    gw, paypal, pp, ctx = gate_on_paypal("P3-01")                 # a refund the store already paid
+    gw, paypal, pp, ctx = gate_on_paypal("P3-01")  # a refund the store already paid
     order = gw.store.orders["ST-1050"]
-    local = sum(Decimal(a) for (a,) in gw.store.sql(
-        "SELECT amount FROM refunds WHERE order_no='ST-1050' AND status='completed'"))
+    local = sum(
+        Decimal(a)
+        for (a,) in gw.store.sql("SELECT amount FROM refunds WHERE order_no='ST-1050' AND status='completed'")
+    )
     assert paypal.refunded_total(order["braintree_transaction_id"]) == local
 
 
@@ -277,8 +310,12 @@ def test_charge_on_a_fixture_token_uses_a_vaulted_sandbox_card():
 def test_toolkit_create_refund_params_go_through_the_gate():
     gw, paypal, pp, ctx = gate_on_paypal("CLEAN-01")
     _, args = attempt(BY_ID["CLEAN-01"])
-    params = {"capture_id": "fixture-txn-001", "amount": {"currency_code": "USD", "value": "30.00"},
-              "rma_id": args["rma_id"], "note_to_payer": "Return received"}
+    params = {
+        "capture_id": "fixture-txn-001",
+        "amount": {"currency_code": "USD", "value": "30.00"},
+        "rma_id": args["rma_id"],
+        "note_to_payer": "Return received",
+    }
     out = create_refund(gw, ctx, params)
     assert out.decision == PASS and out.executed
 
@@ -291,5 +328,45 @@ def test_toolkit_full_refund_without_amount_is_checked_as_the_order_total():
 
 def test_toolkit_unknown_capture_is_blocked():
     gw, paypal, pp, ctx = gate_on_paypal("CLEAN-01")
-    out = create_refund(gw, ctx, {"capture_id": "5TY05013RG002845M", "amount": {"currency_code": "USD", "value": "1.00"}})
+    out = create_refund(
+        gw, ctx, {"capture_id": "5TY05013RG002845M", "amount": {"currency_code": "USD", "value": "1.00"}}
+    )
     assert out.decision == BLOCK and out.findings[0].code == "UNKNOWN_CAPTURE" and not pp.requests
+
+
+def test_expired_token_is_refreshed_once_on_401():
+    r, pp = rail()
+    cid = pp.add_capture("50.00")
+    r.find(cid)
+    pp.fail_next = 401
+    assert r.find(cid)["id"] == cid and pp.tokens_issued == 2
+
+
+def test_urllib_transport_maps_http_errors_and_network_failures(monkeypatch):
+    import io
+    import urllib.error
+
+    from counterfoil import paypal
+
+    class Resp(io.BytesIO):
+        status = 201
+
+    def ok(req, timeout):
+        assert req.full_url.startswith(SANDBOX) and req.get_method() == "POST"
+        return Resp(b'{"id": "REF1"}')
+
+    monkeypatch.setattr(paypal.urllib.request, "urlopen", ok)
+    assert paypal.urllib_transport("POST", f"{SANDBOX}/x", {}, b"{}", 5) == (201, {"id": "REF1"})
+
+    def http_error(req, timeout):
+        raise urllib.error.HTTPError(req.full_url, 422, "x", {}, io.BytesIO(b'{"name": "UNPROCESSABLE_ENTITY"}'))
+
+    monkeypatch.setattr(paypal.urllib.request, "urlopen", http_error)
+    assert paypal.urllib_transport("POST", f"{SANDBOX}/x", {}, None, 5) == (422, {"name": "UNPROCESSABLE_ENTITY"})
+
+    def down(req, timeout):
+        raise urllib.error.URLError("timed out")
+
+    monkeypatch.setattr(paypal.urllib.request, "urlopen", down)
+    with pytest.raises(PayPalUnknown, match="URLError"):
+        paypal.urllib_transport("GET", f"{SANDBOX}/x?secret=1", {}, None, 5)

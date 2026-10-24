@@ -5,15 +5,16 @@ the return record (RMA) for refunds, the catalog for charges, ownership for ever
 structured hand-off for intent. Findings have a severity: BLOCK (never executed, not overridable),
 APPROVAL (held for a human), PASS.
 """
+
 from __future__ import annotations
 
 import hashlib
 import json
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
-from typing import Callable
 
 from .money import BadAmount, parse_amount, parse_qty
 from .rail import Rail, RailResult
@@ -24,23 +25,26 @@ PASS, APPROVAL, BLOCK = "PASS", "APPROVAL", "BLOCK"
 _RANK = {PASS: 0, APPROVAL: 1, BLOCK: 2}
 MONEY_TOOLS = {"refund", "charge", "void"}
 APPROVAL_TTL = timedelta(minutes=30)
-READER_REQUIRED = {"refund": ("istek", "siparis_no", "tutar", "para_birimi"),
-                   "void": ("istek", "siparis_no"),
-                   "charge": ("istek", "tutar", "para_birimi", "kalemler")}
+READER_REQUIRED = {
+    "refund": ("istek", "siparis_no", "tutar", "para_birimi"),
+    "void": ("istek", "siparis_no"),
+    "charge": ("istek", "tutar", "para_birimi", "kalemler"),
+}
 
 
 def utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 @dataclass
 class Context:
     """Per inbound email. Built by the system from the mailbox envelope, never by an LLM."""
+
     session_id: str
-    customer_id: str | None                    # resolved from the envelope sender address
+    customer_id: str | None  # resolved from the envelope sender address
     allowed_tools: frozenset[str]
-    reader: dict | None = None                 # the Reader agent's structured hand-off
-    as_of: datetime = field(default_factory=utcnow)   # business date (refund window); not the approval clock
+    reader: dict | None = None  # the Reader agent's structured hand-off
+    as_of: datetime = field(default_factory=utcnow)  # business date (refund window); not the approval clock
     blocked_attempts: int = 0
 
 
@@ -55,7 +59,7 @@ class Finding:
 class Outcome:
     decision: str
     findings: list[Finding]
-    rail_state: str = "not_called"             # not_called | succeeded | failed | unknown
+    rail_state: str = "not_called"  # not_called | succeeded | failed | unknown
     rail: RailResult | None = None
     data: dict | None = None
     approval_id: str | None = None
@@ -102,10 +106,14 @@ class Gateway:
         elif decision == APPROVAL:
             approval_id = uuid.uuid4().hex
             self.pending[approval_id] = {
-                "fp": _fingerprint(ctx.session_id, tool, args), "ctx": ctx, "tool": tool, "args": dict(args),
+                "fp": _fingerprint(ctx.session_id, tool, args),
+                "ctx": ctx,
+                "tool": tool,
+                "args": dict(args),
                 "expires": self.clock() + APPROVAL_TTL,
                 "accepted": {f.code for f in findings if f.severity == APPROVAL},
-                "state": self._refund_state(tool, args)}
+                "state": self._refund_state(tool, args),
+            }
             out = Outcome(APPROVAL, findings, approval_id=approval_id)
         else:
             out = self._execute(ctx, tool, args, findings)
@@ -126,7 +134,11 @@ class Gateway:
         findings = self.check(ctx, tool, args)
         new = [f for f in findings if f.severity == APPROVAL and f.code not in entry["accepted"]]
         if _decide(findings) == BLOCK or new:
-            extra = [Finding(BLOCK, "APPROVAL_STALE", f"new finding(s) since approval: {', '.join(f.code for f in new)}")] if new else []
+            extra = (
+                [Finding(BLOCK, "APPROVAL_STALE", f"new finding(s) since approval: {', '.join(f.code for f in new)}")]
+                if new
+                else []
+            )
             out = Outcome(BLOCK, findings + extra)
         else:
             out = self._execute(ctx, tool, args, findings, approved=entry)
@@ -142,14 +154,21 @@ class Gateway:
             return [Finding(BLOCK, "TOOL_NOT_ALLOWED", f"'{tool}' is not in this agent's tool list")]
         if not ctx.customer_id:
             return [Finding(BLOCK, "NO_CONTEXT", "no verified sender for this session; writes refused")]
-        check = {"refund": self._check_refund, "charge": self._check_charge,
-                 "void": self._check_void, "lookup_transaction": self._check_lookup}.get(tool)
+        check = {
+            "refund": self._check_refund,
+            "charge": self._check_charge,
+            "void": self._check_void,
+            "lookup_transaction": self._check_lookup,
+        }.get(tool)
         if check is None:
             return [Finding(BLOCK, "TOOL_NOT_ALLOWED", f"no gateway rule for '{tool}'")]
         findings = check(ctx, args)
         if tool in MONEY_TOOLS and ctx.blocked_attempts:
-            findings.append(Finding(APPROVAL, "PRIOR_BLOCKED_ATTEMPT",
-                                    f"{ctx.blocked_attempts} blocked call(s) earlier in this session"))
+            findings.append(
+                Finding(
+                    APPROVAL, "PRIOR_BLOCKED_ATTEMPT", f"{ctx.blocked_attempts} blocked call(s) earlier in this session"
+                )
+            )
         return findings
 
     def _order(self, args: dict) -> tuple[dict | None, list[Finding]]:
@@ -158,13 +177,18 @@ class Gateway:
             return None, [Finding(BLOCK, "UNKNOWN_ORDER", f"order {args.get('order_no')!r} is not in the store record")]
         txn = args.get("braintree_transaction_id")
         if txn is not None and str(txn) != order["braintree_transaction_id"]:
-            return None, [Finding(BLOCK, "TRANSACTION_ORDER_MISMATCH",
-                                  f"transaction {txn} does not belong to order {order['order_no']}")]
+            return None, [
+                Finding(
+                    BLOCK,
+                    "TRANSACTION_ORDER_MISMATCH",
+                    f"transaction {txn} does not belong to order {order['order_no']}",
+                )
+            ]
         return order, []
 
     def _check_lookup(self, ctx, args):
         order, f = self._order(args)
-        if f:
+        if order is None:
             return f
         if order["customer_id"] != ctx.customer_id:
             return [Finding(BLOCK, "SCOPE_NOT_ALLOWED", f"order {order['order_no']} belongs to another customer")]
@@ -172,11 +196,13 @@ class Gateway:
 
     def _check_void(self, ctx, args):
         order, f = self._order(args)
-        if f:
+        if order is None:
             return f
         findings = []
         if order["customer_id"] != ctx.customer_id:
-            findings.append(Finding(APPROVAL, "CUSTOMER_ORDER_MISMATCH", f"order {order['order_no']} belongs to another customer"))
+            findings.append(
+                Finding(APPROVAL, "CUSTOMER_ORDER_MISMATCH", f"order {order['order_no']} belongs to another customer")
+            )
         # A refund request is not a cancellation: void needs the Reader to have seen a cancellation of this order.
         findings += self._reader_check(ctx, "void", {"siparis_no": order["order_no"]})
         if self.store.order_refunded_total(order["order_no"]):
@@ -189,22 +215,39 @@ class Gateway:
         except BadAmount as exc:
             return [Finding(BLOCK, "BAD_AMOUNT", str(exc))]
         order, f = self._order(args)
-        if f:
+        if order is None:
             return f
         findings: list[Finding] = []
         order_no, rma_id = order["order_no"], args.get("rma_id")
+        if rma_id is not None and not isinstance(rma_id, str):  # a list or object here used to crash the ledger query
+            return [Finding(BLOCK, "RMA_UNKNOWN", f"{rma_id!r} is not a return record id")]
         if order["customer_id"] != ctx.customer_id:
-            findings.append(Finding(APPROVAL, "CUSTOMER_ORDER_MISMATCH",
-                                    f"sender is {ctx.customer_id}, order {order_no} belongs to {order['customer_id']}"))
+            findings.append(
+                Finding(
+                    APPROVAL,
+                    "CUSTOMER_ORDER_MISMATCH",
+                    f"sender is {ctx.customer_id}, order {order_no} belongs to {order['customer_id']}",
+                )
+            )
         currency = str(args.get("currency") or order["currency"]).upper()
         if currency != order["currency"]:
-            findings.append(Finding(APPROVAL, "CURRENCY_MISMATCH",
-                                    f"{currency} requested; the rail refunds in the order currency {order['currency']}"))
+            findings.append(
+                Finding(
+                    APPROVAL,
+                    "CURRENCY_MISMATCH",
+                    f"{currency} requested; the rail refunds in the order currency {order['currency']}",
+                )
+            )
 
         ent = self.store.entitlement(order_no, rma_id)
-        if ent.unresolved:                                   # order-level: no RMA-id game gets around this
-            findings.append(Finding(BLOCK, "REFUND_OUTCOME_UNKNOWN",
-                                    f"refund(s) {', '.join(ent.unresolved)} on {order_no} not reconciled"))
+        if ent.unresolved:  # order-level: no RMA-id game gets around this
+            findings.append(
+                Finding(
+                    BLOCK,
+                    "REFUND_OUTCOME_UNKNOWN",
+                    f"refund(s) {', '.join(ent.unresolved)} on {order_no} not reconciled",
+                )
+            )
         drift = self._rail_drift(order)
         if drift:
             findings.append(drift)
@@ -220,22 +263,33 @@ class Gateway:
             findings.append(Finding(BLOCK, "RMA_NOT_OPEN", f"{rma_id} is {rma['status']}"))
         elif amount > ent.remaining:
             if ent.spent or ent.reserved:
-                findings.append(Finding(BLOCK, "CUMULATIVE_REFUND_EXCEEDS_RMA",
-                                        f"{amount} requested; {ent.spent} refunded and {ent.reserved} reserved "
-                                        f"of {ent.approved} approved; {max(ent.remaining, Decimal('0.00'))} left"))
+                findings.append(
+                    Finding(
+                        BLOCK,
+                        "CUMULATIVE_REFUND_EXCEEDS_RMA",
+                        f"{amount} requested; {ent.spent} refunded and {ent.reserved} reserved "
+                        f"of {ent.approved} approved; {max(ent.remaining, Decimal('0.00'))} left",
+                    )
+                )
             else:
-                findings.append(Finding(APPROVAL, "RMA_AMOUNT_MISMATCH",
-                                        f"{amount} requested, return record approves {ent.approved}"))
+                findings.append(
+                    Finding(
+                        APPROVAL, "RMA_AMOUNT_MISMATCH", f"{amount} requested, return record approves {ent.approved}"
+                    )
+                )
 
-        findings += self._reader_check(ctx, "refund", {"tutar": amount, "siparis_no": order_no,
-                                                       "iade_kaydi_no": rma_id, "para_birimi": currency})
+        findings += self._reader_check(
+            ctx, "refund", {"tutar": amount, "siparis_no": order_no, "iade_kaydi_no": rma_id, "para_birimi": currency}
+        )
         created = datetime.fromisoformat(order["created_at"].replace("Z", "+00:00"))
         window = timedelta(days=int(self.store.policy["window_days"]))
         if ctx.as_of > created + window:
             findings.append(Finding(APPROVAL, "OUTSIDE_REFUND_WINDOW", f"order is older than {window.days} days"))
         limit = parse_amount(self.store.policy["auto_refund_limit"])
         if amount > limit:
-            findings.append(Finding(APPROVAL, "AUTO_REFUND_LIMIT_EXCEEDED", f"{amount} is above the {limit} auto-refund limit"))
+            findings.append(
+                Finding(APPROVAL, "AUTO_REFUND_LIMIT_EXCEEDED", f"{amount} is above the {limit} auto-refund limit")
+            )
         return findings
 
     def _rail_drift(self, order) -> Finding | None:
@@ -245,8 +299,11 @@ class Gateway:
             return None
         local = self.store.order_refunded_total(order["order_no"])
         if rail_total > local:
-            return Finding(BLOCK, "UNRECONCILED_RAIL_REFUNDS",
-                           f"rail shows {rail_total} refunded on {order['order_no']}, store knows {local}")
+            return Finding(
+                BLOCK,
+                "UNRECONCILED_RAIL_REFUNDS",
+                f"rail shows {rail_total} refunded on {order['order_no']}, store knows {local}",
+            )
         return None
 
     def _check_charge(self, ctx, args):
@@ -278,17 +335,32 @@ class Gateway:
         unknown = [s for s in authorized if s not in self.store.catalog]
         if unknown:
             return findings + [Finding(APPROVAL, "UNKNOWN_SKU", f"not in catalog: {', '.join(unknown)}")]
-        expected = sum((parse_amount(self.store.catalog[s]["unit_price"]) * q for s, q in authorized.items()), Decimal("0.00"))
+        expected = sum(
+            (parse_amount(self.store.catalog[s]["unit_price"]) * q for s, q in authorized.items()), Decimal("0.00")
+        )
         if amount != expected:
-            findings.append(Finding(APPROVAL, "CHARGE_AMOUNT_MISMATCH",
-                                    f"{amount} requested, catalog price × Reader quantity is {expected}"))
+            findings.append(
+                Finding(
+                    APPROVAL,
+                    "CHARGE_AMOUNT_MISMATCH",
+                    f"{amount} requested, catalog price × Reader quantity is {expected}",
+                )
+            )
         # No store record says how many the customer ordered: the quantity comes from the e-mail, via the Reader.
         # A Reader that obeys hidden text agrees with the call on every field (qwen3, P7-01, 24 Oct), so the checks
         # above cannot be the basis. A human confirms the itemised total before any charge.
-        basket = ", ".join(f"{q} × {s} @ {self.store.catalog[s]['unit_price']}" for s, q in sorted(requested.items())
-                           if s in self.store.catalog)
-        findings.append(Finding(APPROVAL, "CHARGE_NEEDS_CONFIRMATION",
-                                f"no store record of the quantity; confirm {basket or 'the items'} = {amount} {currency}"))
+        basket = ", ".join(
+            f"{q} × {s} @ {self.store.catalog[s]['unit_price']}"
+            for s, q in sorted(requested.items())
+            if s in self.store.catalog
+        )
+        findings.append(
+            Finding(
+                APPROVAL,
+                "CHARGE_NEEDS_CONFIRMATION",
+                f"no store record of the quantity; confirm {basket or 'the items'} = {amount} {currency}",
+            )
+        )
         return findings
 
     @staticmethod
@@ -299,7 +371,7 @@ class Gateway:
         for it in items:
             if not isinstance(it, dict) or not isinstance(it.get("sku"), str):
                 raise BadAmount(f"bad item: {it!r}")
-            qty = it.get(qty_key, it.get("adet" if qty_key == "qty" else "qty"))   # agents mix the two names
+            qty = it.get(qty_key, it.get("adet" if qty_key == "qty" else "qty"))  # agents mix the two names
             out[it["sku"]] = out.get(it["sku"], 0) + parse_qty(qty)
         return out
 
@@ -336,7 +408,7 @@ class Gateway:
     # -- execution -------------------------------------------------------------------------------
     @staticmethod
     def _charge_request_id(ctx) -> str:
-        return f"{ctx.session_id}:charge"     # one charge per inbound email
+        return f"{ctx.session_id}:charge"  # one charge per inbound email
 
     def _refund_state(self, tool, args):
         if tool != "refund" or args.get("order_no") not in self.store.orders:
@@ -358,19 +430,21 @@ class Gateway:
     def _call(decision, findings, fn) -> Outcome:
         try:
             res = fn()
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - any rail failure means the outcome is unknown
             return Outcome(decision, findings + [Finding(BLOCK, "RAIL_ERROR", repr(exc))], "unknown")
         return Outcome(decision, findings, "succeeded" if res.ok else "failed", res)
 
     def _execute_charge(self, ctx, args, findings, decision) -> Outcome:
         amount = parse_amount(args["amount"])
         req = self._charge_request_id(ctx)
-        with self.store.transaction():                      # claim the request id atomically
+        with self.store.transaction():  # claim the request id atomically
             if self.store.charge_status(req) in ("requested", "accepted", "unknown"):
                 ctx.blocked_attempts += 1
                 return Outcome(BLOCK, findings + [Finding(BLOCK, "DUPLICATE_CHARGE", "claimed by a parallel call")])
             self.store.record_charge(req, ctx.customer_id, amount, "requested")
-        out = self._call(decision, findings, lambda: self.rail.charge(args["vaulted_payment_method_token"], amount, req))
+        out = self._call(
+            decision, findings, lambda: self.rail.charge(args["vaulted_payment_method_token"], amount, req)
+        )
         status = {"succeeded": "accepted", "failed": "failed", "unknown": "unknown"}[out.rail_state]
         self.store.record_charge(req, ctx.customer_id, amount, status, out.rail.id if out.rail else None)
         return out
@@ -380,7 +454,7 @@ class Gateway:
         order = self.store.orders[args["order_no"]]
         rma_id = args.get("rma_id")
         reservation = f"res-{uuid.uuid4().hex[:12]}"
-        with self.store.transaction():                      # re-check and reserve atomically
+        with self.store.transaction():  # re-check and reserve atomically
             ent = self.store.entitlement(order["order_no"], rma_id)
             late = None
             if ent.unresolved:
@@ -398,14 +472,25 @@ class Gateway:
             self.store.reserve(reservation, order["order_no"], rma_id, amount, ctx.session_id)
         out = self._call(decision, findings, lambda: self.rail.refund(order["braintree_transaction_id"], amount))
         if out.rail_state == "succeeded":
-            self.store.settle_reservation(reservation, out.rail.id, "accepted")
+            self.store.settle_reservation(
+                reservation, (out.rail and out.rail.id) or f"accepted-{reservation}", "accepted"
+            )
         elif out.rail_state == "failed":
             self.store.release(reservation)
-        else:                                               # unknown: keep it counted, block further refunds
+        else:  # unknown: keep it counted, block further refunds
             self.store.settle_reservation(reservation, f"unknown-{reservation}", "unknown")
         return out
 
     def _record(self, ctx, tool, args, out: Outcome, human_approved=False):
-        self.log.append({"session_id": ctx.session_id, "tool": tool, "args": args, "decision": out.decision,
-                         "findings": [f.__dict__ for f in out.findings], "rail_state": out.rail_state,
-                         "rail": out.rail.__dict__ if out.rail else None, "human_approved": human_approved})
+        self.log.append(
+            {
+                "session_id": ctx.session_id,
+                "tool": tool,
+                "args": args,
+                "decision": out.decision,
+                "findings": [f.__dict__ for f in out.findings],
+                "rail_state": out.rail_state,
+                "rail": out.rail.__dict__ if out.rail else None,
+                "human_approved": human_approved,
+            }
+        )

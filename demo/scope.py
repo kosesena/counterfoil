@@ -6,6 +6,7 @@ is. With the Braintree sandbox behind it that would create or refund real sandbo
 so the rail is wrapped: only the store's own transaction ids and vaulted tokens get through, anything else fails
 like an unknown transaction would. Refused calls never reach the rail, so they are not in `money_calls()`.
 """
+
 from __future__ import annotations
 
 from counterfoil.rail import RailResult

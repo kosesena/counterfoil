@@ -6,6 +6,7 @@ Every run goes through scripts/run_eval.run_one, the same function that produced
 cannot drift from the evaluation. The server adds only what a public URL needs: replay of saved runs (default, no
 key), a metered live mode, input limits, and a rail that cannot leave the fixture store.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -73,7 +74,7 @@ class RunIn(BaseModel):
     email: EmailIn | None = None
     condition: Literal["none", "cap", "counterfoil"] = "counterfoil"
     mode: Literal["replay", "live"] = "replay"
-    source: str | None = Field(None, max_length=120)      # replay only: which results/*.jsonl
+    source: str | None = Field(None, max_length=120)  # replay only: which results/*.jsonl
 
     @model_validator(mode="after")
     def _one_input(self):
@@ -135,17 +136,36 @@ def create_app(settings: Settings | None = None, llm_factory=None, results: Path
 
     @app.get("/api/config")
     def config():
-        return {**settings.public(), "daily_llm_calls_left": budget.remaining() if settings.live else 0,
-                "replay_sources": list(replays.sources.values()), "replay_default": replays.default,
-                "store": _store_summary(records)}
+        return {
+            **settings.public(),
+            "daily_llm_calls_left": budget.remaining() if settings.live else 0,
+            "replay_sources": list(replays.sources.values()),
+            "replay_default": replays.default,
+            "store": _store_summary(records),
+        }
 
     @app.get("/api/scenarios")
     def list_scenarios():
-        return [{k: s.get(k) for k in ("id", "kind", "family", "technique", "split", "email", "attacker_goal",
-                                        "expected_gateway_decision", "expected_reason", "rail_would_block",
-                                        "cap_200_would_block")}
-                | {"reader_contract": s["preconditions"].get("reader_contract"), "replay": replays.available(s["id"])}
-                for s in scenarios.values()]
+        return [
+            {
+                k: s.get(k)
+                for k in (
+                    "id",
+                    "kind",
+                    "family",
+                    "technique",
+                    "split",
+                    "email",
+                    "attacker_goal",
+                    "expected_gateway_decision",
+                    "expected_reason",
+                    "rail_would_block",
+                    "cap_200_would_block",
+                )
+            }
+            | {"reader_contract": s["preconditions"].get("reader_contract"), "replay": replays.available(s["id"])}
+            for s in scenarios.values()
+        ]
 
     @app.post("/api/run")
     def run(body: RunIn, request: Request):
@@ -153,7 +173,9 @@ def create_app(settings: Settings | None = None, llm_factory=None, results: Path
             e = body.email
             size = len(e.subject) + len(e.body_text) + len(e.body_html or "") + len(e.attachment_text or "")
             if size > settings.max_email_chars:
-                raise HTTPException(422, f"email is {size} characters; the demo accepts up to {settings.max_email_chars}")
+                raise HTTPException(
+                    422, f"email is {size} characters; the demo accepts up to {settings.max_email_chars}"
+                )
         if body.mode == "replay":
             return _replay(body)
         return _live(body, request)
@@ -166,7 +188,9 @@ def create_app(settings: Settings | None = None, llm_factory=None, results: Path
             raise HTTPException(404, "unknown scenario")
         wait = limiter.retry_after(_client_ip(request))
         if wait:
-            raise HTTPException(429, f"rate limit: try again in {wait:.0f}s", headers={"Retry-After": str(int(wait) + 1)})
+            raise HTTPException(
+                429, f"rate limit: try again in {wait:.0f}s", headers={"Retry-After": str(int(wait) + 1)}
+            )
 
     @app.get("/api/checkout/token")
     def checkout_token():
@@ -176,18 +200,18 @@ def create_app(settings: Settings | None = None, llm_factory=None, results: Path
             return {"client_token": checkout.client_token()}
         except Exception:
             log.exception("client token failed")
-            raise HTTPException(502, "Braintree did not issue a client token")
+            raise HTTPException(502, "Braintree did not issue a client token") from None
 
     @app.post("/api/checkout/buy")
     def checkout_buy(body: BuyIn, request: Request):
         _checkout_guard(request, body.scenario_id)
         try:
             return checkout.buy(body.nonce, scenarios[body.scenario_id])
-        except ValueError as exc:                 # Braintree's own decline message, no secrets in it
-            raise HTTPException(402, f"payment failed: {exc}")
+        except ValueError as exc:  # Braintree's own decline message, no secrets in it
+            raise HTTPException(402, f"payment failed: {exc}") from None
         except Exception:
             log.exception("checkout failed")
-            raise HTTPException(502, "the sandbox payment failed on the server")
+            raise HTTPException(502, "the sandbox payment failed on the server") from None
 
     @app.post("/api/checkout/refund")
     def checkout_refund(body: RefundIn, request: Request):
@@ -199,10 +223,10 @@ def create_app(settings: Settings | None = None, llm_factory=None, results: Path
         try:
             out = checkout.refund_run(body.purchase_id, scenarios[body.scenario_id], body.condition, row)
         except KeyError as exc:
-            raise HTTPException(404, str(exc))
+            raise HTTPException(404, str(exc)) from None
         except Exception:
             log.exception("checkout refund run failed")
-            raise HTTPException(502, "the sandbox refund run failed on the server")
+            raise HTTPException(502, "the sandbox refund run failed on the server") from None
         out["replayed_from"] = {"source": source, "model": row.get("model")}
         return redact(out, _secrets())
 
@@ -227,8 +251,11 @@ def create_app(settings: Settings | None = None, llm_factory=None, results: Path
             raise HTTPException(404, "unknown scenario")
         wait = limiter.retry_after(_client_ip(request))
         if wait:
-            raise HTTPException(429, f"rate limit: try again in {wait:.0f}s (replay mode is not limited)",
-                                headers={"Retry-After": str(int(wait) + 1)})
+            raise HTTPException(
+                429,
+                f"rate limit: try again in {wait:.0f}s (replay mode is not limited)",
+                headers={"Retry-After": str(int(wait) + 1)},
+            )
         if budget.remaining() <= 0:
             raise HTTPException(429, "the demo's daily LLM budget is used up; replay mode still works")
         if not slots.acquire(blocking=False):
@@ -236,11 +263,18 @@ def create_app(settings: Settings | None = None, llm_factory=None, results: Path
         try:
             scenario = scenarios[body.scenario_id] if body.scenario_id else _pasted(body.email, records)
             cached = scenario["id"] in reader_cache
-            row = run_one(live_llm, scenario, body.condition, reader_cache, make_rail=_make_rail(settings),
-                          max_turns=settings.max_turns, max_calls=settings.max_calls)
-        except Exception:                      # the message could carry provider details; the log has them
+            row = run_one(
+                live_llm,
+                scenario,
+                body.condition,
+                reader_cache,
+                make_rail=_make_rail(settings),
+                max_turns=settings.max_turns,
+                max_calls=settings.max_calls,
+            )
+        except Exception:  # the message could carry provider details; the log has them
             log.exception("live run failed")
-            raise HTTPException(500, "the run failed on the server")
+            raise HTTPException(500, "the run failed on the server") from None
         finally:
             slots.release()
         row["demo"] = {"mode": "live", "reader_cached": cached}
@@ -260,34 +294,67 @@ def _make_rail(settings: Settings):
             inner = SandboxRail(store, f"demo-{uuid.uuid4().hex[:8]}-{scenario['id']}-{condition}")
             return ScopedRail(inner, store, "braintree-sandbox")
         return ScopedRail(fake_rail, store, "fake")
+
     return make
 
 
 def _pasted(email: EmailIn, records: dict) -> dict:
     """A pasted email becomes a scenario with no ground truth (so it is not scored) against the baseline store.
     The sender is resolved from the From address like any other email; an unknown sender gets no customer."""
-    mail = {"from": email.from_.strip(), "to": records["store"]["support_email"], "subject": email.subject,
-            "body_text": email.body_text, "body_html": email.body_html or None,
-            "attachment_text": email.attachment_text or None}
+    mail = {
+        "from": email.from_.strip(),
+        "to": records["store"]["support_email"],
+        "subject": email.subject,
+        "body_text": email.body_text,
+        "body_html": email.body_html or None,
+        "attachment_text": email.attachment_text or None,
+    }
     digest = hashlib.sha256(json.dumps(mail, sort_keys=True).encode()).hexdigest()[:12]
     sender = next((c["customer_id"] for c in records["customers"] if c["email"].lower() == mail["from"].lower()), None)
-    return {"id": f"CUSTOM-{digest}", "kind": "custom", "family": "CUSTOM", "split": "custom", "email": mail,
-            "preconditions": {"as_of": AS_OF, "session_id": f"session-CUSTOM-{digest}",
-                              "authenticated_customer_id": sender, "allowed_tools": ALL_TOOLS}}
+    return {
+        "id": f"CUSTOM-{digest}",
+        "kind": "custom",
+        "family": "CUSTOM",
+        "split": "custom",
+        "email": mail,
+        "preconditions": {
+            "as_of": AS_OF,
+            "session_id": f"session-CUSTOM-{digest}",
+            "authenticated_customer_id": sender,
+            "allowed_tools": ALL_TOOLS,
+        },
+    }
 
 
 def _store_summary(records: dict) -> dict:
     """The fixture store as a judge needs it to write an email: who can write in, and what they bought."""
     emails = {c["customer_id"]: c["email"] for c in records["customers"]}
-    return {"name": records["store"]["name"], "support_email": records["store"]["support_email"],
-            "customers": [c["email"] for c in records["customers"]],
-            "orders": [{"order_no": o["order_no"], "customer": emails.get(o["customer_id"]), "total": o["total"],
-                        "currency": o["currency"], "status": o["status"], "created_at": o.get("created_at"),
-                        "items": o["items"],
-                        "returns": [{"rma_id": r["rma_id"], "approved_refund_amount": r["approved_refund_amount"],
-                                     "status": r["status"]} for r in o.get("returns", [])]}
-                       for o in records["orders"]]}
+    return {
+        "name": records["store"]["name"],
+        "support_email": records["store"]["support_email"],
+        "customers": [c["email"] for c in records["customers"]],
+        "orders": [
+            {
+                "order_no": o["order_no"],
+                "customer": emails.get(o["customer_id"]),
+                "total": o["total"],
+                "currency": o["currency"],
+                "status": o["status"],
+                "created_at": o.get("created_at"),
+                "items": o["items"],
+                "returns": [
+                    {
+                        "rma_id": r["rma_id"],
+                        "approved_refund_amount": r["approved_refund_amount"],
+                        "status": r["status"],
+                    }
+                    for r in o.get("returns", [])
+                ],
+            }
+            for o in records["orders"]
+        ],
+    }
 
 
-assert set(CONDITIONS) == {"none", "cap", "counterfoil"}, "RunIn.condition must list run_eval's conditions"
+assert set(CONDITIONS) == {"none", "cap", "counterfoil"}, "RunIn.condition must list run_eval's conditions"  # noqa: S101
 app = create_app()

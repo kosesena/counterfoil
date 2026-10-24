@@ -5,6 +5,7 @@ no store state, no reservations, no duplicate-charge memory. The call goes to th
 - CapGate: a tool allowlist plus a per-transaction cap, the kind of guard most agent-payment projects ship
   (see docs/arastirma/2026-10-23-rakipler.md). Above the cap → held for a human.
 """
+
 from __future__ import annotations
 
 from decimal import Decimal
@@ -22,7 +23,7 @@ class NoGate(Gateway):
             return [Finding(BLOCK, "NO_SUCH_TOOL", f"the rail has no '{tool}' endpoint")]
         try:
             if tool in ("refund", "charge"):
-                parse_amount(args.get("amount"))            # the rail would reject a malformed amount too
+                parse_amount(args.get("amount"))  # the rail would reject a malformed amount too
         except BadAmount as exc:
             return [Finding(BLOCK, "BAD_AMOUNT", str(exc))]
         return []
@@ -33,15 +34,22 @@ class NoGate(Gateway):
         txn = args.get("braintree_transaction_id") or order.get("braintree_transaction_id")
         if tool == "lookup_transaction":
             if order:
-                return Outcome(decision, findings, "succeeded", data=order_view(self.store, self.rail, order["order_no"]))
+                return Outcome(
+                    decision, findings, "succeeded", data=order_view(self.store, self.rail, order["order_no"])
+                )
             data = self.rail.find(txn)
             return Outcome(decision, findings, "succeeded" if data else "failed", data=data)
         if tool == "refund":
             return self._call(decision, findings, lambda: self.rail.refund(txn, parse_amount(args["amount"])))
         if tool == "void":
             return self._call(decision, findings, lambda: self.rail.void(txn))
-        return self._call(decision, findings, lambda: self.rail.charge(
-            args.get("vaulted_payment_method_token"), parse_amount(args["amount"]), f"{ctx.session_id}:charge"))
+        return self._call(
+            decision,
+            findings,
+            lambda: self.rail.charge(
+                args.get("vaulted_payment_method_token"), parse_amount(args["amount"]), f"{ctx.session_id}:charge"
+            ),
+        )
 
 
 class CapGate(NoGate):

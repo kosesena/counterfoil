@@ -1,0 +1,3 @@
+# Pure formatting commits; use: git blame --ignore-revs-file .git-blame-ignore-revs
+# ruff format (120 columns)
+e73f25b31ac17f868ce1038527304466263a6b95

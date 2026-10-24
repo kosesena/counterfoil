@@ -15,6 +15,7 @@ reservation counted (rail_state 'unknown') rather than releasing it.
 
 The HTTP layer is one injectable function, so the tests run with no network.
 """
+
 from __future__ import annotations
 
 import base64
@@ -24,14 +25,14 @@ import time
 import urllib.error
 import urllib.request
 import uuid
+from collections.abc import Callable
 from decimal import Decimal
-from typing import Callable
 
 from .rail import RailResult
 
 SANDBOX = "https://api-m.sandbox.paypal.com"
 CREDENTIAL_VARS = ("PAYPAL_CLIENT_ID", "PAYPAL_CLIENT_SECRET")
-DEAD = ("FAILED", "CANCELLED", "DECLINED")           # refund / capture states that moved no money
+DEAD = ("FAILED", "CANCELLED", "DECLINED")  # refund / capture states that moved no money
 # PayPal's published sandbox Visa; only used to create setup purchases in the sandbox (PayPalSandboxRail)
 SANDBOX_CARD = {"number": "4111111111111111", "expiry": "2030-12", "security_code": "123"}
 
@@ -77,18 +78,25 @@ class PayPalRestRail:
 
     name = "paypal-sandbox"
 
-    def __init__(self, transport: Transport | None = None, currency: str | None = None,
-                 vault_source: str = "paypal", timeout: float = 30.0, clock: Callable[[], float] = time.monotonic):
+    def __init__(
+        self,
+        transport: Transport | None = None,
+        currency: str | None = None,
+        vault_source: str = "paypal",
+        timeout: float = 30.0,
+        clock: Callable[[], float] = time.monotonic,
+    ):
         if os.environ.get("PAYPAL_ENVIRONMENT", "sandbox") != "sandbox":
             raise RuntimeError("Counterfoil only talks to the PayPal sandbox")
         missing = [v for v in CREDENTIAL_VARS if not os.environ.get(v)]
         if missing:
             raise RuntimeError(f"PayPal REST rail needs {', '.join(missing)} in the environment")
         self._auth = base64.b64encode(
-            f"{os.environ['PAYPAL_CLIENT_ID']}:{os.environ['PAYPAL_CLIENT_SECRET']}".encode()).decode()
+            f"{os.environ['PAYPAL_CLIENT_ID']}:{os.environ['PAYPAL_CLIENT_SECRET']}".encode()
+        ).decode()
         self.send = transport or urllib_transport
         self.currency = currency or os.environ.get("PAYPAL_CURRENCY", "USD")
-        self.vault_source = vault_source      # 'paypal' (vaulted PayPal wallet) or 'card'
+        self.vault_source = vault_source  # 'paypal' (vaulted PayPal wallet) or 'card'
         self.timeout, self.clock = timeout, clock
         self._token: tuple[str, float] | None = None
         self.calls: list[tuple] = []
@@ -100,23 +108,34 @@ class PayPalRestRail:
     def _access_token(self) -> str:
         if self._token and self.clock() < self._token[1]:
             return self._token[0]
-        code, body = self.send("POST", f"{SANDBOX}/v1/oauth2/token",
-                               {"Authorization": f"Basic {self._auth}", "Accept": "application/json",
-                                "Content-Type": "application/x-www-form-urlencoded"},
-                               b"grant_type=client_credentials", self.timeout)
+        code, body = self.send(
+            "POST",
+            f"{SANDBOX}/v1/oauth2/token",
+            {
+                "Authorization": f"Basic {self._auth}",
+                "Accept": "application/json",
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            b"grant_type=client_credentials",
+            self.timeout,
+        )
         if code != 200 or not body or "access_token" not in body:
             raise RuntimeError(f"PayPal sandbox token request failed: {code} {(body or {}).get('error', '')}".rstrip())
         self._token = (body["access_token"], self.clock() + max(0, int(body.get("expires_in", 0)) - 60))
         return self._token[0]
 
     def _req(self, method: str, path: str, payload: dict | None = None, request_id: str | None = None):
-        headers = {"Authorization": f"Bearer {self._access_token()}", "Accept": "application/json",
-                   "Content-Type": "application/json", "Prefer": "return=representation"}
+        headers = {
+            "Authorization": f"Bearer {self._access_token()}",
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Prefer": "return=representation",
+        }
         if request_id:
             headers["PayPal-Request-Id"] = request_id
         body = json.dumps(payload).encode() if payload is not None else None
         code, data = self.send(method, f"{SANDBOX}{path}", headers, body, self.timeout)
-        if code == 401:                       # token revoked or expired early: fetch a new one once
+        if code == 401:  # token revoked or expired early: fetch a new one once
             self._token = None
             headers["Authorization"] = f"Bearer {self._access_token()}"
             code, data = self.send(method, f"{SANDBOX}{path}", headers, body, self.timeout)
@@ -129,8 +148,9 @@ class PayPalRestRail:
         if 200 <= code < 300 and data and data.get("status") not in DEAD:
             return RailResult(True, data.get("id"), data.get("status"))
         if 200 <= code < 300:
-            return RailResult(False, (data or {}).get("id"), (data or {}).get("status"),
-                              f"{code} {(data or {}).get('status')}")
+            return RailResult(
+                False, (data or {}).get("id"), (data or {}).get("status"), f"{code} {(data or {}).get('status')}"
+            )
         return RailResult(False, error=_error(code, data))
 
     # -- Rail interface ------------------------------------------------------------------------------
@@ -143,30 +163,44 @@ class PayPalRestRail:
         if cap is None:
             return RailResult(False, error=f"404 RESOURCE_NOT_FOUND capture {transaction_id}")
         payload = {"amount": {"value": str(amount), "currency_code": cap["amount"]["currency_code"]}}
-        code, data = self._req("POST", f"/v2/payments/captures/{transaction_id}/refund", payload,
-                               request_id or f"cf-refund-{uuid.uuid4().hex}")
+        code, data = self._req(
+            "POST",
+            f"/v2/payments/captures/{transaction_id}/refund",
+            payload,
+            request_id or f"cf-refund-{uuid.uuid4().hex}",
+        )
         return self._money_result(code, data)
 
     def void(self, transaction_id):
-        code, data = self._req("POST", f"/v2/payments/authorizations/{transaction_id}/void", None,
-                               f"cf-void-{uuid.uuid4().hex}")
+        code, data = self._req(
+            "POST", f"/v2/payments/authorizations/{transaction_id}/void", None, f"cf-void-{uuid.uuid4().hex}"
+        )
         if code == 204 or (200 <= code < 300 and not data):
             return RailResult(True, transaction_id, "VOIDED")
         return self._money_result(code, data)
 
     def charge(self, payment_method_token, amount, order_id):
         """A merchant-initiated order on a vaulted payment method; PayPal captures it in the same call."""
-        payload = {"intent": "CAPTURE",
-                   "purchase_units": [{"reference_id": order_id[:256], "custom_id": order_id[:127],
-                                       "amount": {"currency_code": self.currency, "value": str(amount)}}],
-                   "payment_source": {self.vault_source: {"vault_id": payment_method_token}}}
+        payload = {
+            "intent": "CAPTURE",
+            "purchase_units": [
+                {
+                    "reference_id": order_id[:256],
+                    "custom_id": order_id[:127],
+                    "amount": {"currency_code": self.currency, "value": str(amount)},
+                }
+            ],
+            "payment_source": {self.vault_source: {"vault_id": payment_method_token}},
+        }
         # the request id is the store's charge request id: the same request cannot be charged twice
         code, data = self._req("POST", "/v2/checkout/orders", payload, f"cf-charge-{order_id}"[:108])
         if not (200 <= code < 300) or not data:
             return RailResult(False, error=_error(code, data))
         captures = [c for pu in data.get("purchase_units", []) for c in pu.get("payments", {}).get("captures", [])]
         if not captures:
-            return RailResult(False, data.get("id"), data.get("status"), f"order {data.get('status')} without a capture")
+            return RailResult(
+                False, data.get("id"), data.get("status"), f"order {data.get('status')} without a capture"
+            )
         return self._money_result(200, captures[0])
 
     def _refunds(self, cap: dict) -> list[dict]:
@@ -188,19 +222,26 @@ class PayPalRestRail:
         cap = self._capture(transaction_id)
         if cap is None:
             return None
-        return sum((Decimal(r["amount"]["value"]) for r in self._refunds(cap) if r.get("status") not in DEAD),
-                   Decimal("0.00"))
+        return sum(
+            (Decimal(r["amount"]["value"]) for r in self._refunds(cap) if r.get("status") not in DEAD), Decimal("0.00")
+        )
 
     def find(self, transaction_id):
         cap = self._capture(transaction_id)
         if cap is None:
             return None
         refunds = self._refunds(cap)
-        return {"id": cap["id"], "amount": cap["amount"]["value"], "currency": cap["amount"]["currency_code"],
-                "status": cap.get("status"), "refund_ids": [r["id"] for r in refunds],
-                "refunded": str(sum((Decimal(r["amount"]["value"]) for r in refunds if r.get("status") not in DEAD),
-                                    Decimal("0.00"))),
-                "payment_instrument_type": "paypal_rest"}
+        return {
+            "id": cap["id"],
+            "amount": cap["amount"]["value"],
+            "currency": cap["amount"]["currency_code"],
+            "status": cap.get("status"),
+            "refund_ids": [r["id"] for r in refunds],
+            "refunded": str(
+                sum((Decimal(r["amount"]["value"]) for r in refunds if r.get("status") not in DEAD), Decimal("0.00"))
+            ),
+            "payment_instrument_type": "paypal_rest",
+        }
 
 
 class PayPalSandboxRail(PayPalRestRail):
@@ -216,37 +257,54 @@ class PayPalSandboxRail(PayPalRestRail):
         super().__init__(transport, currency=None, vault_source="card")
         self.store, self.tag = store, run_tag
         self.orders = {o["braintree_transaction_id"]: o for o in store.orders.values()}
-        self.real: dict[str, str] = {}           # fixture id -> capture id / vault id
+        self.real: dict[str, str] = {}  # fixture id -> capture id / vault id
 
     def _txn(self, fixture_id: str) -> str | None:
         if fixture_id not in self.real:
             o = self.orders.get(fixture_id)
             if o is None:
                 return None
-            payload = {"intent": "CAPTURE",
-                       "purchase_units": [{"reference_id": o["order_no"], "custom_id": f"{self.tag}:{o['order_no']}"[:127],
-                                           "amount": {"currency_code": o["currency"], "value": str(o["total"])}}],
-                       "payment_source": {"card": SANDBOX_CARD}}
+            payload = {
+                "intent": "CAPTURE",
+                "purchase_units": [
+                    {
+                        "reference_id": o["order_no"],
+                        "custom_id": f"{self.tag}:{o['order_no']}"[:127],
+                        "amount": {"currency_code": o["currency"], "value": str(o["total"])},
+                    }
+                ],
+                "payment_source": {"card": SANDBOX_CARD},
+            }
             code, data = self._req("POST", "/v2/checkout/orders", payload, f"cf-setup-{self.tag}-{o['order_no']}"[:108])
-            caps = [c for pu in (data or {}).get("purchase_units", []) for c in pu.get("payments", {}).get("captures", [])]
+            caps = [
+                c for pu in (data or {}).get("purchase_units", []) for c in pu.get("payments", {}).get("captures", [])
+            ]
             if not (200 <= code < 300) or not caps:
                 raise RuntimeError(f"sandbox setup order for {o['order_no']} failed: {_error(code, data)}")
             self.real[fixture_id] = caps[0]["id"]
-            done = self.store.db.execute("SELECT amount FROM refunds WHERE order_no=? AND status='completed'",
-                                         (o["order_no"],)).fetchall()
-            for (amount,) in done:                 # history the scenario says already happened
+            done = self.store.db.execute(
+                "SELECT amount FROM refunds WHERE order_no=? AND status='completed'", (o["order_no"],)
+            ).fetchall()
+            for (amount,) in done:  # history the scenario says already happened
                 super().refund(caps[0]["id"], Decimal(str(amount)))
         return self.real[fixture_id]
 
     def _vault(self, fixture_token: str) -> str:
         if fixture_token not in self.real:
-            code, setup = self._req("POST", "/v3/vault/setup-tokens", {"payment_source": {"card": SANDBOX_CARD}},
-                                    f"cf-setup-token-{self.tag}-{fixture_token}"[:108])
+            code, setup = self._req(
+                "POST",
+                "/v3/vault/setup-tokens",
+                {"payment_source": {"card": SANDBOX_CARD}},
+                f"cf-setup-token-{self.tag}-{fixture_token}"[:108],
+            )
             if not (200 <= code < 300) or not setup:
                 raise RuntimeError(f"sandbox vault setup failed: {_error(code, setup)}")
-            code, token = self._req("POST", "/v3/vault/payment-tokens",
-                                    {"payment_source": {"token": {"id": setup["id"], "type": "SETUP_TOKEN"}}},
-                                    f"cf-payment-token-{self.tag}-{fixture_token}"[:108])
+            code, token = self._req(
+                "POST",
+                "/v3/vault/payment-tokens",
+                {"payment_source": {"token": {"id": setup["id"], "type": "SETUP_TOKEN"}}},
+                f"cf-payment-token-{self.tag}-{fixture_token}"[:108],
+            )
             if not (200 <= code < 300) or not token:
                 raise RuntimeError(f"sandbox vault setup failed: {_error(code, token)}")
             self.real[fixture_token] = token["id"]
@@ -257,15 +315,21 @@ class PayPalSandboxRail(PayPalRestRail):
 
     def refund(self, transaction_id, amount, request_id=None):
         real = self._txn(transaction_id)
-        out = RailResult(False, error="404 RESOURCE_NOT_FOUND not a store transaction") if real is None \
+        out = (
+            RailResult(False, error="404 RESOURCE_NOT_FOUND not a store transaction")
+            if real is None
             else super().refund(real, amount, request_id)
+        )
         self.calls.append(("refund", transaction_id, amount, real, out.id))
         return out
 
     def void(self, transaction_id):
         real = self._txn(transaction_id)
-        out = RailResult(False, error="404 RESOURCE_NOT_FOUND not a store transaction") if real is None \
+        out = (
+            RailResult(False, error="404 RESOURCE_NOT_FOUND not a store transaction")
+            if real is None
             else super().void(real)
+        )
         self.calls.append(("void", transaction_id, real))
         return out
 
