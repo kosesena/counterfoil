@@ -23,6 +23,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from counterfoil.llm import LLM
+from counterfoil.paypal import PayPalSandboxRail
 from counterfoil.rail import SandboxRail
 from counterfoil.scenarios import load_records, load_scenarios
 from scripts.run_eval import CONDITIONS, run_one
@@ -37,7 +38,7 @@ ROOT = Path(__file__).resolve().parent.parent
 STATIC = Path(__file__).resolve().parent / "static"
 MAX_BODY_BYTES = 64 * 1024
 log = logging.getLogger("counterfoil.demo")
-SECRET_ENV = re.compile(r"KEY|SECRET|TOKEN|PASSWORD|PRIVATE|BRAINTREE_MERCHANT_ID|BRAINTREE_PUBLIC")
+SECRET_ENV = re.compile(r"KEY|SECRET|TOKEN|PASSWORD|PRIVATE|BRAINTREE_MERCHANT_ID|BRAINTREE_PUBLIC|PAYPAL_CLIENT_ID")
 # Every scenario is set on the same business date; a pasted email gets it too, so refund windows behave the same.
 AS_OF = "2026-10-23T12:00:00Z"
 ALL_TOOLS = ["refund", "void", "charge", "lookup_transaction"]
@@ -252,6 +253,9 @@ def create_app(settings: Settings | None = None, llm_factory=None, results: Path
 
 def _make_rail(settings: Settings):
     def make(store, fake_rail, scenario, condition):
+        if settings.paypal_rest:
+            inner = PayPalSandboxRail(store, f"demo-{uuid.uuid4().hex[:8]}-{scenario['id']}-{condition}")
+            return ScopedRail(inner, store, "paypal-sandbox")
         if settings.braintree:
             inner = SandboxRail(store, f"demo-{uuid.uuid4().hex[:8]}-{scenario['id']}-{condition}")
             return ScopedRail(inner, store, "braintree-sandbox")

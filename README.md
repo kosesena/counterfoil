@@ -81,7 +81,15 @@ Through the official `braintree` Python SDK (4.48.0), sandbox only. `BraintreeRa
 - `customer.create` with `fake-paypal-billing-agreement-nonce`: a vaulted mocked PayPal account
 - `transaction.refund` (partial refunds), `transaction.void`, `transaction.find` (refund reconciliation and lookups)
 
-That is the whole list. Counterfoil does not use PayPal Payouts, Invoicing, Disputes or the PayPal Agent Toolkit. The agent's four tools (`refund`, `void`, `charge`, `lookup_transaction`) are our own and map onto the calls above.
+The agent's four tools (`refund`, `void`, `charge`, `lookup_transaction`) are our own and map onto the calls above. Counterfoil does not use PayPal Payouts, Invoicing or Disputes.
+
+**PayPal REST and Agent Toolkit's `create_refund`** ([0008](docs/adr/0008-paypal-rest-rail-in-front-of-agent-toolkit.md)). `counterfoil/paypal.py` puts the same gate in front of PayPal's REST API (sandbox only, plain HTTPS, credentials from `PAYPAL_CLIENT_ID` / `PAYPAL_CLIENT_SECRET`):
+
+- `POST /v2/payments/captures/{id}/refund`: the exact call the Toolkit's `create_refund` makes
+- `POST /v2/checkout/orders` with a vaulted `vault_id` (reorders), `POST /v2/payments/authorizations/{id}/void`
+- `GET /v2/payments/captures/{id}` and `GET /v2/checkout/orders/{id}` (lookups and refund reconciliation)
+
+`counterfoil/toolkit.py` accepts `create_refund`'s own parameters (`capture_id`, optional `amount`) and routes them through the gate, so an agent built on the Toolkit gets the gated tool in its place and never holds the PayPal keys. The tests fake the HTTP layer. It has not run against a real REST sandbox yet: PayPal accounts cannot be opened from Türkiye.
 
 The sandbox experiment showed one more thing. Mocked PayPal accepted refunds above the transaction total, which cards refuse with 91521. We treat that as a limitation of the mock and never count it as a Counterfoil catch.
 
@@ -104,6 +112,7 @@ printf 'FROM qwen2.5\nPARAMETER num_ctx 8192\n' > Modelfile && ollama create qwe
 **Variants:**
 
 - Add `--rail braintree` to run against the Braintree sandbox. Copy `.env.example` to `.env` and fill in the `BRAINTREE_*` keys first. Every run creates real sandbox transactions.
+- Add `--rail paypal` to run against the PayPal REST sandbox instead (needs `PAYPAL_CLIENT_ID` and `PAYPAL_CLIENT_SECRET`; without them it stops before any model runs). In the live demo, `DEMO_RAIL=paypal` with the same two variables does the same.
 - The Claude results were produced inside an Astropods container through the Astro AI Gateway: `cd astropods && ast project start`.
 
 **Dashboard (AG Studio):**

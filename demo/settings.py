@@ -11,6 +11,7 @@ import dataclasses
 import os
 from dataclasses import dataclass
 
+from counterfoil import paypal
 from counterfoil.llm import LLMConfig, preset
 
 BRAINTREE_VARS = ("BRAINTREE_MERCHANT_ID", "BRAINTREE_PUBLIC_KEY", "BRAINTREE_PRIVATE_KEY")
@@ -37,6 +38,7 @@ class Settings:
     live: LLMConfig | None = None
     live_reason: str = "no model configured on the server (set DEMO_MODEL or LLM_BASE_URL/LLM_MODEL/LLM_API_KEY)"
     braintree: bool = False
+    paypal_rest: bool = False            # DEMO_RAIL=paypal + PAYPAL_CLIENT_ID/SECRET: live runs refund via PayPal REST
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -51,6 +53,7 @@ class Settings:
             llm_timeout_s=_int("DEMO_LLM_TIMEOUT_S", cls.llm_timeout_s),
             replay_source=os.environ.get("DEMO_REPLAY_SOURCE", ""),
             braintree=os.environ.get("BRAINTREE_ENVIRONMENT") == "sandbox" and all(os.environ.get(v) for v in BRAINTREE_VARS),
+            paypal_rest=os.environ.get("DEMO_RAIL") == "paypal" and paypal.configured(),
         )
         live, reason = live_config()
         if live is not None:
@@ -61,7 +64,7 @@ class Settings:
         """What the page may know: whether live mode works and which model, never where the key lives."""
         return {"live_enabled": self.live is not None, "live_model": self.live.model if self.live else None,
                 "live_reason": "" if self.live else self.live_reason,
-                "rail": "braintree-sandbox" if self.braintree else "fake",
+                "rail": "paypal-sandbox" if self.paypal_rest else "braintree-sandbox" if self.braintree else "fake",
                 "paypal_checkout": self.braintree,
                 "limits": {"max_email_chars": self.max_email_chars, "max_turns": self.max_turns,
                            "max_calls": self.max_calls, "rate_limit": self.rate_limit,
