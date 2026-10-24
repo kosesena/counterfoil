@@ -68,6 +68,15 @@ export function Store3D() {
       '3d/homi-return-station.glb',
       (gltf) => {
         if (disposed) return;
+        // Brand marks keep their exact colours: the PayPal acceptance logo is drawn unlit and outside
+        // the filmic tone mapping, which would otherwise lighten PayPal's navy and blue.
+        gltf.scene.traverse((o) => {
+          const mesh = o as THREE.Mesh;
+          const mat = mesh.material as THREE.MeshStandardMaterial | undefined;
+          if (!mesh.isMesh || !mat?.name?.startsWith('HOMI_PayPal_Official')) return;
+          mesh.material = new THREE.MeshBasicMaterial({ map: mat.map, side: mat.side, transparent: true, toneMapped: false });
+          mat.dispose();
+        });
         scene.add(gltf.scene);
         setState('ready');
       },
