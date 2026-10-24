@@ -38,7 +38,7 @@ jobs:
           cache: pip
       - run: pip install -r requirements-dev.txt
       # The floor sits a little under the measured number in docs/quality.md; a drop below it fails the build.
-      - run: pytest -q --cov --cov-report=term --cov-report=xml --cov-fail-under=85
+      - run: pytest -q --cov --cov-report=term --cov-report=xml --cov-fail-under=90
       - name: Coverage summary
         if: always()
         run: |
