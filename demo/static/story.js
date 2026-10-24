@@ -1,16 +1,15 @@
 // The HOMI story player: scenario P6-01 told in five steps at the store's return station.
 //
-// Nothing advances on its own. Next plays one step (camera eases to its pose, the step's motion runs once) and holds;
-// Back jumps to the end state of the previous step. The data beside the scene is a recorded P6-01 run under
+// Nothing advances on its own. Next plays one step (the camera eases to that step's camera and the step's frames play
+// once) and holds; Back jumps to the end of the previous step. The data beside the scene is a recorded P6-01 run under
 // Counterfoil until the visitor buys and refunds in section 3; then it is their Braintree sale, the BLOCK finding and
 // the approved 40 USD refund (index.html dispatches "homi:live").
 //
-// Scene: Codex's animated docs/gorseller/homi-story.glb, copied to static/3d/homi-story.glb, when present: cameras
-// HOMI_STEP_1..5, one frame range per step (clips named HOMI_STEP_n, or scene extras homi_steps = [[start, end], ...]
-// with homi_fps), and the screen/tablet materials HOMI_SCREEN_MAT / HOMI_TABLET_MAT drawn as canvas textures from the
-// data. Until then: the till exported from the .blend at the P6 return (frame 650) with hand-set camera poses, a
-// customer who pushes the cart in with the four cups and puts them on the return tray, the station screen and receipt
-// drawn from the data, and the tablet as HTML. Phones (< 760px) get one still per step, no WebGL.
+// Scene: Codex's animated docs/gorseller/homi-story.glb (tools/export_story_glb.py) and its step table
+// homi-story.json: one HOMI_STORY animation, cameras HOMI_OVERVIEW and HOMI_STEP_1..5, a frame range per step and the
+// scan events. The recorded run shows the scene's own screen lettering (the same P6 numbers); the visitor's run hides
+// it and draws HOMI_SCREEN_MAT as a canvas from their data. The tablet's screen has no UVs, so their figures go next
+// to it as HTML. Phones (< 760px) get one still per step, no WebGL.
 
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
@@ -23,20 +22,6 @@ const STILL = (n) => `/static/story/step-${n}.jpg`;
 const PHONE = window.matchMedia("(max-width: 760px)");
 const CALM = window.matchMedia("(prefers-reduced-motion: reduce)");
 const $ = (id) => document.getElementById(id);
-
-// glTF coordinates (Blender x, z, -y). Station HR at x -13.5, its screen faces +x; exit gates at z 11.65.
-const V = (x, y, z) => new THREE.Vector3(x, y, z);
-const POSES = [
-  { pos: V(-9.3, 3.5, 8.4), at: V(-12.6, 1.35, 12.0) },    // 0 · before the start: the gates
-  { pos: V(-9.3, 3.5, 8.4), at: V(-12.6, 1.35, 11.5) },    // 1 · through the gates
-  { pos: V(-13.1, 3.4, 12.4), at: V(-13.45, 1.2, 9.3) },   // 2 · scanning the four cups
-  { pos: V(-12.5, 1.95, 7.25), at: V(-13.49, 1.62, 8.75) },// 3 · the screen
-  { pos: V(-17.75, 3.0, 6.8), at: V(-18.61, 1.1, 6.0) },   // 4 · the manager's tablet
-  { pos: V(-11.9, 1.3, 7.05), at: V(-13.07, 0.66, 7.56) }, // 5 · the receipt slot
-];
-// HTML stand-in for the tablet's screen (static GLB only; too small to draw on), pinned to this point.
-const ANCHORS = { 4: V(-18.61, 1.16, 6.02) };
-const STEP_S = 1.6;            // seconds per step in the static scene
 
 const story = { step: 0, data: null, live: false, view: null, source: null, scene: null };
 
@@ -206,13 +191,6 @@ function tabletLines(n, d) {
   return { tone: n >= 4 ? "block" : "", head: `${d.rma_id} · REJECTED`,
     big: `${money(s.reserved + s.refunded)} + ${money(s.asked)} = ${money(s.total)} > ${money(s.approved)}`, sub: `${money(s.left)} ${cur} left` };
 }
-function receiptLines(d) {
-  const cur = d.currency || "USD";
-  const amount = d.fix ? d.fix.amount : money(d.sum?.left);
-  return { tone: "paper", head: `REFUND · ${d.rma_id}`, big: `${amount} ${d.fix?.settled ? d.paid_currency : cur}`,
-    sub: d.fix?.settled ? `Braintree ${d.fix.refund_id}` : d.fix ? "not completed" : "recorded run · not executed" };
-}
-
 function drawCanvas({ c, g, t }, L) {
   const W = c.width, H = c.height;
   const bg = { amber: "#f2b84b", block: "#3a1714", ok: "#d7efe2", paper: "#fbfaf6" }[L.tone] || "#163f33";
@@ -234,15 +212,24 @@ function fit(g, text, max, size) {
 function ease(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
 const clamp01 = (x) => Math.max(0, Math.min(1, x));
 
+function loadGlb(loader, url, onProgress) {
+  return new Promise((ok, bad) => loader.load(url, ok, (e) => e.total && onProgress(e.loaded / e.total), bad));
+}
+
 async function glView() {
   const stage = $("storyStage");
+  const meta = await api(story.scene.replace(/\.glb$/, ".json"));
+  const draco = new DRACOLoader().setDecoderPath(DRACO);
+  const loader = new GLTFLoader().setDRACOLoader(draco);
+  const gltf = await loadGlb(loader, story.scene, (k) => { stage.dataset.progress = `${Math.round(k * 100)}%`; });
+  delete stage.dataset.progress;
+
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(stage.clientWidth, stage.clientHeight);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 0.88;
   stage.prepend(renderer.domElement);
-
   const scene = new THREE.Scene();
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
@@ -251,15 +238,6 @@ async function glView() {
   sun.position.set(-6, 12, 14);
   scene.add(sun);
 
-  const camera = new THREE.PerspectiveCamera(38, stage.clientWidth / stage.clientHeight, 0.05, 200);
-  const look = POSES[0].at.clone();
-  camera.position.copy(POSES[0].pos); camera.lookAt(look);
-
-  const draco = new DRACOLoader().setDecoderPath(DRACO);
-  const loader = new GLTFLoader().setDRACOLoader(draco);
-  if (!story.scene) throw new Error("the server has no story scene");
-  const url = story.scene, gltf = await loader.loadAsync(url);
-  const animated = url.endsWith("homi-story.glb");
   const root = gltf.scene;
   // Brand marks keep their exact colours: the PayPal acceptance logo is unlit and outside the tone mapping.
   root.traverse((o) => {
@@ -269,198 +247,123 @@ async function glView() {
     mat.dispose();
   });
   scene.add(root);
-  if (!animated) {
-    const floor = new THREE.Mesh(new THREE.CircleGeometry(14, 64), new THREE.MeshStandardMaterial({ color: 0xe9e3da, roughness: 0.9 }));
-    floor.rotation.x = -Math.PI / 2; floor.position.set(-13.5, 0, 8.7);
-    scene.add(floor);
+
+  // -- the animation: paused, moved only by setFrame ------------------------------------------------------------
+  const fps = meta.fps || 24;
+  const mixer = new THREE.AnimationMixer(root);
+  const clip = gltf.animations.find((c) => c.name === meta.animation) || gltf.animations[0];
+  const action = clip ? mixer.clipAction(clip) : null;
+  if (action) { action.play(); action.paused = true; }
+  let frameNow = meta.overviewFrame || 1;
+  const setFrame = (f) => { frameNow = f; if (action) { action.time = (f - 1) / fps; mixer.update(0); } };
+  // step n plays [from, to]; step 1 stops where the entrance camera still sees the customer (previewFrame)
+  const stops = meta.cameraStops;
+  const span = (n) => n === 0 ? [meta.overviewFrame, meta.overviewFrame]
+    : n === 1 ? [stops[0].frames[0], stops[0].previewFrame] : stops[n - 1].frames;
+
+  // -- cameras ---------------------------------------------------------------------------------------------------
+  setFrame(meta.overviewFrame || 1);
+  root.updateMatrixWorld(true);
+  const poseOf = (name) => {
+    const cam = root.getObjectByName(name) || gltf.cameras.find((c) => c.name === name);
+    if (!cam) return null;
+    const pos = new THREE.Vector3(), q = new THREE.Quaternion();
+    cam.matrixWorld.decompose(pos, q, new THREE.Vector3());
+    return { pos, q, fov: cam.isPerspectiveCamera ? cam.fov : 38 };
+  };
+  const poses = [poseOf(meta.initialCamera || "HOMI_OVERVIEW"), ...stops.map((st) => poseOf(st.camera))];
+  for (let n = 0; n < poses.length; n++) poses[n] ||= poses[n - 1] || { pos: new THREE.Vector3(0, 20, 30), q: new THREE.Quaternion(), fov: 38 };
+  const camera = new THREE.PerspectiveCamera(poses[0].fov, stage.clientWidth / stage.clientHeight, 0.05, 2000);
+  camera.position.copy(poses[0].pos); camera.quaternion.copy(poses[0].q);
+
+  // -- the visitor's run: station screen as a canvas, tablet figures as HTML ---------------------------------------
+  const lettering = [], screenMeshes = [];
+  let tabletNode = null;
+  root.traverse((o) => {
+    const src = o.userData && o.userData.source_name;
+    if (src && /^(HF_UI|HR_UI|PC_ScanUI|HF_Simulation|HR_AgentAvatar|HR_AvatarEye)/.test(src)) lettering.push(o);
+    if (o.isMesh && o.material && o.material.name === "HOMI_SCREEN_MAT") screenMeshes.push([o, o.material]);
+    if (/HandTabletScreen$/.test(o.name)) tabletNode = o;
+  });
+  const face = canvasTex(1024, 880);
+  const faceMat = new THREE.MeshBasicMaterial({ map: face.t, toneMapped: false });
+  let screenNode = screenMeshes[0] ? screenMeshes[0][0] : null;
+  // The screen glass's own UVs don't map a flat page; give the live canvas its own geometry with UVs projected flat
+  // onto the glass: left to right as seen from the screen's camera (step 3), top to bottom.
+  const flatGeometry = (o) => {
+    const g = o.geometry.clone(), pos = g.attributes.position, p = new THREE.Vector3();
+    const box = new THREE.Box3().setFromObject(o), size = box.getSize(new THREE.Vector3());
+    const axis = size.x < size.z ? "x" : "z";
+    const n = new THREE.Vector3(); n[axis] = Math.sign(poses[3].pos[axis] - box.getCenter(new THREE.Vector3())[axis]) || 1;
+    const right = new THREE.Vector3(0, 1, 0).cross(n);
+    const pts = [];
+    for (let i = 0; i < pos.count; i++) pts.push(p.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld).clone());
+    const us = pts.map((q) => q.dot(right)), u0 = Math.min(...us), u1 = Math.max(...us);
+    const uv = new Float32Array(pos.count * 2);
+    pts.forEach((q, i) => { uv[2 * i] = (us[i] - u0) / (u1 - u0 || 1); uv[2 * i + 1] = (box.max.y - q.y) / (size.y || 1); });
+    g.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
+    return g;
+  };
+  const flat = screenMeshes.map(([o]) => [o.geometry, flatGeometry(o)]);
+  function liveScreen(on) {
+    for (const o of lettering) o.visible = !on;
+    screenMeshes.forEach(([o, m], i) => { o.material = on ? faceMat : m; o.geometry = flat[i][on ? 1 : 0]; });
   }
 
-  // -- the animated GLB: cameras, per-step frame ranges, canvas screens -----------------------------------------
-  const poses = POSES.map((p) => ({ pos: p.pos.clone(), at: p.at.clone(), fov: 38 }));
-  let mixer = null, ranges = null;
-  const actions = [];
-  const screens = {};
-  if (animated) {
-    for (let n = 1; n <= 5; n++) {
-      const cam = root.getObjectByName(`HOMI_STEP_${n}`) || gltf.cameras.find((c) => c.name === `HOMI_STEP_${n}`);
-      if (!cam) continue;
-      cam.updateWorldMatrix(true, false);
-      const pos = new THREE.Vector3().setFromMatrixPosition(cam.matrixWorld);
-      const dir = new THREE.Vector3(0, 0, -1).transformDirection(cam.matrixWorld);
-      poses[n] = { pos, at: pos.clone().add(dir.multiplyScalar(3)), fov: cam.isPerspectiveCamera ? cam.fov : 38 };
-    }
-    if (poses[1]) poses[0] = poses[1];
-    if (gltf.animations.length) {
-      mixer = new THREE.AnimationMixer(root);
-      const fps = Number(root.userData.homi_fps || gltf.asset?.extras?.homi_fps || 24);
-      const named = (n) => gltf.animations.find((c) => c.name === `HOMI_STEP_${n}`);
-      const marks = root.userData.homi_steps || gltf.asset?.extras?.homi_steps;
-      ranges = [];
-      for (const c of gltf.animations) actions.push(mixer.clipAction(c));
-      for (let n = 1; n <= 5; n++) {
-        if (named(n)) { ranges[n] = { actions: [mixer.clipAction(named(n))], from: 0, to: named(n).duration }; continue; }
-        const r = Array.isArray(marks) ? marks[n - 1] : marks && marks[n];
-        if (r) ranges[n] = { actions, from: r[0] / fps, to: r[1] / fps };
-      }
-      for (const a of actions) { a.play(); a.paused = true; }
-    }
-    root.traverse((o) => {
-      if (!o.isMesh) return;
-      for (const [key, name, w, h] of [["screen", "HOMI_SCREEN_MAT", 1024, 1024], ["tablet", "HOMI_TABLET_MAT", 1024, 640]]) {
-        if (o.material?.name !== name) continue;
-        screens[key] ||= { ...canvasTex(w, h), mats: [] };
-        const m = o.material.clone();
-        m.map = screens[key].t; m.emissive = new THREE.Color(0xffffff); m.emissiveMap = screens[key].t; m.emissiveIntensity = 0.9;
-        o.material = m; screens[key].mats.push(m);
-      }
-    });
-  }
-
-  // -- the static GLB: a customer to move, a screen to tint, a receipt to print ---------------------------------
-  let walker = null, cart = null, cups = null, tablet = null, receipt = null;
-  if (!animated) {
-    // pull the customer, the cart and the four returned cups out of the baked scene so they can move;
-    // each group's pivot is where the .blend left it at frame 650 (the customer at the station)
-    const group = (test, x, z) => {
-      const parts = [];
-      root.traverse((o) => { if (o.isMesh && test.test(o.name)) parts.push(o); });
-      if (!parts.length) return null;
-      const g = new THREE.Group(); g.position.set(x, 0, z);
-      scene.add(g); root.updateMatrixWorld(true); g.updateMatrixWorld(true);
-      for (const o of parts) g.attach(o);
-      return g;
-    };
-    // Fixes for the 24 Oct export only (ece407d's .blend): its exit gates sit 0.9 m and 2.0 m apart and its lane
-    // signs read 02 · 03 · 01 from the entrance. Codex fixed both in the .blend since, so they apply only when the
-    // gates are still where that export put them.
-    const BAKED = { 0: -14.45, 1: -13.55, 2: -11.55 }, GATES = { 0: -14.06, 1: -12.56, 2: -11.06 };
-    const gates = [];
-    root.traverse((o) => { const m = /^SE_GateExit(\d)_/.exec(o.name); if (o.isMesh && m && m[1] in BAKED) gates.push([o, m[1]]); });
-    const oldExport = gates.length > 0 && gates.every(([o, i]) => Math.abs(o.position.x - BAKED[i]) < 0.01);
-    if (oldExport) {
-      for (const [o, i] of gates) o.position.x += GATES[i] - BAKED[i];
-      const signs = {};             // move each baked lane number to its sign: 01 returns, 02 and 03 the payment tills
-      root.traverse((o) => {
-        const m = /^(HR|HP03|HP01)_LaneNumber/.exec(o.name);
-        if (o.isMesh && m) signs[m[1]] = { o, pos: o.position.clone(), scale: o.scale.clone() };
-      });
-      if (Object.keys(signs).length === 3) {
-        for (const [from, to] of [["HP01", "HR"], ["HR", "HP03"], ["HP03", "HP01"]]) {
-          signs[from].o.position.copy(signs[to].pos); signs[from].o.scale.copy(signs[to].scale);
-        }
-      }
-    }
-    walker = group(/^(PC_)?Customer/, -12.63, 9.65);
-    cart = group(/^(Axle|Basket|Caster|Chassis|Folded_child|HOMI_Cart|Handle_|Hub_|Lower_shelf|Rear_|Rubber_wheel|Soft_grip|Wheel_hub)/, -12.28, 9.85);
-    cups = group(/^(P6_ReturnCup|P6_CupHandle|PC_Label|PC_EAN)/, -13.38, 9.9);
-    const tint = (name) => {
-      const o = root.getObjectByName(name);
-      if (!o || !o.isMesh) return null;
-      o.material = o.material.clone();
-      o.material.emissive = new THREE.Color(0x000000);
-      return o.material;
-    };
-    // the station screen's text is baked at one frame; a canvas drawn from the run's data replaces it
-    root.traverse((o) => { if (/^(HF_UI|HF_Simulation|HR_UI|HR_AgentAvatar|HR_AvatarEye|PC_ScanUI)/.test(o.name)) o.visible = false; });
-    const face = canvasTex(1024, 880);
-    face.t.flipY = true;
-    const screenPlane = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.77), new THREE.MeshBasicMaterial({ map: face.t, toneMapped: false }));
-    screenPlane.rotation.y = Math.PI / 2;
-    screenPlane.position.set(-13.478, 1.69, 8.58);
-    scene.add(screenPlane);
-    screens.screen = face;
-    tablet = tint("Store_Manager_HandTabletScreen");
-    const paper = canvasTex(256, 384);
-    paper.t.flipY = true;
-    receipt = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.3), new THREE.MeshBasicMaterial({ map: paper.t, toneMapped: false, side: THREE.DoubleSide }));
-    receipt.rotation.y = Math.PI / 2;
-    receipt.userData.paper = paper;
-    scene.add(receipt);
-  }
-  const CYAN = new THREE.Color(0x7fd6ff);
-  // the static scene as a function of story time s (0 = before step 1, n = end of step n)
-  function pose(s) {
-    // step 1: through the gates pushing the cart (cups in the basket); step 2: park the cart, step up to the
-    // station, put the cups on the return tray
-    const lerp = (a, b, t) => a + (b - a) * t;
-    const LANE = -11.81;            // the right-hand lane between the gates
-    const t1 = ease(clamp01(s)), t2 = clamp01(s - 1);
-    const walkZ = lerp(14.4, 11.0, t1);
-    if (walker) {
-      const k = ease(clamp01((t2 - 0.25) / 0.75));
-      walker.position.set(lerp(LANE, -12.63, k), 0, s <= 1 ? walkZ : lerp(11.0, 9.65, k));
-      walker.rotation.y = -Math.PI / 2 * (1 - ease(clamp01((t2 - 0.6) / 0.4)));
-      const moving = (s > 0 && s < 1) || (t2 > 0.25 && t2 < 1);
-      walker.position.y = moving ? Math.abs(Math.sin(s * 22)) * 0.02 : 0;
-    }
-    if (cart) {                       // handle towards the customer, 1.1 m ahead while walking; parked beside the station
-      const k = ease(clamp01(t2 / 0.6));
-      cart.position.set(lerp(LANE, -11.7, k), 0, lerp(walkZ - 1.1, 9.4, k));
-      cart.rotation.y = lerp(Math.PI / 2, 0, k);
-    }
-    if (cups && cart) {
-      const k = ease(clamp01((t2 - 0.7) / 0.3));
-      const basket = new THREE.Vector3(0.05, 0, 0).applyAxisAngle(THREE.Object3D.DEFAULT_UP, cart.rotation.y).add(cart.position);
-      cups.position.set(lerp(basket.x, -13.38, k), lerp(-0.17, 0, k) + Math.sin(Math.PI * k) * 0.3, lerp(basket.z, 9.9, k));
-      cups.rotation.y = lerp(cart.rotation.y, 0, k);
-    }
-    if (tablet) tablet.emissive.copy(CYAN).multiplyScalar(clamp01((s - 3.2) / 0.5) * 0.6);
-    if (receipt) {
-      const t = ease(clamp01((s - 4.3) / 0.7));
-      receipt.visible = t > 0.01;
-      receipt.scale.set(1, Math.max(t, 0.01), 1);
-      receipt.position.set(-13.045, 0.71 - 0.15 * t, 7.54);
-    }
-  }
-
-  // -- callouts (static GLB) and canvas screens (animated GLB) --------------------------------------------------
+  // -- callouts: scan count in step 2 (the customer hides the screen), the visitor's figures on the tablet --------
   const callout = $("storyCallout");
-  function redraw() {
-    const d = story.data;
-    if (!d) return;
-    if (screens.screen) drawCanvas(screens.screen, screenLines(story.step, d));
-    if (screens.tablet) drawCanvas(screens.tablet, tabletLines(story.step, d));
-    if (receipt) drawCanvas(receipt.userData.paper, receiptLines(d));
-    const n = story.step;
-    const L = !animated && n === 4 ? tabletLines(n, d) : null;
-    callout.classList.toggle("hidden", !L);
-    if (L) {
-      callout.className = `story-callout ${L.tone}`;
-      callout.replaceChildren(...[["b", L.head], ["strong", L.big], ["span", L.sub]].map(([t, x]) => { const e = document.createElement(t); e.textContent = x; return e; }));
+  const scans = Object.entries((meta.events && meta.events.scanCounts) || {}).sort((x, y) => x[1] - y[1]);
+  let calloutKey = "";
+  function calloutFor() {
+    const n = story.step, d = story.data;
+    if (n === 2 && scans.length) {
+      const done = scans.filter(([, f]) => frameNow >= f).pop();
+      return { anchor: screenNode, L: { tone: "", head: "SCANNED", big: done ? done[0] : `0/${scans.length}`, sub: `Cloudstone cup · ${d ? d.rma_id : ""}` } };
     }
-    kick();
+    if (n === 4 && d && d.kind === "live") return { anchor: tabletNode, L: tabletLines(n, d) };
+    return null;
   }
   function placeCallout() {
-    const a = ANCHORS[story.step];
-    if (!a || callout.classList.contains("hidden")) return;
-    const p = a.clone().project(camera);
+    const c = calloutFor();
+    callout.classList.toggle("hidden", !c);
+    if (!c) { calloutKey = ""; return; }
+    const key = JSON.stringify(c.L);
+    if (key !== calloutKey) {
+      calloutKey = key;
+      callout.className = `story-callout ${c.L.tone}`;
+      callout.replaceChildren(...[["b", c.L.head], ["strong", c.L.big], ["span", c.L.sub]].map(([t, x]) => { const e = document.createElement(t); e.textContent = x; return e; }));
+    }
+    if (!c.anchor) { callout.style.left = "16px"; callout.style.top = "16px"; return; }
+    const p = c.anchor.getWorldPosition(new THREE.Vector3()).project(camera);
     const x = (p.x * 0.5 + 0.5) * stage.clientWidth, y = (-p.y * 0.5 + 0.5) * stage.clientHeight;
     const w = callout.offsetWidth, h = callout.offsetHeight;
-    const left = x + 24 + w < stage.clientWidth - 12 ? x + 24 : x - 24 - w;
-    callout.style.left = `${Math.max(12, left)}px`;
+    const left = p.z < 1 && x + 24 + w < stage.clientWidth - 12 ? x + 24 : x - 24 - w;
+    callout.style.left = `${Math.min(stage.clientWidth - w - 12, Math.max(12, left))}px`;
     callout.style.top = `${Math.min(stage.clientHeight - h - 12, Math.max(12, y - h / 2))}px`;
   }
+  function redraw() {
+    const d = story.data;
+    const live = !!d && d.kind === "live";
+    liveScreen(live);
+    if (live) drawCanvas(face, screenLines(story.step, d));
+    calloutKey = "";
+    kick();
+  }
 
-  // -- playback: camera tween + one step of motion, then hold ----------------------------------------------------
-  let tween = null, raf = 0, s = 0;
-  pose(0);
+  // -- playback: camera tween + the step's frames, then hold ------------------------------------------------------
+  let tween = null, raf = 0;
   function kick() { if (!raf) raf = requestAnimationFrame(frame); }
   function frame(now) {
     raf = 0;
     let busy = false;
     if (tween) {
-      const t = clamp01((now - tween.t0) / tween.ms), e = ease(t);
+      const tc = clamp01((now - tween.t0) / tween.camMs), e = ease(tc);
       camera.position.lerpVectors(tween.from.pos, tween.to.pos, e);
-      look.lerpVectors(tween.from.at, tween.to.at, e);
+      camera.quaternion.slerpQuaternions(tween.from.q, tween.to.q, e);
       camera.fov = tween.from.fov + (tween.to.fov - tween.from.fov) * e; camera.updateProjectionMatrix();
-      camera.lookAt(look);
-      if (tween.s1 != null) { s = tween.s0 + (tween.s1 - tween.s0) * clamp01((now - tween.t0) / tween.motionMs); pose(s); }
-      if (tween.range && mixer) {
-        const k = clamp01((now - tween.t0) / tween.motionMs), time = tween.range.from + (tween.range.to - tween.range.from) * k;
-        for (const a of tween.range.actions) a.time = time;
-        mixer.update(0);
-      }
-      busy = t < 1 || (now - tween.t0) < tween.motionMs;
+      const tf = clamp01((now - tween.t0) / tween.playMs);
+      setFrame(tween.f0 + (tween.f1 - tween.f0) * tf);
+      busy = tc < 1 || tf < 1;
       if (!busy) tween = null;
     }
     renderer.render(scene, camera);
@@ -468,26 +371,22 @@ async function glView() {
     if (busy) kick();
   }
   function show(n, play) {
-    const to = poses[n] || poses[0];
-    const from = { pos: camera.position.clone(), at: look.clone(), fov: camera.fov };
     const calm = CALM.matches;
-    const range = ranges && ranges[n];
-    const motionMs = play && !calm ? (range ? (range.to - range.from) * 1000 : STEP_S * 1000) : 0;
-    if (!play || calm) {             // Back, or reduced motion: the step's end state at once
-      s = n; pose(s);
-      if (range) { for (const a of range.actions) a.time = range.to; mixer.update(0); }
-    }
-    tween = { from, to, t0: performance.now(), ms: calm ? 1 : 1100, motionMs: Math.max(motionMs, calm ? 1 : 1100),
-      s0: n - 1, s1: play && !calm && !animated ? n : null, range: play && !calm ? range : null };
+    const [f0, f1] = span(n);
+    const from = { pos: camera.position.clone(), q: camera.quaternion.clone(), fov: camera.fov };
+    const moving = play && !calm;
+    tween = { from, to: poses[n], t0: performance.now(), camMs: calm ? 1 : 1100,
+      f0: moving ? f0 : f1, f1, playMs: moving ? Math.max(1, (f1 - f0) / fps * 1000) : 1 };
     redraw();
   }
+  setFrame(span(0)[1]);
   const resize = () => {
     camera.aspect = stage.clientWidth / stage.clientHeight; camera.updateProjectionMatrix();
     renderer.setSize(stage.clientWidth, stage.clientHeight); kick();
   };
   const ro = new ResizeObserver(resize); ro.observe(stage);
   return {
-    kind: animated ? "animated" : "static", show, redraw,
+    kind: "animated", show, redraw,
     dispose() { ro.disconnect(); cancelAnimationFrame(raf); draco.dispose(); pmrem.dispose(); renderer.dispose(); renderer.domElement.remove(); callout.classList.add("hidden"); },
   };
 }
@@ -503,9 +402,6 @@ async function mountView() {
     try { story.view = await glView(); stage.dataset.state = story.view.kind; }
     catch (e) { console.warn("story: WebGL scene unavailable, showing stills", e); story.view = stillView(); stage.dataset.state = "still"; }
   }
-  $("storyNote").textContent = stage.dataset.state === "static"
-    ? "Stand-in scene with hand-set cameras until the animated HOMI scene lands."
-    : "";
   story.view.show(story.step, false);
 }
 

@@ -87,7 +87,7 @@ td, th { border-bottom: 1px solid var(--line); padding: 5px 6px; text-align: lef
 @media (max-width: 900px) { .story { grid-template-columns: 1fr; } }
 .story-stage { position: relative; aspect-ratio: 16 / 9; background: #e9e3da; min-width: 0; }
 .story-stage canvas, .story-still { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
-.story-stage[data-state="loading"]::after { content: "Loading the store…"; position: absolute; left: 16px; bottom: 14px; font-size: 13px; color: #646a73; }
+.story-stage[data-state="loading"]::after { content: "Loading the store… " attr(data-progress); position: absolute; left: 16px; bottom: 14px; font-size: 13px; color: #646a73; }
 .story-callout { position: absolute; z-index: 2; min-width: 170px; max-width: 280px; padding: 10px 12px; border-radius: 8px;
   background: #163f33; color: #e9f3ee; box-shadow: 0 6px 22px rgba(0,0,0,.18); font-size: 12px; line-height: 1.35; pointer-events: none; }
 .story-callout b { display: block; font-size: 11px; letter-spacing: .06em; }

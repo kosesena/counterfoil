@@ -234,10 +234,15 @@ def test_checkout_rejects_unknown_purchases_and_scenarios():
 def test_story_assets_are_served_and_cached():
     c = client()
     scene = c.get("/api/config").json()["story_scene"]
-    assert scene in ("/static/3d/homi-story.glb", "/static/3d/homi-return-station.glb")
-    glb = c.get(scene)
-    assert glb.status_code == 200 and glb.content[:4] == b"glTF"
-    assert glb.headers["cache-control"] == "public, max-age=3600"
+    if scene:                                                 # the scene is exported from Blender; it may be absent
+        assert scene == "/story/homi-story.glb"
+        glb = c.get(scene)
+        assert glb.status_code == 200 and glb.content[:4] == b"glTF"
+        assert glb.headers["cache-control"] == "public, max-age=3600"
+        meta = c.get("/story/homi-story.json").json()
+        assert [s["camera"] for s in meta["cameraStops"]] == [f"HOMI_STEP_{n}" for n in range(1, 6)]
+    for name in ("counterfoil-magaza.blend", "../app.py", "homi-logo.png"):    # only the two story files
+        assert c.get(f"/story/{name}").status_code == 404
     for n in range(1, 6):                                     # phones get one still per step, no WebGL
         assert c.get(f"/static/story/step-{n}.jpg").status_code == 200
     js = c.get("/static/story.js")

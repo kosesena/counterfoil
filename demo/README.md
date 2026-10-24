@@ -23,14 +23,13 @@ rejected, 40 left), the 40 USD receipt. Back/Next only; nothing advances on its 
 recorded P6-01 run under Counterfoil (the saved run picked in the source menu); after a visitor pays with PayPal and
 runs the Counterfoil refund in section 3, it switches to their Braintree sale, the BLOCK finding and the refund id.
 
-Files in `demo/static/` (code: `story.js`; three.js 0.170.0 and its Draco decoder come pinned from jsDelivr):
-
-- `3d/homi-story.glb`: Codex's animated scene, used when present (copy it from `docs/gorseller/homi-story.glb`).
-  `story.js` reads cameras `HOMI_STEP_1..5`, per-step clips `HOMI_STEP_n` or scene extras `homi_steps`
-  (`[[start, end], ...]` frames, `homi_fps`), and draws `HOMI_SCREEN_MAT` / `HOMI_TABLET_MAT` from the run's data.
-- `3d/homi-return-station.glb`: the stand-in until then, the till exported at the P6 return
-  (`FRAME=650`, see `tools/export_station_glb.py`), with hand-set camera poses.
-- `story/step-1..5.jpg`: what phones (< 760 px) see instead of WebGL (1–2 from the stand-in scene, 3–5 Codex's renders).
+Files: `demo/static/story.js` (three.js 0.170.0 and its Draco decoder come pinned from jsDelivr) and
+`demo/static/story/step-1..5.jpg`, what phones (< 760 px) see instead of WebGL (Codex's step previews). The scene is
+served straight from where Blender exports it (`tools/export_story_glb.py`), as `/story/homi-story.glb` and
+`/story/homi-story.json`: one `HOMI_STORY` animation, cameras `HOMI_OVERVIEW` and `HOMI_STEP_1..5`, a frame range per
+step and the scan events. The recorded run shows the scene's own screen lettering; the visitor's run draws
+`HOMI_SCREEN_MAT` as a canvas from their data. The tablet's screen has no UVs, so their figures sit next to it as
+HTML. The GLB is about 25 MB and only loads on wider screens, once the section is near the viewport.
 
 ## Run locally
 
