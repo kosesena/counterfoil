@@ -3,7 +3,7 @@ Several tests reproduce findings from Codex's code review (docs/inceleme/2026-10
 
 import copy
 import threading
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 import pytest
@@ -18,7 +18,7 @@ BY_ID = {s["id"]: s for s in load_scenarios()}
 
 class Clock:
     def __init__(self):
-        self.now = datetime(2026, 10, 23, 12, tzinfo=timezone.utc)
+        self.now = datetime(2026, 10, 23, 12, tzinfo=UTC)
 
     def __call__(self):
         return self.now

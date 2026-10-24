@@ -23,7 +23,7 @@ class LLMConfig:
     reasoning_effort: str | None = None  # GPT-5.6 on chat completions only allows tools with "none"
 
     @classmethod
-    def from_env(cls) -> "LLMConfig":
+    def from_env(cls) -> LLMConfig:
         return cls(
             base_url=os.environ.get("LLM_BASE_URL", "http://localhost:11434/v1"),
             model=os.environ.get("LLM_MODEL", "qwen2.5-8k"),

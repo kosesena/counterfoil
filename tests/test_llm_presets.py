@@ -35,6 +35,7 @@ def test_astra_needs_its_model_id(monkeypatch):
 
 def test_reader_accepts_a_fenced_json_object():
     from types import SimpleNamespace
+
     from counterfoil.agents import read_email
 
     fenced = '```json\n{"musteri_email": "a@b.c", "siparis_no": "ST-1", "tutar": "30.00"}\n```'

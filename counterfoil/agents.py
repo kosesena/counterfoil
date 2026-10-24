@@ -190,7 +190,7 @@ def run_transaction_agent(
     for _ in range(max_turns):
         try:
             msg = llm.chat(messages, tools=TOOLS)
-        except Exception as exc:  # recorded, not raised: the runner keeps going
+        except Exception as exc:  # noqa: BLE001 - recorded, not raised: the runner keeps going
             run.stopped, run.error = "model_error", repr(exc)
             return run
         calls = msg.tool_calls or []

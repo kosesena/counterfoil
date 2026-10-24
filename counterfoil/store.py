@@ -85,7 +85,7 @@ class Store:
                     )
 
     @classmethod
-    def from_file(cls, path: str | Path, db_path: str = ":memory:") -> "Store":
+    def from_file(cls, path: str | Path, db_path: str = ":memory:") -> Store:
         return cls(json.loads(Path(path).read_text(encoding="utf-8")), db_path)
 
     def sql(self, query: str, params: tuple = ()) -> list[tuple]:
@@ -144,7 +144,8 @@ class Store:
             unresolved = tuple(
                 rid
                 for (rid,) in self.db.execute(
-                    f"SELECT refund_id FROM refunds WHERE order_no=? AND status IN {UNRESOLVED}", (order_no,)
+                    f"SELECT refund_id FROM refunds WHERE order_no=? AND status IN {UNRESOLVED}",  # noqa: S608 - constant tuple
+                    (order_no,),
                 )
             )
             return Entitlement(approved, spent, reserved, unresolved)

@@ -11,10 +11,10 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
-from typing import Callable
 
 from .money import BadAmount, parse_amount, parse_qty
 from .rail import Rail, RailResult
@@ -33,7 +33,7 @@ READER_REQUIRED = {
 
 
 def utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 @dataclass
@@ -413,7 +413,7 @@ class Gateway:
     def _call(decision, findings, fn) -> Outcome:
         try:
             res = fn()
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - any rail failure means the outcome is unknown
             return Outcome(decision, findings + [Finding(BLOCK, "RAIL_ERROR", repr(exc))], "unknown")
         return Outcome(decision, findings, "succeeded" if res.ok else "failed", res)
 

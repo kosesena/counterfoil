@@ -7,7 +7,7 @@ from __future__ import annotations
 import threading
 import time
 from collections import OrderedDict, deque
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 
 class BudgetExhausted(RuntimeError):
@@ -41,7 +41,7 @@ class RateLimiter:
 class DailyBudget:
     """Counts LLM calls per UTC day across all clients."""
 
-    def __init__(self, limit: int, today=lambda: datetime.now(timezone.utc).date()):
+    def __init__(self, limit: int, today=lambda: datetime.now(UTC).date()):
         self.limit, self.today = limit, today
         self.day, self.used = today(), 0
         self.lock = threading.Lock()

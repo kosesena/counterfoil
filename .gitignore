@@ -7,3 +7,10 @@ results/smoke/
 marka-dis/
 *.blend1
 astropods/.ast/
+.coverage
+coverage.xml
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+mutants/

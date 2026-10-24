@@ -199,7 +199,7 @@ def create_app(settings: Settings | None = None, llm_factory=None, results: Path
             return {"client_token": checkout.client_token()}
         except Exception:
             log.exception("client token failed")
-            raise HTTPException(502, "Braintree did not issue a client token")
+            raise HTTPException(502, "Braintree did not issue a client token") from None
 
     @app.post("/api/checkout/buy")
     def checkout_buy(body: BuyIn, request: Request):
@@ -207,10 +207,10 @@ def create_app(settings: Settings | None = None, llm_factory=None, results: Path
         try:
             return checkout.buy(body.nonce, scenarios[body.scenario_id])
         except ValueError as exc:  # Braintree's own decline message, no secrets in it
-            raise HTTPException(402, f"payment failed: {exc}")
+            raise HTTPException(402, f"payment failed: {exc}") from None
         except Exception:
             log.exception("checkout failed")
-            raise HTTPException(502, "the sandbox payment failed on the server")
+            raise HTTPException(502, "the sandbox payment failed on the server") from None
 
     @app.post("/api/checkout/refund")
     def checkout_refund(body: RefundIn, request: Request):
@@ -222,10 +222,10 @@ def create_app(settings: Settings | None = None, llm_factory=None, results: Path
         try:
             out = checkout.refund_run(body.purchase_id, scenarios[body.scenario_id], body.condition, row)
         except KeyError as exc:
-            raise HTTPException(404, str(exc))
+            raise HTTPException(404, str(exc)) from None
         except Exception:
             log.exception("checkout refund run failed")
-            raise HTTPException(502, "the sandbox refund run failed on the server")
+            raise HTTPException(502, "the sandbox refund run failed on the server") from None
         out["replayed_from"] = {"source": source, "model": row.get("model")}
         return redact(out, _secrets())
 
@@ -273,7 +273,7 @@ def create_app(settings: Settings | None = None, llm_factory=None, results: Path
             )
         except Exception:  # the message could carry provider details; the log has them
             log.exception("live run failed")
-            raise HTTPException(500, "the run failed on the server")
+            raise HTTPException(500, "the run failed on the server") from None
         finally:
             slots.release()
         row["demo"] = {"mode": "live", "reader_cached": cached}
@@ -352,5 +352,5 @@ def _store_summary(records: dict) -> dict:
     }
 
 
-assert set(CONDITIONS) == {"none", "cap", "counterfoil"}, "RunIn.condition must list run_eval's conditions"
+assert set(CONDITIONS) == {"none", "cap", "counterfoil"}, "RunIn.condition must list run_eval's conditions"  # noqa: S101
 app = create_app()

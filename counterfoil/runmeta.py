@@ -12,7 +12,7 @@ import platform
 import subprocess
 import sys
 import urllib.request
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -21,8 +21,8 @@ ROOT = Path(__file__).resolve().parent.parent
 
 def _run(*cmd: str) -> str:
     try:
-        return subprocess.run(cmd, capture_output=True, text=True, timeout=10, cwd=ROOT).stdout.strip()
-    except Exception:
+        return subprocess.run(cmd, capture_output=True, text=True, timeout=10, cwd=ROOT).stdout.strip()  # noqa: S603 - fixed argv
+    except Exception:  # noqa: BLE001 - a missing tool leaves the field empty
         return ""
 
 
@@ -34,7 +34,7 @@ def machine() -> dict:
         info["memory_gb"] = round(int(mem) / 2**30) if mem.isdigit() else None
     elif os.path.exists("/proc/meminfo"):
         with open("/proc/meminfo") as f:
-            kb = next((int(l.split()[1]) for l in f if l.startswith("MemTotal")), 0)
+            kb = next((int(line.split()[1]) for line in f if line.startswith("MemTotal")), 0)
         info["memory_gb"] = round(kb / 2**20, 1)
     info["container"] = os.path.exists("/.dockerenv") or bool(os.environ.get("ASTRO_GATEWAY_URL"))
     return info
@@ -73,7 +73,7 @@ def model(cfg) -> dict:
             tags = json.load(urllib.request.urlopen(f"{base}/api/tags", timeout=5)).get("models", [])
             tag = cfg.model if ":" in cfg.model else f"{cfg.model}:latest"
             out["digest"] = next((m.get("digest") for m in tags if m.get("name") == tag), None)
-        except Exception as exc:  # the run still counts; the record says what it could not see
+        except Exception as exc:  # noqa: BLE001 - the run still counts; the record says what it could not see
             out["ollama_error"] = repr(exc)
     elif host.endswith("astropods.ai"):
         out["provider_route"] = "Astro AI Gateway (Astropods) → Amazon Bedrock"
@@ -82,7 +82,7 @@ def model(cfg) -> dict:
 
 def write(out_path: Path, cfg, args: dict, rail: str) -> Path:
     meta = {
-        "started_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "started_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "argv": sys.argv[1:],
         "selection": args,
         "rail": rail,
@@ -102,5 +102,5 @@ def finish(out_path: Path, rows: list[dict]) -> None:
     counts: dict[str, int] = {}
     for r in rows:
         counts[r.get("status", "?")] = counts.get(r.get("status", "?"), 0) + 1
-    meta.update(finished_at=datetime.now(timezone.utc).isoformat(timespec="seconds"), rows=len(rows), status=counts)
+    meta.update(finished_at=datetime.now(UTC).isoformat(timespec="seconds"), rows=len(rows), status=counts)
     path.write_text(json.dumps(meta, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")

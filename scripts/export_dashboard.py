@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
@@ -149,7 +149,7 @@ def export(paths: list[Path]) -> dict:
         for ret in o.get("returns", [])
     ]
     return {
-        "asOf": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "asOf": datetime.now(UTC).isoformat(timespec="seconds"),
         "runs": runs,
         "calls": calls,
         "scenarios": scenario_rows,

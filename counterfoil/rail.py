@@ -50,7 +50,7 @@ class FakeRail:
         self._sales: set[tuple[str, Decimal]] = set()
 
     @classmethod
-    def from_store(cls, store) -> "FakeRail":
+    def from_store(cls, store) -> FakeRail:
         txns = {}
         for o in store.orders.values():
             refunded = sum(

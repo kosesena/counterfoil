@@ -16,11 +16,11 @@ import argparse
 import json
 import sys
 import time
-import uuid
 import traceback
+import uuid
 from collections import defaultdict
 from dataclasses import asdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -30,12 +30,12 @@ from dotenv import load_dotenv  # noqa: E402
 
 load_dotenv(ROOT / ".env")  # API keys for the cloud presets; .env is git-ignored
 
+from counterfoil import runmeta  # noqa: E402
 from counterfoil.agents import read_email, run_transaction_agent  # noqa: E402
 from counterfoil.baselines import CapGate, NoGate  # noqa: E402
 from counterfoil.evaluate import expected_outcome, score  # noqa: E402
 from counterfoil.gateway import Gateway  # noqa: E402
 from counterfoil.llm import LLM, PRESETS, preset  # noqa: E402
-from counterfoil import runmeta  # noqa: E402
 from counterfoil.rail import SandboxRail  # noqa: E402
 from counterfoil.scenarios import build, load_scenarios  # noqa: E402
 
@@ -61,7 +61,7 @@ def run_one(
     (the live demo wraps it so a pasted email cannot reach transactions outside the fixture store). A scenario
     without ground truth (an email pasted into the demo) is run but not scored."""
     row = {
-        "started_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "started_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "scenario": scenario["id"],
         "kind": scenario["kind"],
         "family": scenario["family"],
@@ -86,7 +86,7 @@ def run_one(
             t0 = time.time()
             reader_cache[scenario["id"]] = (*read_email(llm, email), round(time.time() - t0, 1))
         handoff, reader_raw, row["reader_seconds"] = reader_cache[scenario["id"]]
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - the row records the failure, the run goes on
         row.update(status="reader_error", error=repr(exc))
         return row
     row.update(
@@ -100,7 +100,7 @@ def run_one(
     t0 = time.time()
     try:
         agent = run_transaction_agent(llm, gate, ctx, handoff, max_turns=max_turns, max_calls=max_calls)
-    except Exception:
+    except Exception:  # noqa: BLE001 - the row records the failure, the run goes on
         row.update(status="agent_error", error=traceback.format_exc(limit=3))
         return row
     row["agent_seconds"] = round(time.time() - t0, 1)
@@ -199,7 +199,7 @@ def main():
         scenarios = [s for s in scenarios if s["split"] == args.split]
     conditions = [c for c in args.conditions.split(",") if c]
     llm = LLM(preset(args.model) if args.model else None)
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    stamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
     out = (
         Path(args.out).resolve()
         if args.out

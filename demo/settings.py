@@ -40,7 +40,7 @@ class Settings:
     braintree: bool = False
 
     @classmethod
-    def from_env(cls) -> "Settings":
+    def from_env(cls) -> Settings:
         s = cls(
             max_email_chars=_int("DEMO_MAX_EMAIL_CHARS", cls.max_email_chars, 200),
             max_turns=_int("DEMO_MAX_TURNS", cls.max_turns),
