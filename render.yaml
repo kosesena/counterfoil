@@ -1,0 +1,31 @@
+# Render Blueprint for the live demo (New → Blueprint → this repo). Replay mode works with no env vars at all.
+# Values marked sync: false are entered in the Render dashboard and never committed.
+services:
+  - type: web
+    name: counterfoil-demo
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /healthz
+    envVars:
+      # live mode: a counterfoil.llm preset name (e.g. haiku-5.5) plus that preset's key
+      - key: DEMO_MODEL
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      # abuse limits (defaults shown)
+      - key: DEMO_DAILY_LLM_CALLS
+        value: "300"
+      - key: DEMO_RATE_LIMIT
+        value: "6"
+      - key: DEMO_RATE_WINDOW_S
+        value: "600"
+      # optional: real Braintree sandbox instead of the in-memory rail (all four must be set)
+      - key: BRAINTREE_ENVIRONMENT
+        value: sandbox
+      - key: BRAINTREE_MERCHANT_ID
+        sync: false
+      - key: BRAINTREE_PUBLIC_KEY
+        sync: false
+      - key: BRAINTREE_PRIVATE_KEY
+        sync: false

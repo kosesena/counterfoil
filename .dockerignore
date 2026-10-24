@@ -1,0 +1,10 @@
+# Allowlist: the demo image needs the package, run_eval, the scenarios and the saved runs. Nothing else
+# (no .env, no dashboard, no Blender files).
+*
+!counterfoil/
+!scripts/run_eval.py
+!docs/senaryolar/
+!results/*.jsonl
+!demo/
+!requirements.txt
+**/__pycache__
