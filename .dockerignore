@@ -1,10 +1,12 @@
 # Allowlist: the demo image needs the package, run_eval, the scenarios and the saved runs. Nothing else
-# (no .env, no dashboard, no Blender files).
+# (no .env, no dashboard, no Blender files) except the HOMI story scene the page plays.
 *
 !counterfoil/
 !scripts/run_eval.py
 !docs/senaryolar/
 !results/*.jsonl
 !demo/
+!docs/gorseller/homi-story.glb
+!docs/gorseller/homi-story.json
 !requirements.txt
 **/__pycache__

@@ -21,6 +21,7 @@ from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from counterfoil.llm import LLM
@@ -38,6 +39,10 @@ from .settings import Settings
 ROOT = Path(__file__).resolve().parent.parent
 STATIC = Path(__file__).resolve().parent / "static"
 MAX_BODY_BYTES = 64 * 1024
+# The HOMI story scene, served from where Blender exports it (tools/export_story_glb.py): the animated GLB and its
+# step table (cameras, frame ranges). Only these two files; the rest of docs/gorseller is not served.
+STORY = ROOT / "docs" / "gorseller"
+STORY_FILES = {"homi-story.glb": "model/gltf-binary", "homi-story.json": "application/json"}
 log = logging.getLogger("counterfoil.demo")
 SECRET_ENV = re.compile(r"KEY|SECRET|TOKEN|PASSWORD|PRIVATE|BRAINTREE_MERCHANT_ID|BRAINTREE_PUBLIC|PAYPAL_CLIENT_ID")
 # Every scenario is set on the same business date; a pasted email gets it too, so refund windows behave the same.
@@ -122,13 +127,24 @@ def create_app(settings: Settings | None = None, llm_factory=None, results: Path
         if int(request.headers.get("content-length") or 0) > MAX_BODY_BYTES:
             return JSONResponse({"detail": "request body too large"}, status_code=413)
         response = await call_next(request)
-        response.headers["Cache-Control"] = "no-store"
+        # the story's GLB and stills are a few MB and never carry visitor data; API answers are never cached
+        static = request.url.path.startswith(("/story/", "/static/story/")) and response.status_code == 200
+        response.headers["Cache-Control"] = "public, max-age=3600" if static else "no-store"
         response.headers["X-Content-Type-Options"] = "nosniff"
         return response
 
     @app.get("/", include_in_schema=False)
     def index():
         return FileResponse(STATIC / "index.html")
+
+    # the HOMI story player: story.js and one still per step for phones (static/story/), the scene from docs/gorseller
+    app.mount("/static", StaticFiles(directory=STATIC), name="static")
+
+    @app.get("/story/{name}", include_in_schema=False)
+    def story_file(name: str):
+        if name not in STORY_FILES or not (STORY / name).is_file():
+            raise HTTPException(404, "not found")
+        return FileResponse(STORY / name, media_type=STORY_FILES[name])
 
     @app.get("/healthz", include_in_schema=False)
     def healthz():
@@ -142,6 +158,7 @@ def create_app(settings: Settings | None = None, llm_factory=None, results: Path
             "replay_sources": list(replays.sources.values()),
             "replay_default": replays.default,
             "store": _store_summary(records),
+            "story_scene": "/story/homi-story.glb" if all((STORY / f).is_file() for f in STORY_FILES) else None,
         }
 
     @app.get("/api/scenarios")
