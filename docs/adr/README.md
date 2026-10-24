@@ -13,3 +13,4 @@ notes; Sena reviews and rewrites each one in her own words.**
 | [0005](0005-approvals-are-single-use-and-bound.md) | Human approvals are single-use, time-limited and bound to the exact call | 2026-10-23 |
 | [0006](0006-check-what-the-call-does-not-what-the-text-says.md) | Check what the call would do, not what the text looks like | 2026-10-23 |
 | [0007](0007-braintree-sandbox-with-mocked-paypal.md) | Braintree sandbox with mocked PayPal instead of the PayPal REST API | 2026-10-23 |
+| [0008](0008-paypal-rest-rail-in-front-of-agent-toolkit.md) | A PayPal REST rail, so the gate sits in front of Agent Toolkit's `create_refund` | 2026-10-24 |

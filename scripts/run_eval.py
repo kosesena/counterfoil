@@ -5,8 +5,8 @@
     .venv/bin/python scripts/run_eval.py --rescore results/smoke/dev-run1.jsonl     # re-score saved steps, no LLM
 
 Writes one JSONL line per (scenario, condition, repeat), then prints a summary. The rail is the in-memory FakeRail
-(card-like limits). Within one repeat the Reader runs once per scenario and its hand-off is reused for every
-condition, so conditions differ only in the gate (paired comparison, not independent Reader samples).
+(card-like limits); --rail braintree or --rail paypal (PayPal REST) swaps in that sandbox. Within one repeat the
+Reader runs once per scenario and its hand-off is reused for every condition, so conditions differ only in the gate (paired comparison, not independent Reader samples).
 Holdout scenarios are for the final measurement only: do not tune prompts on them.
 """
 
@@ -30,7 +30,7 @@ from dotenv import load_dotenv  # noqa: E402
 
 load_dotenv(ROOT / ".env")  # API keys for the cloud presets; .env is git-ignored
 
-from counterfoil import runmeta  # noqa: E402
+from counterfoil import paypal, runmeta  # noqa: E402
 from counterfoil.agents import read_email, run_transaction_agent  # noqa: E402
 from counterfoil.baselines import CapGate, NoGate  # noqa: E402
 from counterfoil.evaluate import expected_outcome, score  # noqa: E402
@@ -40,7 +40,7 @@ from counterfoil.rail import SandboxRail  # noqa: E402
 from counterfoil.scenarios import build, load_scenarios  # noqa: E402
 
 CONDITIONS = {"none": NoGate, "cap": CapGate, "counterfoil": Gateway}
-RAIL = "fake"  # --rail braintree: every run moves real money in the Braintree sandbox (mocked PayPal)
+RAIL = "fake"  # --rail braintree / paypal: every run moves real money in that sandbox
 FLAGS = (
     "attempt",
     "intervention",
@@ -76,6 +76,8 @@ def run_one(
         rail = make_rail(store, rail, scenario, condition)
     elif RAIL == "braintree":
         rail = SandboxRail(store, f"cf-{uuid.uuid4().hex[:8]}-{scenario['id']}-{condition}")
+    elif RAIL == "paypal":
+        rail = paypal.PayPalSandboxRail(store, f"cf-{uuid.uuid4().hex[:8]}-{scenario['id']}-{condition}")
     row["rail"] = getattr(rail, "name", RAIL)
     email = scenario["email"]
     sender = store.customer_by_email(email["from"])
@@ -173,9 +175,10 @@ def main():
     p.add_argument("--rescore", default="", help="re-score a saved JSONL with the current scorer (no LLM)")
     p.add_argument(
         "--rail",
-        choices=["fake", "braintree"],
+        choices=["fake", "braintree", "paypal"],
         default="fake",
-        help="braintree: run against the Braintree sandbox (needs BRAINTREE_* in .env); slower, real sandbox transactions",
+        help="braintree: the Braintree sandbox (needs BRAINTREE_* in .env); paypal: the PayPal REST sandbox "
+        "(needs PAYPAL_CLIENT_ID / PAYPAL_CLIENT_SECRET); slower, real sandbox transactions",
     )
     p.add_argument(
         "--model",
@@ -190,6 +193,11 @@ def main():
     if args.rescore:
         print(summarise(rescore(Path(args.rescore))))
         return
+    if RAIL == "paypal" and not paypal.configured():  # say so before any model runs; never print the values
+        sys.exit(
+            "--rail paypal needs PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET in the environment or .env; "
+            "live PayPal calls are off"
+        )
 
     scenarios = load_scenarios()
     if args.ids:
