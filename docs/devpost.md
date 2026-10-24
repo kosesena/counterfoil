@@ -28,18 +28,22 @@ Counterfoil compares the call with the store's record of that transaction:
 
 The result is PASS, APPROVAL (held for a human, with a single-use, time-limited approval bound to the exact arguments) or BLOCK.
 
-**Measured on 7 attacks and 6 genuine requests (dev set, 1 repeat):**
+**Measured on 7 attacks and 6 genuine requests, dev set, 3 repeats:** 21 attack runs and 18 genuine runs per model and condition, from the committed `results/2026-10-24-dev-r3-*.jsonl`.
 
-| Model | Harm: no gate | Harm: $200 cap | Harm: Counterfoil | Genuine requests handled right (Counterfoil) |
-|---|---|---|---|---|
-| qwen2.5 | 4/7 | 4/7 | 0/7 | 6/6 |
-| Claude Haiku 4.5 | 3/7 | 3/7 | 0/7 | 6/6 |
-| Claude Opus 5.5 | 2/7 | 2/7 | 0/7 | 6/6 |
+| Model | Agent misled (no gate) | Harm: no gate | Harm: $200 cap | Harm: Counterfoil | Genuine requests handled right (Counterfoil) |
+|---|---|---|---|---|---|
+| qwen2.5 (local, 8B) | 12/21 | 12/21 | 12/21 | **0/21** | 18/18 |
+| Claude Haiku 4.5 | 9/21 | 9/21 | 9/21 | **0/21** | 18/18 |
+| GPT-5.6 Sol | 9/21 | 9/21 | 9/21 | **0/21** | 18/18 |
+| Claude Opus 5.5 | 6/21 | 6/21 | 6/21 | **0/21** | 18/18 |
+| GPT-5.6 Terra | 6/21 | 6/21 | 6/21 | **0/21** | 18/18 |
+| Claude Sonnet 5 | 5/21 | 5/21 | 5/21 | **0/21** | 18/18 |
 
 Notes on the table:
-- "Harm" means wrong money moved, or another customer's data was read.
-- Counterfoil stopped every attack that fooled the agent; the other attacks fooled no model.
-- Measured with the earlier gate (commit 6f30a4a). A later qwen3 run broke the zero: its Reader obeyed P7-01's hidden HTML and handed off 6 cups for $150.00, the charge matched that hand-off, and $150.00 reached the rail. The gate now holds every charge for confirmation of the itemised total, so the genuine reorder (CLEAN-06) is held too.
+- "Harm" means wrong money moved, or another customer's data was read. In total: 47 harmful outcomes in 126 attack runs with no gate, 47 with a $200 cap, 0 with Counterfoil.
+- "Handled right" is 15 genuine requests completed plus 3 held for review: the $300 return (CLEAN-07), which store policy says needs a person. With no gate, that return went through unreviewed.
+- The $200 cap stopped nothing: every harmful amount was below it.
+- Measured with the earlier gate (commit 6f30a4a). A local qwen3 run, still in progress and not committed yet, broke the zero. In both repeats so far, its Reader obeyed P7-01's hidden HTML and handed off 6 cups for $150.00; the charge matched that hand-off, and $150.00 reached the rail. The gate now holds every charge for confirmation of the itemised total, so that charge is held. The genuine reorder (CLEAN-06) is held too.
 
 ## How we built it
 - **Code:** Python 3, the official `braintree` SDK (sandbox), and an SQLite-backed store holding orders, RMAs, refund reservations and charge states.
@@ -58,13 +62,13 @@ Notes on the table:
 - **Our own runs found two bugs.** The agent used the Reader's field name for quantity and the gate rejected a genuine reorder, and a scenario setup counted a refund twice. Both were fixed, with tests.
 
 ## Accomplishments that we're proud of
-- **Zero harmful outcomes** with Counterfoil across these three models, without blocking a single genuine request. The one refund held for review is a $300 return that store policy says needs a person. (A later qwen3 run did get one inflated reorder through; see the note under the table.)
+- **Zero harmful outcomes** with Counterfoil in 126 attack runs across six models (three repeats each), without blocking a single genuine request. The one refund held for review is a $300 return that store policy says needs a person. (A later qwen3 run got an inflated reorder through the earlier gate; see the note under the table.)
 - **Attacks that pass both baselines.** Over-refunds, split refunds and replays all stay below the transaction total, so neither Braintree nor a $200 cap stops them.
 - **Approvals that can't be replayed or stretched.** Each one is bound to the exact arguments and to the refund state the human saw.
 
 ## What we learned
 - **Payment rails protect the transaction, not the business rule.** The gap between them is the merchant's to close, and it is closed with the merchant's own records, not with smarter prompts.
-- **Better models are fooled less often, but not never.** Opus 5.5 was misled 2/7 times, against 4/7 for qwen2.5.
+- **Better models are fooled less often, but not never.** Sonnet 5 was misled in 5 of 21 attack runs and Opus 5.5 in 6, against 12 for qwen2.5.
 - **Measure attempts and harm separately.** Otherwise a model that ignores an injection looks like a gate success.
 
 ## What's next
