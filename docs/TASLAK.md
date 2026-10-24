@@ -94,4 +94,4 @@ Kural: en fazla 1 Grand + 1 Sponsor ya da 1 Mansiyon + 1 Sponsor. Hedef **Grand 
 - **Taklit PayPal'ın sınırları:** iade toplam sınırını uygulamıyor (bkz. 2); gerçek ortam davranışı kartla ölçülüp ayrı raporlanacak. Drop-in davranışı henüz denenmedi.
 - **Vultr:** lablab ön-kod kuralı belirsiz; Rule Book okunacak, kickoff'ta sorulacak.
 - **AG Studio lisansı 45 gün:** erken başlarsa jüri döneminden (1–15 Ara) önce biter; #ag-grid'de sorulacak.
-- **Zaman:** Meta Global kabul gelirse (≤26 Eki) 26 Eki–4 Kas çakışır. Model davranışı günden güne değişiyor; sabit model, birden çok gün.
+- **Zaman:** Model davranışı günden güne değişiyor; sabit model, birden çok gün.
