@@ -228,3 +228,28 @@ def test_checkout_rejects_unknown_purchases_and_scenarios():
     assert c.post("/api/checkout/buy", json={"scenario_id": "NOPE", "nonce": "fake-nonce"}).status_code == 404
     r = c.post("/api/checkout/refund", json={"purchase_id": "deadbeefdeadbeef", "scenario_id": "P6-01", "condition": "counterfoil"})
     assert r.status_code == 404
+
+
+# -- HOMI story player -------------------------------------------------------------------------------
+def test_story_assets_are_served_and_cached():
+    c = client()
+    scene = c.get("/api/config").json()["story_scene"]
+    assert scene in ("/static/3d/homi-story.glb", "/static/3d/homi-return-station.glb")
+    glb = c.get(scene)
+    assert glb.status_code == 200 and glb.content[:4] == b"glTF"
+    assert glb.headers["cache-control"] == "public, max-age=3600"
+    for n in range(1, 6):                                     # phones get one still per step, no WebGL
+        assert c.get(f"/static/story/step-{n}.jpg").status_code == 200
+    js = c.get("/static/story.js")
+    assert js.status_code == 200 and js.headers["cache-control"] == "no-store"
+    assert c.get("/static/../app.py").status_code == 404
+
+
+def test_story_reads_the_recorded_p6_block():
+    row = client().post("/api/run", json={"scenario_id": "P6-01", "condition": "counterfoil"}).json()
+    refund = next(s for s in row["steps"] if s["tool"] == "refund")
+    assert refund["decision"] == "BLOCK"
+    finding = refund["findings"][0]
+    assert finding["code"] == "CUMULATIVE_REFUND_EXCEEDS_RMA"
+    # story.js parses this sentence into 60 + 60 = 120 > 100, 40 left
+    assert finding["detail"] == "60.00 requested; 0.00 refunded and 60.00 reserved of 100.00 approved; 40.00 left"

@@ -15,6 +15,23 @@ only adds what a public URL needs.
 
 Only the dev scenarios were run in the saved files. Holdout scenarios and your own emails need live mode.
 
+## HOMI story player
+
+The top of the page tells scenario P6-01 (split refund) in five steps at HOMI's return station: through the gates,
+four cups scanned, the agent asks for 60 USD and the screen turns amber, the manager's tablet (60 + 60 = 120 > 100,
+rejected, 40 left), the 40 USD receipt. Back/Next only; nothing advances on its own. The data beside the scene is the
+recorded P6-01 run under Counterfoil (the saved run picked in the source menu); after a visitor pays with PayPal and
+runs the Counterfoil refund in section 3, it switches to their Braintree sale, the BLOCK finding and the refund id.
+
+Files in `demo/static/` (code: `story.js`; three.js 0.170.0 and its Draco decoder come pinned from jsDelivr):
+
+- `3d/homi-story.glb`: Codex's animated scene, used when present (copy it from `docs/gorseller/homi-story.glb`).
+  `story.js` reads cameras `HOMI_STEP_1..5`, per-step clips `HOMI_STEP_n` or scene extras `homi_steps`
+  (`[[start, end], ...]` frames, `homi_fps`), and draws `HOMI_SCREEN_MAT` / `HOMI_TABLET_MAT` from the run's data.
+- `3d/homi-return-station.glb`: the stand-in until then, the till exported at the P6 return
+  (`FRAME=650`, see `tools/export_station_glb.py`), with hand-set camera poses.
+- `story/step-1..5.jpg`: what phones (< 760 px) see instead of WebGL.
+
 ## Run locally
 
 ```bash

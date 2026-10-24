@@ -20,6 +20,7 @@ from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from counterfoil.llm import LLM
@@ -36,6 +37,8 @@ from .settings import Settings
 ROOT = Path(__file__).resolve().parent.parent
 STATIC = Path(__file__).resolve().parent / "static"
 MAX_BODY_BYTES = 64 * 1024
+# The HOMI story scene: Codex's animated scene once it is copied in, else the static till the dashboard also uses
+STORY_SCENES = ("3d/homi-story.glb", "3d/homi-return-station.glb")
 log = logging.getLogger("counterfoil.demo")
 SECRET_ENV = re.compile(r"KEY|SECRET|TOKEN|PASSWORD|PRIVATE|BRAINTREE_MERCHANT_ID|BRAINTREE_PUBLIC")
 # Every scenario is set on the same business date; a pasted email gets it too, so refund windows behave the same.
@@ -120,13 +123,18 @@ def create_app(settings: Settings | None = None, llm_factory=None, results: Path
         if int(request.headers.get("content-length") or 0) > MAX_BODY_BYTES:
             return JSONResponse({"detail": "request body too large"}, status_code=413)
         response = await call_next(request)
-        response.headers["Cache-Control"] = "no-store"
+        # the story's GLB and stills are a few MB and never carry visitor data; API answers are never cached
+        static = request.url.path.startswith(("/static/3d/", "/static/story/")) and response.status_code == 200
+        response.headers["Cache-Control"] = "public, max-age=3600" if static else "no-store"
         response.headers["X-Content-Type-Options"] = "nosniff"
         return response
 
     @app.get("/", include_in_schema=False)
     def index():
         return FileResponse(STATIC / "index.html")
+
+    # the HOMI story player: story.js, the store's GLB (static/3d/) and one still per step for phones (static/story/)
+    app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
     @app.get("/healthz", include_in_schema=False)
     def healthz():
@@ -136,7 +144,8 @@ def create_app(settings: Settings | None = None, llm_factory=None, results: Path
     def config():
         return {**settings.public(), "daily_llm_calls_left": budget.remaining() if settings.live else 0,
                 "replay_sources": list(replays.sources.values()), "replay_default": replays.default,
-                "store": _store_summary(records)}
+                "store": _store_summary(records),
+                "story_scene": next((f"/static/{p}" for p in STORY_SCENES if (STATIC / p).is_file()), None)}
 
     @app.get("/api/scenarios")
     def list_scenarios():
