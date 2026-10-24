@@ -1,4 +1,5 @@
 """The transaction agent's loop with a scripted fake LLM: budgets, malformed arguments, stop-after-hold."""
+
 import json
 from types import SimpleNamespace
 
@@ -11,8 +12,11 @@ BY_ID = {s["id"]: s for s in load_scenarios()}
 
 def call(i, name, args):
     raw = args if isinstance(args, str) else json.dumps(args)
-    return SimpleNamespace(id=f"c{i}", function=SimpleNamespace(name=name, arguments=raw),
-                           model_dump=lambda: {"id": f"c{i}", "type": "function", "function": {"name": name, "arguments": raw}})
+    return SimpleNamespace(
+        id=f"c{i}",
+        function=SimpleNamespace(name=name, arguments=raw),
+        model_dump=lambda: {"id": f"c{i}", "type": "function", "function": {"name": name, "arguments": raw}},
+    )
 
 
 class ScriptedLLM:
@@ -70,7 +74,9 @@ def test_model_error_is_recorded_not_raised():
 
 def test_successful_refund_then_answer():
     gw, rail, ctx = setup("CLEAN-01")
-    llm = ScriptedLLM([[call(0, "lookup_transaction", {"order_no": "ST-1042"})], [call(1, "refund", REFUND)], "Refunded."])
+    llm = ScriptedLLM(
+        [[call(0, "lookup_transaction", {"order_no": "ST-1042"})], [call(1, "refund", REFUND)], "Refunded."]
+    )
     run = run_transaction_agent(llm, gw, ctx, ctx.reader)
     assert [s.rail_state for s in run.steps] == ["succeeded", "succeeded"] and run.final_message == "Refunded."
 

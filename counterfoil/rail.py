@@ -6,6 +6,7 @@ refunds before settlement with 91506, and an identical sale (same payment method
 with "Gateway Rejected: duplicate". Mocked PayPal in the sandbox does NOT enforce the refund total; the fake does,
 because production would.
 """
+
 from __future__ import annotations
 
 import itertools
@@ -19,8 +20,8 @@ from typing import Protocol
 class RailResult:
     ok: bool
     id: str | None = None
-    status: str | None = None            # rail status, e.g. 'settling', 'submitted_for_settlement'
-    error: str | None = None             # e.g. '91521 Refund amount is too large.'
+    status: str | None = None  # rail status, e.g. 'settling', 'submitted_for_settlement'
+    error: str | None = None  # e.g. '91521 Refund amount is too large.'
 
 
 class Rail(Protocol):
@@ -49,11 +50,12 @@ class FakeRail:
         self._sales: set[tuple[str, Decimal]] = set()
 
     @classmethod
-    def from_store(cls, store) -> "FakeRail":
+    def from_store(cls, store) -> FakeRail:
         txns = {}
         for o in store.orders.values():
-            refunded = sum((Decimal(r["amount"]) for r in o.get("refunds", []) if r["status"] == "completed"),
-                           Decimal("0.00"))
+            refunded = sum(
+                (Decimal(r["amount"]) for r in o.get("refunds", []) if r["status"] == "completed"), Decimal("0.00")
+            )
             txns[o["braintree_transaction_id"]] = FakeTxn(Decimal(o["total"]), o.get("status", "settled"), refunded)
         return cls(txns)
 
@@ -77,7 +79,9 @@ class FakeRail:
         self.calls.append(("void", transaction_id))
         t = self.txns.get(transaction_id)
         if t is None or t.status not in ("authorized", "submitted_for_settlement"):
-            return RailResult(False, error="91504 Transaction can only be voided if authorized or submitted for settlement.")
+            return RailResult(
+                False, error="91504 Transaction can only be voided if authorized or submitted for settlement."
+            )
         t.status = "voided"
         return RailResult(True, transaction_id, "voided")
 
@@ -102,8 +106,13 @@ class FakeRail:
         t = self.txns.get(transaction_id)
         if t is None:
             return None
-        return {"id": transaction_id, "amount": str(t.amount), "status": t.status,
-                "refunded": str(t.refunded), "refund_ids": list(t.refund_ids)}
+        return {
+            "id": transaction_id,
+            "amount": str(t.amount),
+            "status": t.status,
+            "refunded": str(t.refunded),
+            "refund_ids": list(t.refund_ids),
+        }
 
 
 class BraintreeRail:
@@ -115,12 +124,14 @@ class BraintreeRail:
         if os.environ.get("BRAINTREE_ENVIRONMENT") != "sandbox":
             raise RuntimeError("Counterfoil only talks to the Braintree sandbox")
         self.bt = braintree
-        self.gw = braintree.BraintreeGateway(braintree.Configuration(
-            environment=braintree.Environment.Sandbox,
-            merchant_id=os.environ["BRAINTREE_MERCHANT_ID"],
-            public_key=os.environ["BRAINTREE_PUBLIC_KEY"],
-            private_key=os.environ["BRAINTREE_PRIVATE_KEY"],
-        ))
+        self.gw = braintree.BraintreeGateway(
+            braintree.Configuration(
+                environment=braintree.Environment.Sandbox,
+                merchant_id=os.environ["BRAINTREE_MERCHANT_ID"],
+                public_key=os.environ["BRAINTREE_PUBLIC_KEY"],
+                private_key=os.environ["BRAINTREE_PRIVATE_KEY"],
+            )
+        )
 
     @staticmethod
     def _result(r) -> RailResult:
@@ -137,9 +148,16 @@ class BraintreeRail:
         return self._result(self.gw.transaction.void(transaction_id))
 
     def charge(self, payment_method_token, amount, order_id):
-        return self._result(self.gw.transaction.sale({
-            "amount": str(amount), "payment_method_token": payment_method_token, "order_id": order_id,
-            "options": {"submit_for_settlement": True}}))
+        return self._result(
+            self.gw.transaction.sale(
+                {
+                    "amount": str(amount),
+                    "payment_method_token": payment_method_token,
+                    "order_id": order_id,
+                    "options": {"submit_for_settlement": True},
+                }
+            )
+        )
 
     def refunded_total(self, transaction_id):
         """Sum of non-failed refunds the rail holds for this transaction (for reconciliation)."""
@@ -159,8 +177,13 @@ class BraintreeRail:
             t = self.gw.transaction.find(transaction_id)
         except self.bt.exceptions.NotFoundError:
             return None
-        return {"id": t.id, "amount": str(t.amount), "status": t.status, "refund_ids": list(t.refund_ids),
-                "payment_instrument_type": t.payment_instrument_type}
+        return {
+            "id": t.id,
+            "amount": str(t.amount),
+            "status": t.status,
+            "refund_ids": list(t.refund_ids),
+            "payment_instrument_type": t.payment_instrument_type,
+        }
 
 
 class SandboxRail(BraintreeRail):
@@ -176,7 +199,7 @@ class SandboxRail(BraintreeRail):
         super().__init__()
         self.store, self.tag = store, run_tag
         self.orders = {o["braintree_transaction_id"]: o for o in store.orders.values()}
-        self.real: dict[str, str] = {}           # fixture id -> sandbox id
+        self.real: dict[str, str] = {}  # fixture id -> sandbox id
         self.calls: list[tuple] = []
 
     def _txn(self, fixture_id: str) -> str | None:
@@ -184,17 +207,22 @@ class SandboxRail(BraintreeRail):
             o = self.orders.get(fixture_id)
             if o is None:
                 return None
-            sale = {"amount": str(o["total"]), "payment_method_nonce": "fake-paypal-one-time-nonce",
-                    "order_id": f"{self.tag}:{o['order_no']}", "options": {"submit_for_settlement": True}}
+            sale = {
+                "amount": str(o["total"]),
+                "payment_method_nonce": "fake-paypal-one-time-nonce",
+                "order_id": f"{self.tag}:{o['order_no']}",
+                "options": {"submit_for_settlement": True},
+            }
             if os.environ.get("BRAINTREE_MERCHANT_ACCOUNT_ID"):
                 sale["merchant_account_id"] = os.environ["BRAINTREE_MERCHANT_ACCOUNT_ID"]
             r = self.gw.transaction.sale(sale)
             if not r.is_success:
                 raise RuntimeError(f"sandbox setup sale for {o['order_no']} failed: {r.message}")
             self.real[fixture_id] = r.transaction.id
-            done = self.store.db.execute("SELECT amount FROM refunds WHERE order_no=? AND status='completed'",
-                                         (o["order_no"],)).fetchall()
-            for (amount,) in done:                 # history the scenario says already happened
+            done = self.store.db.execute(
+                "SELECT amount FROM refunds WHERE order_no=? AND status='completed'", (o["order_no"],)
+            ).fetchall()
+            for (amount,) in done:  # history the scenario says already happened
                 self.gw.transaction.refund(r.transaction.id, str(amount))
         return self.real[fixture_id]
 
