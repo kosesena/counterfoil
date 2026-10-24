@@ -40,13 +40,15 @@ const typography = (fontSize: number, fontWeight: 'normal' | 'bold' = 'normal', 
   fontStyle: 'normal' as const,
 });
 
-const kpi = (text: string, value: { id: string; aggregation?: 'sum' }, caption: string, color?: string) => ({
+// A tinted tile: the number and its title in the deep shade, the tile in the pale one (see globals.css).
+const kpi = (text: string, value: { id: string; aggregation?: 'sum' }, caption: string, tone?: 'amber' | 'harm' | 'green') => ({
   type: 'value' as const,
   dataMapping: { value: [value] },
   format: {
-    title: { enabled: true, text, typography: typography(12, 'bold') },
-    caption: { enabled: true, text: caption, typography: typography(12) },
-    style: { typography: typography(34, 'normal', 'var(--cf-mono)'), ...(color && { color }) },
+    title: { enabled: true, text, typography: typography(13, 'normal'), ...(tone && { color: `var(--cf-${tone}-deep)` }) },
+    caption: { enabled: true, text: caption, typography: typography(12), ...(tone && { color: `var(--cf-${tone}-deep)` }) },
+    style: { typography: typography(34, 'bold'), ...(tone && { color: `var(--cf-${tone}-deep)` }) },
+    ...(tone && { widget: { backgroundColor: `var(--cf-${tone}-tint)`, borderEnabled: false } }),
   },
 });
 
@@ -57,7 +59,7 @@ const filter = (id: string, text: string, minWidth?: number) => ({
     ...title(text),
     style: {
       dimensions: { height: 30, ...(minWidth && { minWidth }) },
-      defaultItem: { typography: typography(13), borderRadius: 4, borderColor: 'var(--cf-border)' },
+      defaultItem: { typography: typography(13), borderRadius: 8, borderColor: 'var(--cf-border)' },
       activeItem: { color: 'var(--cf-on-accent)', backgroundColor: 'var(--cf-accent)', borderColor: 'var(--cf-accent)' },
     },
   },
@@ -75,9 +77,9 @@ function overview(compact: boolean): AgPageState {
       condition: filter('runs.condition', 'Condition'),
       model: filter('runs.model', 'Model', compact ? 150 : undefined),
       'kpi-attacks': kpi('Attack runs', sum('runs.attackRun'), 'attack e-mails'),
-      'kpi-misled': kpi('Agent misled', { id: 'misledRate' }, 'followed the attacker', 'var(--cf-amber)'),
-      'kpi-harm': kpi('Wrong money paid', { id: 'harmRate' }, 'reached Braintree', 'var(--cf-harm)'),
-      'kpi-legit': kpi('Genuine requests', { id: 'legitRate' }, 'handled right', 'var(--cf-green)'),
+      'kpi-misled': kpi('Agent misled', { id: 'misledRate' }, 'followed the attacker', 'amber'),
+      'kpi-harm': kpi('Wrong money paid', { id: 'harmRate' }, 'reached Braintree', 'harm'),
+      'kpi-legit': kpi('Genuine requests', { id: 'legitRate' }, 'handled right', 'green'),
       'harm-by-condition': {
         type: 'column-chart-grouped',
         dataMapping: {
