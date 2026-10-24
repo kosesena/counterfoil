@@ -21,6 +21,7 @@ from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from counterfoil.llm import LLM
@@ -38,6 +39,10 @@ from .settings import Settings
 ROOT = Path(__file__).resolve().parent.parent
 STATIC = Path(__file__).resolve().parent / "static"
 MAX_BODY_BYTES = 64 * 1024
+# The HOMI story scene, served from where Blender exports it (tools/export_story_glb.py): the animated GLB and its
+# step table (cameras, frame ranges). Only these two files; the rest of docs/gorseller is not served.
+STORY = ROOT / "docs" / "gorseller"
+STORY_FILES = {"homi-story.glb": "model/gltf-binary", "homi-story.json": "application/json"}
 log = logging.getLogger("counterfoil.demo")
 SECRET_ENV = re.compile(r"KEY|SECRET|TOKEN|PASSWORD|PRIVATE|BRAINTREE_MERCHANT_ID|BRAINTREE_PUBLIC|PAYPAL_CLIENT_ID")
 # Every scenario is set on the same business date; a pasted email gets it too, so refund windows behave the same.
@@ -66,6 +71,13 @@ class RefundIn(BaseModel):
     scenario_id: str = Field(max_length=32)
     condition: Literal["none", "cap", "counterfoil"] = "counterfoil"
     source: str | None = Field(None, max_length=120)
+
+
+class ApproveIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    purchase_id: str = Field(min_length=8, max_length=64)
+    approval_id: str = Field(pattern=r"^[0-9a-f]{32}$")
+    decision: Literal["approve", "reject"]
 
 
 class RunIn(BaseModel):
@@ -122,13 +134,24 @@ def create_app(settings: Settings | None = None, llm_factory=None, results: Path
         if int(request.headers.get("content-length") or 0) > MAX_BODY_BYTES:
             return JSONResponse({"detail": "request body too large"}, status_code=413)
         response = await call_next(request)
-        response.headers["Cache-Control"] = "no-store"
+        # the story's GLB and stills are a few MB and never carry visitor data; API answers are never cached
+        static = request.url.path.startswith(("/story/", "/static/story/")) and response.status_code == 200
+        response.headers["Cache-Control"] = "public, max-age=3600" if static else "no-store"
         response.headers["X-Content-Type-Options"] = "nosniff"
         return response
 
     @app.get("/", include_in_schema=False)
     def index():
         return FileResponse(STATIC / "index.html")
+
+    # the HOMI story player: story.js and one still per step for phones (static/story/), the scene from docs/gorseller
+    app.mount("/static", StaticFiles(directory=STATIC), name="static")
+
+    @app.get("/story/{name}", include_in_schema=False)
+    def story_file(name: str):
+        if name not in STORY_FILES or not (STORY / name).is_file():
+            raise HTTPException(404, "not found")
+        return FileResponse(STORY / name, media_type=STORY_FILES[name])
 
     @app.get("/healthz", include_in_schema=False)
     def healthz():
@@ -142,6 +165,7 @@ def create_app(settings: Settings | None = None, llm_factory=None, results: Path
             "replay_sources": list(replays.sources.values()),
             "replay_default": replays.default,
             "store": _store_summary(records),
+            "story_scene": "/story/homi-story.glb" if all((STORY / f).is_file() for f in STORY_FILES) else None,
         }
 
     @app.get("/api/scenarios")
@@ -181,10 +205,10 @@ def create_app(settings: Settings | None = None, llm_factory=None, results: Path
         return _live(body, request)
 
     # -- real PayPal purchase (Braintree sandbox) + the recorded agent calls replayed onto it ------------------
-    def _checkout_guard(request: Request, scenario_id: str):
+    def _checkout_guard(request: Request, scenario_id: str | None):
         if not checkout.enabled:
             raise HTTPException(503, "PayPal checkout is off: the server has no Braintree sandbox keys")
-        if scenario_id not in scenarios or "ground_truth" not in scenarios[scenario_id]:
+        if scenario_id is not None and (scenario_id not in scenarios or "ground_truth" not in scenarios[scenario_id]):
             raise HTTPException(404, "unknown scenario")
         wait = limiter.retry_after(_client_ip(request))
         if wait:
@@ -228,6 +252,19 @@ def create_app(settings: Settings | None = None, llm_factory=None, results: Path
             log.exception("checkout refund run failed")
             raise HTTPException(502, "the sandbox refund run failed on the server") from None
         out["replayed_from"] = {"source": source, "model": row.get("model")}
+        return redact(out, _secrets())
+
+    @app.post("/api/checkout/approve")
+    def checkout_approve(body: ApproveIn, request: Request):
+        """The store manager's answer to a held call; only "approve" can send it to Braintree."""
+        _checkout_guard(request, None)
+        try:
+            out = checkout.decide(body.purchase_id, body.approval_id, body.decision == "approve")
+        except KeyError as exc:
+            raise HTTPException(404, str(exc).strip("'\"")) from None
+        except Exception:
+            log.exception("checkout approval failed")
+            raise HTTPException(502, "the approved call failed on the server") from None
         return redact(out, _secrets())
 
     def _replay(body: RunIn) -> dict:

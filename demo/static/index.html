@@ -82,6 +82,49 @@ details summary { cursor: pointer; color: var(--accent); font-size: 14px; }
 table { border-collapse: collapse; width: 100%; font-size: 13px; }
 td, th { border-bottom: 1px solid var(--line); padding: 5px 6px; text-align: left; vertical-align: top; }
 .hidden { display: none !important; }
+/* the store manager's review of a held call: the call, why it was held, the record it was checked against */
+.review { border: 1px solid var(--line); border-left: 3px solid var(--hold); border-radius: 8px; background: var(--panel); padding: 12px 14px; margin: 8px 0 4px; max-width: 560px; }
+.review-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+.review-head b { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
+.review .kv { margin: 0 0 6px; }
+.review-sub { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 10px 0 4px; }
+.ledger { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.ledger div { padding: 6px 9px; border-left: 1px solid var(--line); }
+.ledger div:first-child { border-left: 0; }
+.ledger span { display: block; font-size: 11px; color: var(--muted); }
+.ledger b { font-variant-numeric: tabular-nums; }
+.ledger .left b { color: var(--pass); }
+.review-act { display: flex; gap: 8px; margin-top: 12px; }
+.review-act .reject { background: transparent; color: var(--block); border: 1px solid var(--line); }
+/* HOMI story: scene left, data right, edges aligned; buttons only, nothing advances on its own */
+.story { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 0; padding: 0; overflow: hidden; }
+@media (max-width: 900px) { .story { grid-template-columns: 1fr; } }
+.story-stage { position: relative; aspect-ratio: 16 / 9; background: #e9e3da; min-width: 0; }
+.story-stage canvas, .story-still { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
+.story-stage[data-state="loading"]::after { content: "Loading the store… " attr(data-progress); position: absolute; left: 16px; bottom: 14px; font-size: 13px; color: #646a73; }
+.story-callout { position: absolute; z-index: 2; min-width: 170px; max-width: 280px; padding: 10px 12px; border-radius: 8px;
+  background: #163f33; color: #e9f3ee; box-shadow: 0 6px 22px rgba(0,0,0,.18); font-size: 12px; line-height: 1.35; pointer-events: none; }
+.story-callout b { display: block; font-size: 11px; letter-spacing: .06em; }
+.story-callout strong { display: block; font-size: 18px; margin: 2px 0; font-variant-numeric: tabular-nums; }
+.story-callout span { display: block; word-break: break-word; opacity: .9; }
+.story-callout.amber { background: #f2b84b; color: #2a1d05; }
+.story-callout.block { background: #3a1714; color: #ffd9d3; }
+.story-callout.paper { background: #fbfaf6; color: #1d1f22; border: 1px solid #dedbd3; }
+.story-side { display: flex; flex-direction: column; padding: 16px; border-left: 1px solid var(--line); min-width: 0; }
+@media (max-width: 900px) { .story-side { border-left: 0; border-top: 1px solid var(--line); } }
+.story-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.story-count { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; letter-spacing: .04em; }
+.story-src { font-size: 11px; font-weight: 700; letter-spacing: .04em; padding: 1px 7px; border-radius: 99px; background: var(--code); color: var(--muted); }
+.story-src.live { background: var(--pass-bg); color: var(--pass); }
+.story-side h3 { font-size: 18px; margin: 6px 0 12px; }
+.story-side .kv { gap: 6px 12px; }
+.story-side .kv code { font-size: 12px; word-break: break-all; }
+.story-nav { margin-top: auto; padding-top: 14px; display: flex; align-items: center; gap: 8px; }
+.story-dots { display: flex; gap: 4px; margin-right: auto; }
+.story-dots i { width: 18px; height: 3px; border-radius: 2px; background: var(--line); }
+.story-dots i.on { background: var(--accent); }
+.story-note { font-size: 12px; color: var(--muted); margin: 10px 0 0; }
+.story-note:empty { display: none; }
 footer { color: var(--muted); font-size: 13px; padding: 20px 16px 40px; max-width: 1280px; margin: 0 auto; }
 </style>
 </head>
@@ -93,6 +136,22 @@ footer { color: var(--muted); font-size: 13px; padding: 20px 16px 40px; max-widt
   before money moves. Pick an email, run it under three conditions, and watch what each one lets through.</p>
 </header>
 <main>
+  <section class="panel story" id="story" aria-label="HOMI story">
+    <div class="story-stage" id="storyStage" data-state="loading">
+      <div class="story-callout hidden" id="storyCallout"></div>
+    </div>
+    <div class="story-side">
+      <div class="story-head"><span class="story-count" id="storyCount">5 steps</span><span class="story-src" id="storySource"></span></div>
+      <h3 id="storyTitle">HOMI · return of order ST-1057</h3>
+      <dl class="kv" id="storyData"></dl>
+      <p class="story-note" id="storyNote"></p>
+      <div class="story-nav">
+        <div class="story-dots" id="storyDots"><i></i><i></i><i></i><i></i><i></i></div>
+        <button class="ghost" id="storyBack" disabled>Back</button>
+        <button id="storyNext">Start</button>
+      </div>
+    </div>
+  </section>
   <section class="panel">
     <div class="row">
       <div>
@@ -194,6 +253,11 @@ footer { color: var(--muted); font-size: 13px; padding: 20px 16px 40px; max-widt
   measured; live mode calls the model configured on the server. Source: github.com/kosesena/counterfoil (MIT).
 </footer>
 
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+               "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }
+</script>
+<script type="module" src="/static/story.js"></script>
 <script>
 "use strict";
 const CONDITIONS = [
@@ -488,19 +552,70 @@ function refundStep(s, label) {
     s.rail_error ? h("div", { class: "err" }, s.rail_error) : null,
     ...(s.findings || []).filter((f) => f.severity !== "PASS").map((f) => h("div", { class: "finding" }, h("code", {}, f.code), " ", f.detail)));
 }
+// A held call waits here for the visitor, acting as HOMI's manager. Only Approve sends it on to Braintree.
+function reviewCard(s, onDecide) {
+  const a = s.args || {}, rec = s.record || {}, cur = a.currency || "USD";
+  const call = s.tool === "charge"
+    ? [["Call", `charge ${a.amount} ${cur}`], ["Items", (a.items || []).map((i) => `${i.qty ?? i.adet} × ${i.sku}`).join(", ") || "—"],
+       ["Payment method", a.vaulted_payment_method_token]]
+    : [["Call", `${s.tool} ${a.amount} ${cur}`], ["Order", a.order_no], ["RMA", a.rma_id || "none cited"]];
+  const cell = (k, v, cls) => h("div", { class: cls }, h("span", {}, k), h("b", {}, v));
+  const ledger = s.tool === "charge"
+    ? h("div", { class: "ledger" }, ...(rec.catalog || []).map((c) => cell(`${c.sku} unit price`, c.unit_price)),
+        cell("Quantity on record", "none"))
+    : h("div", { class: "ledger" }, cell("Approved", rec.approved), cell("Refunded", rec.refunded), cell("Reserved", rec.reserved),
+        cell("Left", rec.left, "left"));
+  const act = h("div", { class: "review-act" });
+  const go = (decision) => async () => { for (const b of act.children) b.disabled = true; await onDecide(s.approval_id, decision); };
+  act.append(h("button", { onclick: go("approve") }, "Approve"), h("button", { class: "reject", onclick: go("reject") }, "Reject"));
+  return h("div", { class: "review" },
+    h("div", { class: "review-head" }, h("b", {}, "HOMI manager · review"), h("span", { class: "dec APPROVAL" }, "HELD")),
+    h("dl", { class: "kv" }, ...call.flatMap(([k, v]) => [h("dt", {}, k), h("dd", {}, v)])),
+    h("div", { class: "review-sub" }, "Why it was held"),
+    ...(s.findings || []).filter((f) => f.severity !== "PASS").map((f) => h("div", { class: "finding" }, h("code", {}, f.code), " ", f.detail)),
+    h("div", { class: "review-sub" }, s.tool === "charge" ? "Store catalog" : `Store record · ${rec.rma_id || rec.order_no || ""}`),
+    ledger, act);
+}
+function decided(s) {
+  const out = [];
+  // the findings the manager accepted are on the line above; only new ones (a re-check that failed) show here
+  const seen = new Set((s.findings || []).map((f) => f.code));
+  if (s.approved) out.push(refundStep({ ...s.approved, tool: s.tool, args: s.args, findings: s.approved.findings.filter((f) => !seen.has(f.code)) }, `manager approves the ${s.tool}:`));
+  if (s.rejected) out.push(h("li", { class: "shown BLOCK" }, h("span", { class: "dec BLOCK" }, "REJECTED"), ` manager rejects the ${s.tool}; nothing sent to Braintree`));
+  return out;
+}
+function renderRun(r, condition) {
+  const onDecide = async (approval_id, decision) => {
+    $("payErr").textContent = "";
+    try { renderRun(await api("/api/checkout/approve", { purchase_id: pay.purchase.id, approval_id, decision }), condition); }
+    catch (e) { $("payErr").textContent = e.message; renderRun(r, condition); }
+  };
+  const item = (s, label) => {
+    const li = refundStep(s.approval_id ? { ...s, findings: [] } : s, label);  // a held call's findings are on its card
+    if (s.approval_id) li.append(reviewCard(s, onDecide));
+    return [li, ...decided(s)];
+  };
+  const tl = h("ul", { class: "tl" }, ...r.steps.flatMap((s) => item(s)));
+  if (r.correction) tl.append(...item(r.correction, "manager re-creates the refund the records allow:"));
+  const waiting = [...r.steps, r.correction].some((s) => s && s.approval_id);
+  const money = r.braintree_calls.filter((c) => c[0] !== "find");
+  const moved = money.map((c) => `${c[0]} ${c[2]}`).join(" + ");
+  $("refundOut").replaceChildren(h("h3", {}, condition === "counterfoil" ? "Through Counterfoil" : "No gate",
+    h("small", {}, ` · agent calls recorded from ${r.replayed_from.model}`)), tl,
+    h("div", { class: `verdict ${waiting ? "held" : money.length ? "neutral" : "ok"}` },
+      waiting ? "Held for the manager. Nothing held has reached Braintree."
+        : money.length ? `Braintree sandbox: ${moved} (${pay.purchase.currency})` : "No money moved."));
+  if (!waiting && condition === "counterfoil" && state.scenario.id === "P6-01") {
+    // the HOMI story panel tells this purchase and this run, once the manager has answered
+    const order = state.config.store.orders.find((o) => o.order_no === pay.purchase.order_no);
+    window.dispatchEvent(new CustomEvent("homi:live", { detail: { purchase: pay.purchase, run: r, order } }));
+    if ($("story")) $("refundOut").append(h("p", { class: "note" }, h("a", { href: "#story" }, "Your run, step by step in the HOMI store ↑")));
+  }
+}
 async function refundRun(condition) {
   $("payErr").textContent = "";
   try {
-    const r = await api("/api/checkout/refund", { purchase_id: pay.purchase.id, scenario_id: state.scenario.id, condition, source: $("source").value });
-    const tl = h("ul", { class: "tl" }, ...r.steps.map((s) => refundStep(s)));
-    if (r.correction) tl.append(refundStep(r.correction, "manager re-creates the refund the records allow:"));
-    if (r.correction && r.correction.approved) tl.append(refundStep({ ...r.correction.approved, tool: "refund", args: r.correction.args }, "manager approves it:"));
-    const money = r.braintree_calls.filter((c) => c[0] !== "find");
-    $("refundOut").replaceChildren(h("h3", {}, condition === "counterfoil" ? "Through Counterfoil" : "No gate",
-      h("small", {}, ` · agent calls recorded from ${r.replayed_from.model}`)), tl,
-      h("div", { class: `verdict ${money.length ? "neutral" : "ok"}` }, money.length
-        ? `Sandbox refunds on your transaction: ${money.map((c) => c[2]).join(" + ")} (${pay.purchase.currency})`
-        : "No money left your transaction."));
+    renderRun(await api("/api/checkout/refund", { purchase_id: pay.purchase.id, scenario_id: state.scenario.id, condition, source: $("source").value }), condition);
   } catch (e) { $("payErr").textContent = e.message; }
 }
 
