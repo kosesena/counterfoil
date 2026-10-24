@@ -1,16 +1,16 @@
 'use client';
 
-// HOMI's returns control: one AG Studio instance over the exported evaluation data, under a header
-// that states the result in one line. The page is static: it fetches public/counterfoil-data.json
-// in the browser, so it can be hosted anywhere with no credentials.
+// HOMI's returns control: a header, the store's return station next to the result per condition,
+// and one AG Studio instance over the exported evaluation data. The page is static: it fetches
+// public/counterfoil-data.json in the browser, so it can be hosted anywhere with no credentials.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { enableStudioDevValidations, type AgStudioApi } from 'ag-studio';
 import { AgStudio, AgStudioProvider } from 'ag-studio-react';
-import { counterfoilReport, PAGE_TITLES } from './report';
-import { buildStudioData, type CounterfoilData } from './studio-data';
+import { buildReport, layoutRows, PAGE_TITLES, ROW_HEIGHT } from './report';
+import { buildStudioData, modelName, type CounterfoilData } from './studio-data';
 import { Store3D } from './store-3d';
-import { counterfoilTheme } from './theme';
+import { canvasPadding, counterfoilTheme } from './theme';
 
 if (process.env.NODE_ENV !== 'production') {
   enableStudioDevValidations();
@@ -19,10 +19,12 @@ if (process.env.NODE_ENV !== 'production') {
 // Optional. Without a key AG Studio shows a watermark, which the AG Grid team says is fine for judging.
 const LICENSE_KEY = process.env.NEXT_PUBLIC_AG_STUDIO_LICENSE || undefined;
 
+const PHONE = '(max-width: 760px)';
+
 const CONDITIONS = [
-  { label: 'No gate', note: 'agent calls Braintree directly' },
-  { label: '$200 cap', note: 'tool allowlist + per-transaction cap' },
-  { label: 'Counterfoil', note: "checked against the store's records" },
+  { label: 'No gate', note: 'Agent calls Braintree directly' },
+  { label: '$200 cap', note: 'Tool allowlist and per-transaction cap' },
+  { label: 'Counterfoil', note: "Every call checked against the store's records" },
 ];
 
 // Attack runs where wrong money reached the rail, per condition.
@@ -37,10 +39,12 @@ function harmByCondition(data: CounterfoilData) {
 export default function Page() {
   const [data, setData] = useState<CounterfoilData | null>(null);
   const [error, setError] = useState('');
-  const [pageId, setPageId] = useState(counterfoilReport.selectedPageId);
+  const [compact, setCompact] = useState<boolean | null>(null);
+  const [pageId, setPageId] = useState('overview');
   const apiRef = useRef<AgStudioApi | null>(null);
 
   useEffect(() => {
+    setCompact(window.matchMedia(PHONE).matches);
     fetch('counterfoil-data.json')
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
       .then(setData)
@@ -48,8 +52,15 @@ export default function Page() {
   }, []);
 
   const studioData = useMemo(() => (data ? buildStudioData(data) : null), [data]);
+  const report = useMemo(() => (compact === null ? null : buildReport(compact)), [compact]);
+  const theme = useMemo(() => counterfoilTheme(!!compact), [compact]);
   const compare = useMemo(() => (data ? harmByCondition(data) : []), [data]);
-  const models = useMemo(() => (data ? [...new Set(data.runs.map((r) => String(r.model)))] : []), [data]);
+  const models = useMemo(() => (data ? [...new Set(data.runs.map((r) => modelName(r.model)))] : []), [data]);
+
+  // The canvas is as tall as the page's widgets, so the browser scrolls, not Studio.
+  const page = report?.pages.find((p) => p.id === pageId);
+  const pad = canvasPadding(!!compact);
+  const studioHeight = page ? layoutRows(page) * ROW_HEIGHT + 2 * pad : 0;
 
   // Studio leaves page navigation to the host: switching pages is a state change.
   const openPage = (id: string) => {
@@ -62,60 +73,58 @@ export default function Page() {
   return (
     <>
       <header className="top">
-        <div className="brand">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="homi-logo.png" alt="HOMI" />
-          <span className="divider" />
-          <b>Returns control</b>
-          <span className="pill">powered by Counterfoil</span>
-        </div>
-        <a className="live" href="https://counterfoil-demo.onrender.com" target="_blank" rel="noopener">Try it live →</a>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="logo" src="homi-logo.png" alt="HOMI" />
+        <span className="product">Returns control</span>
         <nav>
-          {counterfoilReport.pages.map((p) => (
-            <button key={p.id} className={p.id === pageId ? 'active' : ''} onClick={() => openPage(p.id)}>
-              {PAGE_TITLES[p.id] ?? p.id}
+          {Object.entries(PAGE_TITLES).map(([id, text]) => (
+            <button key={id} className={id === pageId ? 'active' : ''} onClick={() => openPage(id)}>
+              {text}
             </button>
           ))}
         </nav>
+        <a className="live" href="https://counterfoil-demo.onrender.com" target="_blank" rel="noopener">
+          Try it live →
+        </a>
       </header>
 
-      <Store3D />
-
-      {data && (
+      {pageId === 'overview' && (
         <section className="hero">
-          <div>
-            <span className="eyebrow">AI agents handle refunds · Braintree sandbox</span>
-            <h1>Hidden instructions moved the agent. Counterfoil kept the money where the store&apos;s records say.</h1>
-            <p>
-              Each attack e-mail tries to make the store&apos;s AI agent refund or charge the wrong amount. These are the
-              attack runs where that wrong money actually reached Braintree.
-            </p>
-          </div>
-          <div className="compare">
-            {compare.map((c) => (
-              <div key={c.label} className={`cond ${c.label === 'Counterfoil' ? 'us' : ''}`}>
-                <small>{c.label}</small>
-                <strong className={c.harm ? 'bad' : 'good'}>
-                  {c.harm}/{c.total}
-                </strong>
-                <em>{c.note}</em>
-              </div>
-            ))}
+          <Store3D />
+          <div className="result">
+            <span className="eyebrow">Attack runs · wrong money reached Braintree</span>
+            <h1>Hidden instructions fool the agent. Counterfoil keeps the money right.</h1>
+            <div className="conditions">
+              {compare.map((c) => (
+                <div key={c.label} className={`cond ${c.harm ? 'bad' : 'good'}`}>
+                  <div>
+                    <b>{c.label}</b>
+                    <small>{c.note}</small>
+                  </div>
+                  <strong>
+                    {c.harm}
+                    <span>/{c.total}</span>
+                  </strong>
+                  <i style={{ width: `${c.total ? (100 * c.harm) / c.total : 0}%` }} />
+                </div>
+              ))}
+            </div>
           </div>
         </section>
       )}
 
-      <main>
+      <main style={studioHeight ? { height: studioHeight } : undefined}>
         {error && <p className="message">Could not load counterfoil-data.json ({error}). Run scripts/export_dashboard.py first.</p>}
         {!error && !studioData && <p className="message">Loading…</p>}
-        {studioData && (
+        {studioData && report && (
           <AgStudioProvider licenseKey={LICENSE_KEY}>
             <AgStudio
               style={{ height: '100%', width: '100%' }}
-              theme={counterfoilTheme}
+              theme={theme}
               layout={{ widgetBorderEnabled: true }}
+              panels={{ view: { left: [], right: [] } }}
               data={studioData}
-              initialState={counterfoilReport}
+              initialState={report}
               mode="view"
               onApiReady={(e) => {
                 apiRef.current = e.api;
@@ -127,8 +136,10 @@ export default function Page() {
 
       {data && (
         <footer>
-          {data.runs.length} runs · models: {models.join(', ')} · exported {data.asOf.slice(0, 16).replace('T', ' ')} UTC ·
-          HOMI is a fictional store built for this demo; payments run in the Braintree sandbox with mocked PayPal.
+          <span>
+            {data.runs.length} runs · {models.join(', ')} · exported {data.asOf.slice(0, 16).replace('T', ' ')} UTC
+          </span>
+          <span>HOMI is a fictional store. Payments run in the Braintree sandbox with mocked PayPal.</span>
         </footer>
       )}
     </>

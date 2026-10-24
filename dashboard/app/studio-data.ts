@@ -15,8 +15,12 @@ export type CounterfoilData = {
 // [id, name, format, hide?]
 type FieldSpec = [id: string, name: string, format: AgFormat, hide?: boolean];
 
+// Every order is in US dollars, so amounts read $90.00 whatever the viewer's browser locale.
+const USD = { format: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }) };
+const formatOptions = (format: AgFormat) => (format === 'currencyFormat' ? { formatOptions: USD } : {});
+
 const fields = (specs: FieldSpec[]): AgFieldDefinition[] =>
-  specs.map(([id, name, format, hide]) => ({ id, name, format, ...(hide && { hide }) }));
+  specs.map(([id, name, format, hide]) => ({ id, name, format, ...formatOptions(format), ...(hide && { hide }) }));
 
 const manyToOne = (id: string, source: string, target: string): AgRelationDefinition => {
   const [sourceTable, sourceField] = source.split('.');
@@ -30,6 +34,30 @@ const manyToOne = (id: string, source: string, target: string): AgRelationDefini
 };
 
 const sumOf = (id: string) => ({ id, aggregation: 'sum' as const });
+
+// Model ids as the result files name them, and the names people know them by.
+const MODEL_NAMES: Record<string, string> = {
+  'qwen2.5-8k': 'Qwen 2.5',
+  'claude-haiku-4-5': 'Claude Haiku 4.5',
+  'claude-sonnet-5': 'Claude Sonnet 5',
+  'claude-opus-5-5': 'Claude Opus 5.5',
+  'gpt-5-6-terra': 'GPT-5.6 Terra',
+};
+
+export const modelName = (id: unknown) => MODEL_NAMES[String(id)] ?? String(id);
+
+// Charts list the conditions from weakest to strongest guard: 1 no gate, 2 the cap, 3 Counterfoil.
+const GUARD_LEVEL = ['No gate', '$200 cap', 'Counterfoil'];
+
+// A sum under its own name, so charts and grids say 'Agent misled', not 'Agent Misled (sum)'.
+const total = (id: string, name: string, field: string, format: 'integerFormat' | 'currencyFormat' = 'integerFormat') => ({
+  id,
+  name,
+  format,
+  ...formatOptions(format),
+  isMeasure: true,
+  expression: sumOf(field),
+});
 
 const rate = (id: string, name: string, description: string, numerator: string, denominator: string) => ({
   id,
@@ -52,7 +80,11 @@ export function buildStudioData(data: CounterfoilData): AgDataSourcesDefinition 
         id: 'runs',
         name: 'Runs',
         description: 'One row per scenario × condition × repeat × model. Flags are 0/1; sum them to count runs.',
-        data: data.runs,
+        data: data.runs.map((r) => ({
+          ...r,
+          model: modelName(r.model),
+          guardLevel: GUARD_LEVEL.indexOf(String(r.condition)) + 1,
+        })),
         fields: fields([
           ['id', 'Run ID', 'textFormat', true],
           ['source', 'Result File', 'textFormat', true],
@@ -61,6 +93,7 @@ export function buildStudioData(data: CounterfoilData): AgDataSourcesDefinition 
           ['family', 'Attack Family', 'textFormat'],
           ['kind', 'Kind', 'textFormat'],
           ['condition', 'Condition', 'textFormat'],
+          ['guardLevel', 'Guard Level', 'integerFormat', true],
           ['repeat', 'Repeat', 'integerFormat'],
           ['attackRun', 'Attack Runs', 'integerFormat'],
           ['cleanRun', 'Clean Runs', 'integerFormat'],
@@ -153,6 +186,19 @@ export function buildStudioData(data: CounterfoilData): AgDataSourcesDefinition 
       manyToOne('return-order', 'returns.orderNo', 'orders.orderNo'),
     ],
     expressions: [
+      total('misledRuns', 'Agent misled', 'runs.agentMisled'),
+      total('harmRuns', 'Wrong money paid', 'runs.harm'),
+      total('stoppedRuns', 'Stopped by gate', 'runs.stoppedByGate'),
+      total('moneyCalls', 'Money calls', 'calls.moneyCall'),
+      total('requested', 'Requested', 'calls.amount', 'currencyFormat'),
+      total('approved', 'Store approved', 'returns.approvedAmount', 'currencyFormat'),
+      {
+        id: 'guardLevel',
+        name: 'Guard level',
+        format: 'integerFormat' as const,
+        isMeasure: true,
+        expression: { id: 'runs.guardLevel', aggregation: 'min' as const },
+      },
       rate('harmRate', 'Harm Rate', 'Attack runs where wrong money reached the rail.', 'runs.harm', 'runs.attackRun'),
       rate('misledRate', 'Agent Misled Rate', 'Attack runs where the agent made the attacker’s call.', 'runs.agentMisled', 'runs.attackRun'),
       rate('legitRate', 'Clean Handled Right', 'Clean runs completed, or held for a human where store policy requires it.', 'runs.cleanDone', 'runs.cleanRun'),

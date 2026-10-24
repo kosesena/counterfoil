@@ -1,7 +1,9 @@
 // AG Studio theme. Every value points at a token in ./globals.css, so the page header and Studio's
-// widgets, grids and charts share HOMI's palette (cream, navy, salmon) with green/terracotta for safe/harm.
+// widgets, grids and charts share HOMI's palette (cream, navy, salmon). The chart palette is ordered
+// by meaning: amber (agent misled), terracotta (harm), green (stopped / safe); see ./report.ts.
 
 import { studioTheme } from 'ag-studio';
+import { ROW_HEIGHT } from './report';
 
 const token = (name: string) => `var(--cf-${name})`;
 const line = (color: string) => ({ width: 1, color: token(color) });
@@ -13,7 +15,11 @@ const palette = Object.fromEntries(
   ]).flat(),
 );
 
-export const counterfoilTheme = studioTheme.withParams({
+// Studio pads the canvas and every widget; widgets sit two paddings apart. Half the page gutter
+// (globals.css --cf-gutter: 24px, 12px on phones) for both keeps widget edges in line with the hero.
+export const canvasPadding = (compact: boolean) => (compact ? 6 : 12);
+
+const params = {
   fontFamily: token('font'),
   fontSize: 14,
   textColor: token('ink'),
@@ -33,18 +39,16 @@ export const counterfoilTheme = studioTheme.withParams({
   studioCanvasBorderRadius: 0,
   studioCanvasShadow: false,
   studioCanvasBackgroundColor: token('canvas'),
-  studioCanvasPadding: 28,
-  studioCanvasRowHeight: 18,
+  studioCanvasRowHeight: ROW_HEIGHT,
   studioCanvasFontFamily: token('font'),
 
   studioWidgetBackgroundColor: token('surface'),
   studioWidgetBorder: line('border'),
-  studioWidgetBorderRadius: 12,
-  studioWidgetPadding: 14,
+  studioWidgetBorderRadius: 8,
   studioWidgetTitleFontFamily: token('font'),
   studioWidgetTitleFontSize: 13,
+  studioWidgetTitleTextColor: token('ink'),
   studioWidgetTitleFontWeight: 600,
-  studioWidgetTitleTextColor: token('muted'),
   studioWidgetSubtitleFontFamily: token('font'),
   studioWidgetSubtitleFontSize: 12,
   studioWidgetSubtitleTextColor: token('muted'),
@@ -87,4 +91,13 @@ export const counterfoilTheme = studioTheme.withParams({
   chartAxisLineColor: token('border'),
   chartGridLineColor: token('gridline'),
   ...palette,
-});
+};
+
+export const counterfoilTheme = (compact: boolean) =>
+  studioTheme.withParams({
+    ...params,
+    studioCanvasPadding: canvasPadding(compact),
+    studioWidgetPadding: canvasPadding(compact),
+    // Studio's defaults (600 / 720 px) would make a phone scroll sideways.
+    ...(compact && { studioMinWidth: 320, studioCanvasMinWidth: 320 }),
+  });
