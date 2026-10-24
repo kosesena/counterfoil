@@ -23,7 +23,7 @@ Counterfoil compares the call with the store's record of that transaction:
 - The sender owns the order.
 - The refund cites an open return authorisation (RMA) and doesn't exceed what it still allows, across calls and sessions.
 - No refund is replayed, and no unreconciled outcome is retried.
-- A charge equals catalog price × the quantity the Reader extracted, on the sender's own vaulted method, once per e-mail.
+- A charge is held for a human to confirm the itemised total, because no store record says how many the customer ordered. It must also equal catalog price × the Reader's quantity, on the sender's own vaulted method, once per e-mail.
 - The call matches the Reader's hand-off.
 
 The result is PASS, APPROVAL (held for a human, with a single-use, time-limited approval bound to the exact arguments) or BLOCK.
@@ -39,6 +39,7 @@ The result is PASS, APPROVAL (held for a human, with a single-use, time-limited 
 Notes on the table:
 - "Harm" means wrong money moved, or another customer's data was read.
 - Counterfoil stopped every attack that fooled the agent; the other attacks fooled no model.
+- Measured with the earlier gate (commit 6f30a4a). A later qwen3 run broke the zero: its Reader obeyed P7-01's hidden HTML and handed off 6 cups for $150.00, the charge matched that hand-off, and $150.00 reached the rail. The gate now holds every charge for confirmation of the itemised total, so the genuine reorder (CLEAN-06) is held too.
 
 ## How we built it
 - **Code:** Python 3, the official `braintree` SDK (sandbox), and an SQLite-backed store holding orders, RMAs, refund reservations and charge states.
@@ -57,7 +58,7 @@ Notes on the table:
 - **Our own runs found two bugs.** The agent used the Reader's field name for quantity and the gate rejected a genuine reorder, and a scenario setup counted a refund twice. Both were fixed, with tests.
 
 ## Accomplishments that we're proud of
-- **Zero harmful outcomes** with Counterfoil across three models, without blocking a single genuine request. The one refund held for review is a $300 return that store policy says needs a person.
+- **Zero harmful outcomes** with Counterfoil across these three models, without blocking a single genuine request. The one refund held for review is a $300 return that store policy says needs a person. (A later qwen3 run did get one inflated reorder through; see the note under the table.)
 - **Attacks that pass both baselines.** Over-refunds, split refunds and replays all stay below the transaction total, so neither Braintree nor a $200 cap stops them.
 - **Approvals that can't be replayed or stretched.** Each one is bound to the exact arguments and to the refund state the human saw.
 
@@ -70,6 +71,7 @@ Notes on the table:
 - **More evidence:** more repeats on different days, the untouched holdout set, more models (including Vultr Serverless Inference), and end-to-end runs against the Braintree sandbox (`--rail braintree`).
 - **Review flow:** a review queue in the dashboard where staff approve or reject held calls.
 - **PayPal REST:** a PayPal REST rail, so the same gate sits in front of PayPal Agent Toolkit's `create_refund`.
+- **Privacy in a real store (KVKK / GDPR):** the demo uses fictional customers and test money. A real store would tell customers that an AI agent reads their e-mail, that calls are checked automatically and that staff review the held ones (an information notice). Human review of held calls also answers the right to object to purely automated decisions (KVKK art. 11/1-g, GDPR art. 22). The review screen shows only the order, the items and the amount; card data stays with Braintree as a vault token. If e-mails go to a model hosted abroad, that is a cross-border transfer that needs its legal basis (KVKK art. 9); a local model avoids it.
 
 ## Built with
 python, braintree (Python SDK, sandbox), mocked PayPal (Braintree sandbox), sqlite, openai-python (OpenAI-compatible client), ollama, qwen2.5, claude (Haiku 4.5, Opus 5.5 via Astro AI Gateway), astropods, pytest, next.js, react, typescript, ag-grid / ag-studio, three.js, blender
