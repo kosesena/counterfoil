@@ -1,4 +1,5 @@
-# Unit tests on every push and pull request. No secrets: the suite uses the fake rail and scripted LLMs.
+# Lint, types, tests with coverage, and a dependency audit on every push to main and every pull request.
+# No secrets: the suite uses the fake rail and scripted LLMs.
 name: tests
 
 on:
@@ -10,7 +11,8 @@ permissions:
   contents: read
 
 jobs:
-  pytest:
+  lint:
+    name: ruff + mypy
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -19,5 +21,50 @@ jobs:
         with:
           python-version: "3.13"
           cache: pip
-      - run: pip install -r requirements.txt
-      - run: pytest -q
+      - run: pip install -r requirements-dev.txt
+      - run: ruff check --output-format=github .
+      - run: ruff format --check .
+      - run: mypy
+
+  pytest:
+    name: pytest + coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      # The floor sits a little under the measured number in docs/quality.md; a drop below it fails the build.
+      - run: pytest -q --cov --cov-report=term --cov-report=xml --cov-fail-under=85
+      - name: Coverage summary
+        if: always()
+        run: |
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import xml.etree.ElementTree as ET
+          root = ET.parse("coverage.xml").getroot()
+          print(f"### Coverage: {float(root.get('line-rate')) * 100:.1f}% lines, {float(root.get('branch-rate')) * 100:.1f}% branches\n")
+          print("| file | lines |\n|---|---|")
+          for c in root.iter("class"):
+              print(f"| {c.get('filename')} | {float(c.get('line-rate')) * 100:.1f}% |")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-xml
+          path: coverage.xml
+
+  audit:
+    name: pip-audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      # Audits the resolved runtime and dev dependencies against the PyPI advisory database (OSV).
+      - run: pip install pip-audit==2.10.1
+      - run: pip-audit -r requirements.txt -r requirements-dev.txt --strict
