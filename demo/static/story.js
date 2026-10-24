@@ -330,22 +330,24 @@ async function glView() {
       for (const o of parts) g.attach(o);
       return g;
     };
-    // the .blend's three exit gates sit 0.9 m and 2.0 m apart; centre them on their mat, two equal 1.5 m lanes
-    const GATES = { 0: -14.06, 1: -12.56, 2: -11.06 }, BAKED = { 0: -14.45, 1: -13.55, 2: -11.55 };
-    root.traverse((o) => {
-      const m = /^SE_GateExit(\d)_/.exec(o.name);
-      if (o.isMesh && m && m[1] in GATES) o.position.x += GATES[m[1]] - BAKED[m[1]];
-    });
-    // lane signs read 02 · 03 · 01 from the entrance since HP01 moved to the far end; renumber them in order by
-    // moving each baked number to the sign it belongs on (01 returns, 02 and 03 the payment tills)
-    const signs = {};
-    root.traverse((o) => {
-      const m = /^(HR|HP03|HP01)_LaneNumber/.exec(o.name);
-      if (o.isMesh && m) signs[m[1]] = { o, pos: o.position.clone(), scale: o.scale.clone() };
-    });
-    if (Object.keys(signs).length === 3) {
-      for (const [from, to] of [["HP01", "HR"], ["HR", "HP03"], ["HP03", "HP01"]]) {
-        signs[from].o.position.copy(signs[to].pos); signs[from].o.scale.copy(signs[to].scale);
+    // Fixes for the 24 Oct export only (ece407d's .blend): its exit gates sit 0.9 m and 2.0 m apart and its lane
+    // signs read 02 · 03 · 01 from the entrance. Codex fixed both in the .blend since, so they apply only when the
+    // gates are still where that export put them.
+    const BAKED = { 0: -14.45, 1: -13.55, 2: -11.55 }, GATES = { 0: -14.06, 1: -12.56, 2: -11.06 };
+    const gates = [];
+    root.traverse((o) => { const m = /^SE_GateExit(\d)_/.exec(o.name); if (o.isMesh && m && m[1] in BAKED) gates.push([o, m[1]]); });
+    const oldExport = gates.length > 0 && gates.every(([o, i]) => Math.abs(o.position.x - BAKED[i]) < 0.01);
+    if (oldExport) {
+      for (const [o, i] of gates) o.position.x += GATES[i] - BAKED[i];
+      const signs = {};             // move each baked lane number to its sign: 01 returns, 02 and 03 the payment tills
+      root.traverse((o) => {
+        const m = /^(HR|HP03|HP01)_LaneNumber/.exec(o.name);
+        if (o.isMesh && m) signs[m[1]] = { o, pos: o.position.clone(), scale: o.scale.clone() };
+      });
+      if (Object.keys(signs).length === 3) {
+        for (const [from, to] of [["HP01", "HR"], ["HR", "HP03"], ["HP03", "HP01"]]) {
+          signs[from].o.position.copy(signs[to].pos); signs[from].o.scale.copy(signs[to].scale);
+        }
       }
     }
     walker = group(/^(PC_)?Customer/, -12.63, 9.65);
