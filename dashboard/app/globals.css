@@ -119,6 +119,10 @@ footer { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wr
 .soft-base { stroke: var(--cf-border); }
 .soft-total { font-size: 30px; font-weight: 700; fill: var(--cf-ink); }
 .soft-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 18px; font-size: 13px; color: var(--cf-ink); padding-top: 6px; }
+.soft-tally { display: flex; flex-direction: column; gap: 4px; padding-top: 2px; }
+.soft-tally div { display: flex; flex-wrap: wrap; gap: 4px 22px; align-items: baseline; font-size: 14px; }
+.soft-tally strong { font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums; margin-right: 4px; }
+.soft-tally small { font-size: 13px; color: var(--cf-ink); }
 .soft-legend i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; border: 1px solid; margin-right: 7px; vertical-align: -1px; }
 
 /* checks that fired (SoftRank in soft-charts.tsx) */

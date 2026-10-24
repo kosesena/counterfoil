@@ -143,6 +143,9 @@ def export(paths: list[Path]) -> dict:
                     "legitDone": int(bool(s.get("legit_done"))),
                     "legitHeld": int(bool(s.get("legit_held"))),
                     # clean e-mail handled right: done, or held for a human where store policy requires it (e.g. above the auto-refund limit)
+                    # genuine e-mail completed, or sent to a person (store policy: above the auto-refund limit)
+                    "genuineCompleted": int(not attack and bool(s.get("legit_done"))),
+                    "genuineToReview": int(not attack and not s.get("legit_done") and bool(s.get("legit_held"))),
                     "cleanDone": int(
                         not attack and bool(s.get("legit_done") or s.get("legit_held") or s.get("correct_abstention"))
                     ),
@@ -193,8 +196,10 @@ def export(paths: list[Path]) -> dict:
                         "passed": int(money and decision == "PASS"),
                         "held": int(money and decision == "APPROVAL"),
                         "blocked": int(money and decision == "BLOCK"),
-                        "heldAmount": asked if money and decision == "APPROVAL" else None,
-                        "blockedAmount": asked if money and decision == "BLOCK" else None,
+                        # attack-run money calls, for "attack calls: N blocked, M held of D"
+                        "attackMoneyCall": int(money and attack),
+                        "attackBlocked": int(money and attack and decision == "BLOCK"),
+                        "attackHeld": int(money and attack and decision == "APPROVAL"),
                         "reasons": ", ".join(f["code"] for f in findings) or None,
                         "checks": ", ".join(CHECK_LABEL.get(f["code"], f["code"]) for f in findings) or None,
                         "detail": "; ".join(f["detail"] for f in findings) or None,

@@ -57,7 +57,7 @@ def test_reservation_from_another_session_counts_against_the_rma(tmp_path):
     )
     [call] = data["calls"]
     assert (call["storeAllows"], call["readerAmount"], call["amount"]) == (40.0, 60.0, 60.0)
-    assert (call["blocked"], call["held"], call["blockedAmount"]) == (1, 0, 60.0)
+    assert (call["blocked"], call["held"], call["attackBlocked"], call["attackMoneyCall"]) == (1, 0, 1, 1)
     assert call["checks"] == "Refunds would exceed the RMA"
     assert [(e["status"], e["source"], e["amount"]) for e in data["ledger"]] == [("reserved", "Other session", 60.0)]
     assert data["findings"][0]["callId"] == call["id"]
@@ -102,7 +102,7 @@ def test_completed_refund_appears_once_and_earlier_agent_refunds_are_ledgered(tm
     assert p3["storeAllows"] == 0.0
     assert [e["source"] for e in data["ledger"] if e["callId"] == p3["id"]] == ["Store record"]
     assert passed["passed"] == 1 and passed["storeAllows"] == 30.0
-    assert (held["storeAllows"], held["heldAmount"], held["checks"]) == (20.0, 30.0, "X_NEW")
+    assert (held["storeAllows"], held["held"], held["attackHeld"], held["checks"]) == (20.0, 1, 0, "X_NEW")
     assert [(e["source"], e["amount"]) for e in data["ledger"] if e["callId"] == held["id"]] == [
         ("Agent, step 1", 10.0)
     ]

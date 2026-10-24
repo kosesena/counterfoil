@@ -216,6 +216,36 @@ export function SoftRank(params: AgWidgetParams<SoftWidget>) {
   );
 }
 
+// Counts with their denominator, never a summed amount: the value fields are the parts ("25 blocked",
+// "3 held for a person") and the last one is what they are counted out of ("of 94 attack money calls").
+// Part colours come from the definition: the attack tally reads harm then amber, the genuine one green then amber.
+function tally(tones: string[]) {
+  return function SoftTally(params: AgWidgetParams<SoftWidget>) {
+    const rows = useRows(params);
+    const fields = params.dataMapping.valueKey ?? [];
+    const row = rows?.[0] ?? {};
+    const parts = fields.slice(0, -1);
+    const of = fields[fields.length - 1];
+    const n = (f: (typeof fields)[number]) => Number(row[f.key]) || 0;
+    return (
+      <div className="soft-tally">
+        <div>
+          {parts.map((f, i) => (
+            <span key={f.key} style={{ color: `var(--cf-${tones[i % tones.length]}-deep)` }}>
+              <strong>{rows ? n(f) : '…'}</strong> {params.widgetApi.getFieldName(f)}
+            </span>
+          ))}
+        </div>
+        {of && (
+          <small>
+            of {rows ? n(of) : '…'} {params.widgetApi.getFieldName(of)}
+          </small>
+        )}
+      </div>
+    );
+  };
+}
+
 const mapping = {
   categoryKey: { type: 'fieldset' as const, supportedRoles: ['category' as const], intent: 'category' as const, sort: true },
   valueKey: { type: 'fieldset' as const, supportedRoles: ['numeric' as const], intent: 'value' as const },
@@ -235,4 +265,6 @@ export const SOFT_WIDGETS = [
   definition('soft-bars', 'Soft bars', SoftBars),
   definition('soft-donut', 'Soft donut', SoftDonut),
   definition('soft-rank', 'Soft ranking', SoftRank),
+  definition('tally-attack', 'Attack tally', tally(['harm', 'amber'])),
+  definition('tally-genuine', 'Genuine tally', tally(['green', 'amber'])),
 ];

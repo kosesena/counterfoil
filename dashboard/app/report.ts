@@ -52,6 +52,17 @@ const kpi = (text: string, value: { id: string; aggregation?: 'sum' }, caption: 
   },
 });
 
+// A count tile with its denominator (SoftTally in ./soft-charts.tsx); the last measure is the denominator.
+const tally = (type: string, text: string, measures: string[], caption: string, tone: 'harm' | 'green') => ({
+  type: type as 'value',
+  dataMapping: { valueKey: measures.map((id) => ({ id })) } as never,
+  format: {
+    title: { enabled: true, text, typography: typography(13, 'normal') },
+    caption: { enabled: true, text: caption, typography: typography(12) },
+    widget: { backgroundColor: `var(--cf-${tone}-tint)`, borderEnabled: false },
+  },
+});
+
 const filter = (id: string, text: string, minWidth?: number) => ({
   type: 'button-filter' as const,
   dataMapping: { value: [{ id }] },
@@ -188,11 +199,23 @@ function review(compact: boolean): AgPageState {
     },
     widgets: {
       condition: filter('runs.condition', 'Condition'),
+      model: filter('runs.model', 'Model', compact ? 150 : undefined),
       decision: filter('calls.decision', 'Decision'),
-      'kpi-held': kpi('Held for a human', { id: 'heldCalls' }, 'APPROVAL: waits for the merchant', 'amber'),
-      'kpi-held-amount': kpi('Amount held for review', { id: 'heldAmount' }, 'asked on held calls, genuine ones included', 'amber'),
-      'kpi-blocked': kpi('Blocked', { id: 'blockedCalls' }, 'BLOCK: never reaches Braintree', 'harm'),
-      'kpi-passed': kpi('Passed', { id: 'passedCalls' }, 'PASS: matched the store record', 'green'),
+      // counts with their denominators, across the runs the filters leave; no summed dollar figure
+      'tally-attack': tally(
+        'tally-attack',
+        'Attack e-mails: what happened to the money calls',
+        ['attackBlocked', 'attackHeld', 'attackMoneyCalls'],
+        'The rest matched the store record and passed: no wrong money reached Braintree.',
+        'harm',
+      ),
+      'tally-genuine': tally(
+        'tally-genuine',
+        'Genuine e-mails',
+        ['genuineCompleted', 'genuineToReview', 'genuineRuns'],
+        'Sent to review: the $300 return above the $200 auto-refund limit, as store policy requires.',
+        'green',
+      ),
       pending: {
         type: 'grid',
         dataMapping: {
@@ -213,7 +236,8 @@ function review(compact: boolean): AgPageState {
         },
         format: {
           ...title('Pending approvals and blocked calls: the store record, the Reader and the agent side by side'),
-          style: { columnAutoSize: false, columnWidth: 140 },
+          // one row per call; a total would add the same refund up once per model and repeat
+          style: { columnAutoSize: false, columnWidth: 140, grandTotalRow: { enabled: false } },
         },
       },
       case: {
@@ -240,22 +264,26 @@ function review(compact: boolean): AgPageState {
     widgetLayout: compact
       ? rows([
           [['condition'], [24], 7],
+          [['model'], [24], 11],
+          [['tally-attack'], [24], 10],
+          [['tally-genuine'], [24], 10],
           [['decision'], [24], 7],
-          [['kpi-held'], [24], 7],
-          [['kpi-held-amount'], [24], 7],
-          [['kpi-blocked'], [24], 7],
-          [['kpi-passed'], [24], 7],
           [['case'], [24], 46],
           [['pending'], [24], 30],
           [['checks'], [24], 20],
           [['mix'], [24], 20],
         ])
-      : rows([
-          [['condition', 'decision'], [12, 12], 7],
-          [['kpi-held', 'kpi-held-amount', 'kpi-blocked', 'kpi-passed'], [6, 6, 6, 6], 7],
-          [['pending', 'case'], [13, 11], 38],
-          [['checks', 'mix'], [15, 9], 20],
-        ]),
+      : {
+          ...rows([
+            [['condition', 'model'], [8, 16], 7],
+            [['tally-attack', 'tally-genuine'], [12, 12], 9],
+          ]),
+          decision: at([0, 16, 13, 7]),
+          pending: at([0, 23, 13, 38]),
+          case: at([13, 16, 11, 45]),
+          checks: at([0, 61, 15, 20]),
+          mix: at([15, 61, 9, 20]),
+        },
   };
 }
 
