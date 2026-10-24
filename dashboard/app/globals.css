@@ -8,6 +8,7 @@
   --cf-ink: #1f2d44;
   --cf-muted: #667085;
   --cf-rule: #1f2d44;
+  --cf-navy-soft: #edf1f7;
   --cf-border: #e3ddd3;
   --cf-gridline: #efeae2;
   --cf-highlight: #f3f0ea;
@@ -26,32 +27,15 @@
   --cf-chart-4: #c3d2e6; --cf-chart-4-edge: #46638d;
   --cf-chart-5: #f3cdc3; --cf-chart-5-edge: #e08d7a;
   --cf-chart-6: #e0d8c9; --cf-chart-6-edge: #b9ab93;
+  /* KPI tiles: pale tint behind a deep shade of the same hue */
+  --cf-amber-tint: #fff7e6; --cf-amber-deep: #8a5a0e;
+  --cf-harm-tint: #fdeeea; --cf-harm-deep: #9a3d28;
+  --cf-green-tint: #eaf5ef; --cf-green-deep: #24593f;
   --cf-gutter: 24px;
 }
 
-/* The console: AG Studio renders inside <main>, where the same tokens turn dark navy. */
-main, footer {
-  --cf-canvas: #101a2e;
-  --cf-surface: #101a2e;
-  --cf-ink: #f3efe8;
-  --cf-muted: #8b97b3;
-  --cf-border: #27365a;
-  --cf-gridline: #1c2a47;
-  --cf-highlight: #182540;
-  --cf-accent: #f3efe8;
-  --cf-on-accent: #101a2e;
-  --cf-green: #a9d6c0;
-  --cf-harm: #eea592;
-  --cf-amber: #f0cc8a;
-  --cf-chart-1: #eec27a; --cf-chart-1-edge: #f6d9a8;
-  --cf-chart-2: #e59a84; --cf-chart-2-edge: #f3b9a7;
-  --cf-chart-3: #8fc7ab; --cf-chart-3-edge: #b9dfcb;
-  --cf-chart-4: #8fa7cc; --cf-chart-4-edge: #b5c6e0;
-  --cf-chart-5: #e08d7a; --cf-chart-5-edge: #f3cdc3;
-  --cf-chart-6: #5f6c88; --cf-chart-6-edge: #8b97b3;
-  background: var(--cf-canvas);
-  color: var(--cf-ink);
-}
+/* AG Studio renders inside <main> on the same paper as the page; widgets sit as white panels with hairlines. */
+main, footer { --cf-accent: var(--cf-ink); }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; min-height: 100%; background: var(--cf-canvas); color: var(--cf-ink); font-family: var(--cf-font); -webkit-font-smoothing: antialiased; }
@@ -93,16 +77,14 @@ html, body { margin: 0; min-height: 100%; background: var(--cf-canvas); color: v
 .store3d-note, .store3d-hint { position: absolute; left: 12px; bottom: 12px; font-size: 12px; color: var(--cf-muted); background: rgba(255,255,255,.9); padding: 4px 10px; border-radius: 2px; }
 
 /* console */
-main { height: 1100px; border-top: 1px solid var(--cf-border); }
+main { height: 1100px; }
 .message { padding: var(--cf-gutter); font-size: 14px; color: var(--cf-muted); }
-footer { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 4px var(--cf-gutter) 24px; font-size: 12px; color: var(--cf-muted); font-family: var(--cf-mono); }
+footer { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 4px var(--cf-gutter) 24px; font-size: 12px; color: var(--cf-muted); }
 
 /* Studio: the button filters show their selection on the buttons, so the "Filter by" summary goes */
 .ag-studio-button-filter-widget .ag-studio-filter-widget-title { display: none; }
 /* view mode: clicking a filter selects its widget; the selection frame is edit-mode chrome */
 .ag-studio-layout-widget-selected { box-shadow: none !important; }
-/* widget titles as console labels */
-.ag-studio-layout-widget-title, .ag-studio-widget-title { font-family: var(--cf-mono) !important; letter-spacing: .8px; text-transform: uppercase; font-size: 11px !important; color: var(--cf-muted) !important; }
 
 @media (max-width: 1000px) {
   .lead { grid-template-columns: 1fr; gap: 20px; }
@@ -126,3 +108,15 @@ footer { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wr
   .cond:last-child { border-bottom: 0; }
   .cond strong { font-size: 44px; margin-top: 8px; }
 }
+
+/* soft chart widgets (soft-charts.tsx) */
+.soft { display: flex; flex-direction: column; height: 100%; padding: 4px 0 0; }
+.soft-svg { flex: 1; min-height: 0; width: 100%; overflow: hidden; }
+.soft-svg svg { display: block; }
+.soft-donut { flex: 1; min-height: 0; max-height: 240px; width: auto; align-self: center; }
+.soft-axis { font-size: 11px; fill: var(--cf-muted); }
+.soft-cat { font-size: 13px; fill: var(--cf-ink); }
+.soft-base { stroke: var(--cf-border); }
+.soft-total { font-size: 30px; font-weight: 700; fill: var(--cf-ink); }
+.soft-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 18px; font-size: 13px; color: var(--cf-ink); padding-top: 6px; }
+.soft-legend i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; border: 1px solid; margin-right: 7px; vertical-align: -1px; }

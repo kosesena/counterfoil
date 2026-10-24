@@ -1,7 +1,6 @@
-// AG Studio theme. Every value points at a token in ./globals.css. The page is editorial and light;
-// <main> redefines the same tokens for the dark console that Studio renders in, so this file never
-// needs to know which it is on. The chart palette is ordered by meaning: amber (agent misled),
-// terracotta (harm), green (stopped / safe); see ./report.ts.
+// AG Studio theme. Every value points at a token in ./globals.css, so Studio's widgets, grids and
+// charts share the page's paper, ink and soft palette. The chart palette is ordered by meaning:
+// amber (agent misled), terracotta (harm), green (stopped / safe); see ./report.ts.
 
 import { studioTheme } from 'ag-studio';
 import { ROW_HEIGHT } from './report';
@@ -43,13 +42,13 @@ const params = {
   studioCanvasRowHeight: ROW_HEIGHT,
   studioCanvasFontFamily: token('font'),
 
-  studioWidgetBackgroundColor: token('surface'),
-  studioWidgetBorder: line('border'),
-  studioWidgetBorderRadius: 4,
+  studioWidgetBackgroundColor: 'transparent',
+  studioWidgetBorder: false,
+  studioWidgetBorderRadius: 14,
   studioWidgetTitleFontFamily: token('font'),
-  studioWidgetTitleFontSize: 13,
+  studioWidgetTitleFontSize: 14,
   studioWidgetTitleTextColor: token('ink'),
-  studioWidgetTitleFontWeight: 500,
+  studioWidgetTitleFontWeight: 600,
   studioWidgetSubtitleFontFamily: token('font'),
   studioWidgetSubtitleFontSize: 12,
   studioWidgetSubtitleTextColor: token('muted'),
@@ -90,7 +89,7 @@ const params = {
   chartTextColor: token('ink'),
   chartSubtleTextColor: token('muted'),
   chartAxisLineColor: token('border'),
-  chartGridLineColor: token('gridline'),
+  chartGridLineColor: 'transparent',
   ...palette,
 };
 
