@@ -1,0 +1,12 @@
+# Used instead of the root .dockerignore when building astropods/Dockerfile (BuildKit per-Dockerfile ignore).
+.git
+.env
+.venv
+**/__pycache__
+dashboard
+demo
+docs/gorseller
+results
+marka-dis
+spikes
+astropods/.ast
