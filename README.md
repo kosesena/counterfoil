@@ -40,6 +40,18 @@ The trusted source is the store's record, not the email. Counterfoil (`counterfo
 
 Approvals are single-use, expire after 30 minutes, and are bound to the exact arguments and the refund state the human saw. Counterfoil doesn't hunt for "injection-looking" text; it checks what the call would do against the record.
 
+## Design decisions
+
+Each one has a short record in [`docs/adr/`](docs/adr/README.md).
+
+1. **Trust the store's record, not the e-mail** ([0001](docs/adr/0001-trust-the-store-record-not-the-email.md)). The attack lives in the e-mail; the return authorisation, order and catalog do not.
+2. **Two agents** ([0002](docs/adr/0002-two-agents-reader-and-transaction.md)). A tool-less Reader and a Transaction agent that never sees the e-mail. This narrows the path but does not close it, so it is a second layer.
+3. **Per-transaction checks, not a cap** ([0003](docs/adr/0003-per-transaction-checks-not-a-spending-cap.md)). The attacks that matter stay under any cap and under Braintree's own limits, and the measurements show it.
+4. **One gate holds the rail keys** ([0004](docs/adr/0004-the-gate-holds-the-only-rail-credentials.md)). A gate the agent can go around is advice, not a control.
+5. **Approvals are single-use and bound to the exact call** ([0005](docs/adr/0005-approvals-are-single-use-and-bound.md)). What the manager approves is what executes.
+6. **Check what the call does, not what the text looks like** ([0006](docs/adr/0006-check-what-the-call-does-not-what-the-text-says.md)). An instruction-pattern list caught 0 of 36 variations in the author's earlier prototype.
+7. **Braintree sandbox with mocked PayPal** ([0007](docs/adr/0007-braintree-sandbox-with-mocked-paypal.md)). PayPal accounts cannot be opened from Türkiye; PayPal's team confirmed Braintree for the hackathon.
+
 ## Measured results
 
 Dev set: 7 attacks (one per family P1–P7) and 6 genuine requests. Three conditions: no gate, a $200 per-transaction cap (the kind of guard most agent-payment projects ship), and Counterfoil. The same Reader hand-off feeds all three conditions, so they differ only in the gate.
