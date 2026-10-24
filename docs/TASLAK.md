@@ -84,6 +84,7 @@ Kural: en fazla 1 Grand + 1 Sponsor ya da 1 Mansiyon + 1 Sponsor. Hedef **Grand 
 
 ## 6. Takvim
 - **23 Eki–2 Kas — çekirdek:** yeni public MIT repo. Mağaza kaydı + iki ajan + geçit + P1–P7 + temiz set + LLM'siz testler. Ödeme katmanı ayrı bir arayüz: önce taklit Braintree, sonra gerçek sandbox. **İlk denemeler:** ~~Braintree sandbox hesabı~~ ✓ (23 Eki); ~~taklit PayPal işlemi → iade → sorgu~~ ✓ (23 Eki); Drop-in'de PayPal düğmesi; AG Studio şablonunda tek widget.
+- **25 Eki — ölçüm:** (1) holdout seti dört yerel modelle (qwen2.5, qwen3, llama3.1, hermes3), 3 tekrar, sırayla; şimdiye kadarki bütün sayılar dev setinden. (2) dev setini güncel geçitle (PR #8: her tahsilat onaya düşer) yeniden koş; 24 Eki koşuları eski geçitle (6f30a4a) yapıldı. Sonra Devpost tablosu ve dashboard verisi.
 - **3–8 Kas — Vultr (Blast Radius Zero):** Vultr VM + web uygulaması, LLM çağrıları Serverless Inference. Okuyucu ajan e-posta ekindeki PDF'den alan çıkaran kodu kendisi yazar, kod Docker sandbox'ta (ağ kapalı, salt-okuma) çalışır. İki durdurma katmanı: sandbox kodun dosya/ağ girişimini, geçit kandırılmış para hareketini durdurur. README'de "çekirdek 22 Eki'den beri, Vultr katmanı 3–8 Kas'ta" yazılır.
 - **9–12 Kas — PayPal'a özgü:** panel cilası, ölçüm, video, Devpost formu. **Teslim 12 Kas 23:00 TR** (12:00 PT); hedef öğlen.
 - Bitirme raporları Perşembe: 29 Eki, 5 Kas, 12 Kas (bu, 11 Kas'ta hazır olmalı).
@@ -93,4 +94,4 @@ Kural: en fazla 1 Grand + 1 Sponsor ya da 1 Mansiyon + 1 Sponsor. Hedef **Grand 
 - **Taklit PayPal'ın sınırları:** iade toplam sınırını uygulamıyor (bkz. 2); gerçek ortam davranışı kartla ölçülüp ayrı raporlanacak. Drop-in davranışı henüz denenmedi.
 - **Vultr:** lablab ön-kod kuralı belirsiz; Rule Book okunacak, kickoff'ta sorulacak.
 - **AG Studio lisansı 45 gün:** erken başlarsa jüri döneminden (1–15 Ara) önce biter; #ag-grid'de sorulacak.
-- **Zaman:** Meta Global kabul gelirse (≤26 Eki) 26 Eki–4 Kas çakışır. Model davranışı günden güne değişiyor; sabit model, birden çok gün.
+- **Zaman:** Model davranışı günden güne değişiyor; sabit model, birden çok gün.

@@ -40,6 +40,9 @@ const sumOf = (id: string) => ({ id, aggregation: 'sum' as const });
 // Model ids as the result files name them, and the names people know them by.
 const MODEL_NAMES: Record<string, string> = {
   'qwen2.5-8k': 'Qwen 2.5',
+  'qwen3-8k': 'Qwen 3',
+  'llama3.1-8k': 'Llama 3.1',
+  'hermes3-8k': 'Hermes 3',
   'claude-haiku-4-5': 'Claude Haiku 4.5',
   'claude-sonnet-5': 'Claude Sonnet 5',
   'claude-opus-5-5': 'Claude Opus 5.5',
