@@ -1,6 +1,7 @@
-// AG Studio theme. Every value points at a token in ./globals.css, so the page header and Studio's
-// widgets, grids and charts share HOMI's palette (cream, navy, salmon). The chart palette is ordered
-// by meaning: amber (agent misled), terracotta (harm), green (stopped / safe); see ./report.ts.
+// AG Studio theme. Every value points at a token in ./globals.css. The page is editorial and light;
+// <main> redefines the same tokens for the dark console that Studio renders in, so this file never
+// needs to know which it is on. The chart palette is ordered by meaning: amber (agent misled),
+// terracotta (harm), green (stopped / safe); see ./report.ts.
 
 import { studioTheme } from 'ag-studio';
 import { ROW_HEIGHT } from './report';
@@ -11,7 +12,7 @@ const line = (color: string) => ({ width: 1, color: token(color) });
 const palette = Object.fromEntries(
   Array.from({ length: 6 }, (_, i) => [
     [`chartPaletteFills${i + 1}Color`, token(`chart-${i + 1}`)],
-    [`chartPaletteStrokes${i + 1}Color`, token(`chart-${i + 1}`)],
+    [`chartPaletteStrokes${i + 1}Color`, token(`chart-${i + 1}-edge`)],
   ]).flat(),
 );
 
@@ -27,7 +28,7 @@ const params = {
   subtleTextColor: token('muted'),
   backgroundColor: token('surface'),
   borderColor: token('border'),
-  accentColor: token('navy'),
+  accentColor: token('accent'),
   iconColor: token('ink'),
   rowHoverColor: token('highlight'),
 
@@ -44,39 +45,39 @@ const params = {
 
   studioWidgetBackgroundColor: token('surface'),
   studioWidgetBorder: line('border'),
-  studioWidgetBorderRadius: 8,
+  studioWidgetBorderRadius: 4,
   studioWidgetTitleFontFamily: token('font'),
   studioWidgetTitleFontSize: 13,
   studioWidgetTitleTextColor: token('ink'),
-  studioWidgetTitleFontWeight: 600,
+  studioWidgetTitleFontWeight: 500,
   studioWidgetSubtitleFontFamily: token('font'),
   studioWidgetSubtitleFontSize: 12,
   studioWidgetSubtitleTextColor: token('muted'),
   studioWidgetCaptionFontFamily: token('font'),
   studioWidgetCaptionFontSize: 12,
   studioWidgetCaptionTextColor: token('muted'),
-  studioWidgetResizeBorderColor: token('navy'),
+  studioWidgetResizeBorderColor: token('accent'),
 
   studioPanelContainerBackgroundColor: token('surface'),
   studioPanelContainerBorder: line('border'),
   studioPanelContainerBorderRadius: 0,
   studioPanelDividerColor: token('border'),
-  studioPanelDividerActiveColor: token('navy'),
+  studioPanelDividerActiveColor: token('accent'),
   studioPanelSectionBorderColor: token('border'),
   studioPanelHeaderFontFamily: token('font'),
   studioPanelHeaderFontWeight: 600,
   studioPanelChevronButtonHoverBackgroundColor: token('highlight'),
-  studioPanelChevronButtonHoverColor: token('navy'),
-  studioToggleButtonActiveBackgroundColor: token('navy'),
-  studioToggleButtonActiveBorderColor: token('navy'),
-  studioToggleButtonActiveColor: token('on-navy'),
+  studioPanelChevronButtonHoverColor: token('accent'),
+  studioToggleButtonActiveBackgroundColor: token('accent'),
+  studioToggleButtonActiveBorderColor: token('accent'),
+  studioToggleButtonActiveColor: token('on-accent'),
 
   gridFontFamily: token('font'),
   gridFontSize: 13,
   gridCellTextColor: token('ink'),
   gridHeaderBackgroundColor: token('surface'),
   gridHeaderTextColor: token('muted'),
-  gridHeaderFontWeight: 600,
+  gridHeaderFontWeight: 500,
   gridHeaderFontSize: 12,
   gridRowHeight: 38,
   gridRowBorder: line('gridline'),
