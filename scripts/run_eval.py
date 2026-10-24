@@ -9,17 +9,18 @@ Writes one JSONL line per (scenario, condition, repeat), then prints a summary. 
 condition, so conditions differ only in the gate (paired comparison, not independent Reader samples).
 Holdout scenarios are for the final measurement only: do not tune prompts on them.
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import sys
 import time
-import uuid
 import traceback
+import uuid
 from collections import defaultdict
 from dataclasses import asdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -27,32 +28,49 @@ sys.path.insert(0, str(ROOT))
 
 from dotenv import load_dotenv  # noqa: E402
 
-load_dotenv(ROOT / ".env")          # API keys for the cloud presets; .env is git-ignored
+load_dotenv(ROOT / ".env")  # API keys for the cloud presets; .env is git-ignored
 
+from counterfoil import runmeta  # noqa: E402
 from counterfoil.agents import read_email, run_transaction_agent  # noqa: E402
 from counterfoil.baselines import CapGate, NoGate  # noqa: E402
 from counterfoil.evaluate import expected_outcome, score  # noqa: E402
 from counterfoil.gateway import Gateway  # noqa: E402
 from counterfoil.llm import LLM, PRESETS, preset  # noqa: E402
-from counterfoil import runmeta  # noqa: E402
 from counterfoil.rail import SandboxRail  # noqa: E402
 from counterfoil.scenarios import build, load_scenarios  # noqa: E402
 
 CONDITIONS = {"none": NoGate, "cap": CapGate, "counterfoil": Gateway}
-RAIL = "fake"            # --rail braintree: every run moves real money in the Braintree sandbox (mocked PayPal)
-FLAGS = ("attempt", "intervention", "schema_rejected", "harm", "policy_bypass", "rail_refused",
-         "legit_done", "legit_held", "correct_abstention")
+RAIL = "fake"  # --rail braintree: every run moves real money in the Braintree sandbox (mocked PayPal)
+FLAGS = (
+    "attempt",
+    "intervention",
+    "schema_rejected",
+    "harm",
+    "policy_bypass",
+    "rail_refused",
+    "legit_done",
+    "legit_held",
+    "correct_abstention",
+)
 
 
-def run_one(llm: LLM, scenario: dict, condition: str, reader_cache: dict, make_rail=None,
-            max_turns: int = 6, max_calls: int = 8) -> dict:
+def run_one(
+    llm: LLM, scenario: dict, condition: str, reader_cache: dict, make_rail=None, max_turns: int = 6, max_calls: int = 8
+) -> dict:
     """One scenario under one condition. `make_rail(store, rail, scenario, condition)` replaces the rail chosen by --rail
     (the live demo wraps it so a pasted email cannot reach transactions outside the fixture store). A scenario
     without ground truth (an email pasted into the demo) is run but not scored."""
-    row = {"started_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-           "scenario": scenario["id"], "kind": scenario["kind"], "family": scenario["family"],
-           "split": scenario["split"], "condition": condition, "model": llm.config.model,
-           "base_url": llm.config.base_url, "status": "ok"}
+    row = {
+        "started_at": datetime.now(UTC).isoformat(timespec="seconds"),
+        "scenario": scenario["id"],
+        "kind": scenario["kind"],
+        "family": scenario["family"],
+        "split": scenario["split"],
+        "condition": condition,
+        "model": llm.config.model,
+        "base_url": llm.config.base_url,
+        "status": "ok",
+    }
     store, rail, ctx = build(scenario)
     if make_rail is not None:
         rail = make_rail(store, rail, scenario, condition)
@@ -61,31 +79,39 @@ def run_one(llm: LLM, scenario: dict, condition: str, reader_cache: dict, make_r
     row["rail"] = getattr(rail, "name", RAIL)
     email = scenario["email"]
     sender = store.customer_by_email(email["from"])
-    ctx.customer_id = sender["customer_id"] if sender else None          # from the envelope, not from the LLM
+    ctx.customer_id = sender["customer_id"] if sender else None  # from the envelope, not from the LLM
     row["sender_matches_precondition"] = ctx.customer_id == scenario["preconditions"]["authenticated_customer_id"]
     try:
         if scenario["id"] not in reader_cache:
             t0 = time.time()
             reader_cache[scenario["id"]] = (*read_email(llm, email), round(time.time() - t0, 1))
         handoff, reader_raw, row["reader_seconds"] = reader_cache[scenario["id"]]
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - the row records the failure, the run goes on
         row.update(status="reader_error", error=repr(exc))
         return row
-    row.update(reader=handoff, reader_raw=None if handoff else reader_raw,
-               reader_valid=handoff is not None,
-               reader_matches_contract=handoff == scenario["preconditions"].get("reader_contract"))
+    row.update(
+        reader=handoff,
+        reader_raw=None if handoff else reader_raw,
+        reader_valid=handoff is not None,
+        reader_matches_contract=handoff == scenario["preconditions"].get("reader_contract"),
+    )
     ctx.reader = handoff
     gate = CONDITIONS[condition](store, rail)
     t0 = time.time()
     try:
         agent = run_transaction_agent(llm, gate, ctx, handoff, max_turns=max_turns, max_calls=max_calls)
-    except Exception:
+    except Exception:  # noqa: BLE001 - the row records the failure, the run goes on
         row.update(status="agent_error", error=traceback.format_exc(limit=3))
         return row
     row["agent_seconds"] = round(time.time() - t0, 1)
-    row.update(steps=[asdict(s) for s in agent.steps], agent_stopped=agent.stopped, agent_error=agent.error,
-               parse_errors=agent.parse_errors, agent_final=agent.final_message,
-               rail_money_calls=[list(map(str, c)) for c in rail.money_calls()])
+    row.update(
+        steps=[asdict(s) for s in agent.steps],
+        agent_stopped=agent.stopped,
+        agent_error=agent.error,
+        parse_errors=agent.parse_errors,
+        agent_final=agent.final_message,
+        rail_money_calls=[list(map(str, c)) for c in rail.money_calls()],
+    )
     if agent.stopped == "model_error":
         row["status"] = "model_error"
     if "ground_truth" in scenario:
@@ -117,8 +143,16 @@ def summarise(rows: list[dict]) -> str:
         for k in FLAGS:
             a[k] += bool(r["score"].get(k))
     cols = ("runs", "errors", "reader_invalid") + FLAGS
-    short = {"intervention": "interv", "schema_rejected": "schema", "policy_bypass": "bypass", "rail_refused": "railref",
-             "legit_done": "legit", "legit_held": "held", "correct_abstention": "abstain", "reader_invalid": "rdr_bad"}
+    short = {
+        "intervention": "interv",
+        "schema_rejected": "schema",
+        "policy_bypass": "bypass",
+        "rail_refused": "railref",
+        "legit_done": "legit",
+        "legit_held": "held",
+        "correct_abstention": "abstain",
+        "reader_invalid": "rdr_bad",
+    }
     head = f"{'condition':12} {'kind':6} " + " ".join(f"{short.get(c, c):>7}" for c in cols)
     lines = [head]
     for cond in CONDITIONS:
@@ -137,10 +171,18 @@ def main():
     p.add_argument("--repeats", type=int, default=1)
     p.add_argument("--out", default="")
     p.add_argument("--rescore", default="", help="re-score a saved JSONL with the current scorer (no LLM)")
-    p.add_argument("--rail", choices=["fake", "braintree"], default="fake",
-                   help="braintree: run against the Braintree sandbox (needs BRAINTREE_* in .env); slower, real sandbox transactions")
-    p.add_argument("--model", default="", choices=["", *PRESETS],
-                   help="named model preset; default: LLM_BASE_URL / LLM_MODEL / LLM_API_KEY from the environment")
+    p.add_argument(
+        "--rail",
+        choices=["fake", "braintree"],
+        default="fake",
+        help="braintree: run against the Braintree sandbox (needs BRAINTREE_* in .env); slower, real sandbox transactions",
+    )
+    p.add_argument(
+        "--model",
+        default="",
+        choices=["", *PRESETS],
+        help="named model preset; default: LLM_BASE_URL / LLM_MODEL / LLM_API_KEY from the environment",
+    )
     args = p.parse_args()
 
     global RAIL
@@ -157,11 +199,16 @@ def main():
         scenarios = [s for s in scenarios if s["split"] == args.split]
     conditions = [c for c in args.conditions.split(",") if c]
     llm = LLM(preset(args.model) if args.model else None)
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
-    out = Path(args.out).resolve() if args.out else ROOT / "results" / f"{stamp}-{llm.config.model.replace(':', '_')}-{args.split}.jsonl"
+    stamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
+    out = (
+        Path(args.out).resolve()
+        if args.out
+        else ROOT / "results" / f"{stamp}-{llm.config.model.replace(':', '_')}-{args.split}.jsonl"
+    )
     out.parent.mkdir(parents=True, exist_ok=True)
-    runmeta.write(out, llm.config, {"split": args.split, "ids": args.ids, "conditions": conditions,
-                                    "repeats": args.repeats}, RAIL)
+    runmeta.write(
+        out, llm.config, {"split": args.split, "ids": args.ids, "conditions": conditions, "repeats": args.repeats}, RAIL
+    )
 
     rows = []
     with out.open("w", encoding="utf-8") as f:
@@ -175,9 +222,12 @@ def main():
                     f.write(json.dumps(row, ensure_ascii=False, default=str) + "\n")
                     f.flush()
                     sc = row.get("score") or {}
-                    print(f"{s['id']:9} {cond:12} {row['status']:12} attempt={sc.get('attempt')!s:5} "
-                          f"harm={sc.get('harm')!s:5} legit={sc.get('legit_done')!s:5} held={sc.get('legit_held')!s:5} "
-                          f"stop={row.get('agent_stopped')}", flush=True)
+                    print(
+                        f"{s['id']:9} {cond:12} {row['status']:12} attempt={sc.get('attempt')!s:5} "
+                        f"harm={sc.get('harm')!s:5} legit={sc.get('legit_done')!s:5} held={sc.get('legit_held')!s:5} "
+                        f"stop={row.get('agent_stopped')}",
+                        flush=True,
+                    )
     print()
     runmeta.finish(out, rows)
     print(summarise(rows))

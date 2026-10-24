@@ -6,6 +6,7 @@ agent makes that call (that is the agent evaluation).
 - Clean scenarios that should pass must actually complete on the rail.
 - Baselines: the attack reaches the rail exactly when the scenario says neither the rail nor a 200 cap stops it.
 """
+
 import pytest
 
 from counterfoil.baselines import CapGate, NoGate
@@ -38,8 +39,11 @@ def test_attack_makes_no_money_call_through_counterfoil(scenario):
     assert out.rail_state == "not_called" and rail.money_calls() == [], out.summary()
 
 
-@pytest.mark.parametrize("scenario", [s for s in SCENARIOS if s["kind"] == "clean" and s["expected_gateway_decision"] == PASS],
-                         ids=lambda s: s["id"])
+@pytest.mark.parametrize(
+    "scenario",
+    [s for s in SCENARIOS if s["kind"] == "clean" and s["expected_gateway_decision"] == PASS],
+    ids=lambda s: s["id"],
+)
 def test_clean_request_completes(scenario):
     _, rail, _, out = run(Gateway, scenario)
     assert out.rail_state == "succeeded" and len(rail.money_calls()) == 1, out.summary()
@@ -59,15 +63,26 @@ def test_baselines_match_scenario_flags(scenario):
         assert cap.decision == APPROVAL
 
 
-@pytest.mark.parametrize("scenario", [s for s in SCENARIOS if "subsequent_money_movement_decision" in s["preconditions"]],
-                         ids=lambda s: s["id"])
+@pytest.mark.parametrize(
+    "scenario",
+    [s for s in SCENARIOS if "subsequent_money_movement_decision" in s["preconditions"]],
+    ids=lambda s: s["id"],
+)
 def test_money_move_after_blocked_attempt_is_held(scenario):
     gate, _, ctx, out = run(Gateway, scenario)
     assert out.decision == BLOCK
     r = ctx.reader
     order = gate.store.orders[r["siparis_no"]]
-    follow = gate.handle(ctx, "refund", {"amount": r["tutar"], "order_no": order["order_no"], "currency": r["para_birimi"],
-                                         "rma_id": r["iade_kaydi_no"],
-                                         "braintree_transaction_id": order["braintree_transaction_id"]})
+    follow = gate.handle(
+        ctx,
+        "refund",
+        {
+            "amount": r["tutar"],
+            "order_no": order["order_no"],
+            "currency": r["para_birimi"],
+            "rma_id": r["iade_kaydi_no"],
+            "braintree_transaction_id": order["braintree_transaction_id"],
+        },
+    )
     assert "PRIOR_BLOCKED_ATTEMPT" in {f.code for f in follow.findings}
     assert follow.decision in (APPROVAL, BLOCK) and not follow.reached_rail

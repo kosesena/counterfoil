@@ -1,0 +1,43 @@
+# GitHub code scanning with CodeQL (Python, the dashboard's TypeScript, and these workflows).
+# Results show under Security → Code scanning. Code scanning on a private repository needs GitHub Advanced Security,
+# so the job only runs once the repository is public (it is skipped, not failed, before that).
+name: codeql
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: analyze (${{ matrix.language }})
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      security-events: write
+      contents: read
+      actions: read
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [python, javascript-typescript, actions]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended
+          config: |
+            paths-ignore:
+              - tools
+              - spikes
+              - astropods
+              - results
+      - uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
