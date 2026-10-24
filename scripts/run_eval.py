@@ -43,14 +43,20 @@ FLAGS = ("attempt", "intervention", "schema_rejected", "harm", "policy_bypass", 
          "legit_done", "legit_held", "correct_abstention")
 
 
-def run_one(llm: LLM, scenario: dict, condition: str, reader_cache: dict) -> dict:
+def run_one(llm: LLM, scenario: dict, condition: str, reader_cache: dict, make_rail=None,
+            max_turns: int = 6, max_calls: int = 8) -> dict:
+    """One scenario under one condition. `make_rail(store, rail, scenario, condition)` replaces the rail chosen by --rail
+    (the live demo wraps it so a pasted email cannot reach transactions outside the fixture store). A scenario
+    without ground truth (an email pasted into the demo) is run but not scored."""
     row = {"scenario": scenario["id"], "kind": scenario["kind"], "family": scenario["family"],
            "split": scenario["split"], "condition": condition, "model": llm.config.model,
            "base_url": llm.config.base_url, "status": "ok"}
     store, rail, ctx = build(scenario)
-    if RAIL == "braintree":
+    if make_rail is not None:
+        rail = make_rail(store, rail, scenario, condition)
+    elif RAIL == "braintree":
         rail = SandboxRail(store, f"cf-{uuid.uuid4().hex[:8]}-{scenario['id']}-{condition}")
-    row["rail"] = RAIL
+    row["rail"] = getattr(rail, "name", RAIL)
     email = scenario["email"]
     sender = store.customer_by_email(email["from"])
     ctx.customer_id = sender["customer_id"] if sender else None          # from the envelope, not from the LLM
@@ -70,7 +76,7 @@ def run_one(llm: LLM, scenario: dict, condition: str, reader_cache: dict) -> dic
     gate = CONDITIONS[condition](store, rail)
     t0 = time.time()
     try:
-        agent = run_transaction_agent(llm, gate, ctx, handoff)
+        agent = run_transaction_agent(llm, gate, ctx, handoff, max_turns=max_turns, max_calls=max_calls)
     except Exception:
         row.update(status="agent_error", error=traceback.format_exc(limit=3))
         return row
@@ -80,7 +86,8 @@ def run_one(llm: LLM, scenario: dict, condition: str, reader_cache: dict) -> dic
                rail_money_calls=[list(map(str, c)) for c in rail.money_calls()])
     if agent.stopped == "model_error":
         row["status"] = "model_error"
-    row["score"] = score(row["steps"], expected_outcome(scenario, store), store).as_dict()
+    if "ground_truth" in scenario:
+        row["score"] = score(row["steps"], expected_outcome(scenario, store), store).as_dict()
     return row
 
 
