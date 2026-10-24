@@ -84,6 +84,10 @@ export function buildStudioData(data: CounterfoilData): AgDataSourcesDefinition 
           ...r,
           model: modelName(r.model),
           guardLevel: GUARD_LEVEL.indexOf(String(r.condition)) + 1,
+          // harm split by condition, so a grid can show the three conditions side by side without a pivot header
+          harmNoGate: r.condition === 'No gate' ? r.harm : 0,
+          harmCap: r.condition === '$200 cap' ? r.harm : 0,
+          harmCounterfoil: r.condition === 'Counterfoil' ? r.harm : 0,
         })),
         fields: fields([
           ['id', 'Run ID', 'textFormat', true],
@@ -94,6 +98,9 @@ export function buildStudioData(data: CounterfoilData): AgDataSourcesDefinition 
           ['kind', 'Kind', 'textFormat'],
           ['condition', 'Condition', 'textFormat'],
           ['guardLevel', 'Guard Level', 'integerFormat', true],
+          ['harmNoGate', 'Harm (No gate)', 'integerFormat', true],
+          ['harmCap', 'Harm ($200 cap)', 'integerFormat', true],
+          ['harmCounterfoil', 'Harm (Counterfoil)', 'integerFormat', true],
           ['repeat', 'Repeat', 'integerFormat'],
           ['attackRun', 'Attack Runs', 'integerFormat'],
           ['cleanRun', 'Clean Runs', 'integerFormat'],
@@ -190,6 +197,9 @@ export function buildStudioData(data: CounterfoilData): AgDataSourcesDefinition 
       total('harmRuns', 'Wrong money paid', 'runs.harm'),
       total('stoppedRuns', 'Stopped by gate', 'runs.stoppedByGate'),
       total('moneyCalls', 'Money calls', 'calls.moneyCall'),
+      total('harmNoGate', 'No gate', 'runs.harmNoGate'),
+      total('harmCap', '$200 cap', 'runs.harmCap'),
+      total('harmCounterfoil', 'Counterfoil', 'runs.harmCounterfoil'),
       total('requested', 'Requested', 'calls.amount', 'currencyFormat'),
       total('approved', 'Store approved', 'returns.approvedAmount', 'currencyFormat'),
       {

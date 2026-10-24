@@ -42,8 +42,8 @@ const params = {
   studioCanvasRowHeight: ROW_HEIGHT,
   studioCanvasFontFamily: token('font'),
 
-  studioWidgetBackgroundColor: token('surface'),
-  studioWidgetBorder: line('border'),
+  studioWidgetBackgroundColor: 'transparent',
+  studioWidgetBorder: false,
   studioWidgetBorderRadius: 14,
   studioWidgetTitleFontFamily: token('font'),
   studioWidgetTitleFontSize: 14,
@@ -89,7 +89,7 @@ const params = {
   chartTextColor: token('ink'),
   chartSubtleTextColor: token('muted'),
   chartAxisLineColor: token('border'),
-  chartGridLineColor: token('gridline'),
+  chartGridLineColor: 'transparent',
   ...palette,
 };
 

@@ -47,7 +47,7 @@ const kpi = (text: string, value: { id: string; aggregation?: 'sum' }, caption: 
   format: {
     title: { enabled: true, text, typography: typography(13, 'normal'), ...(tone && { color: `var(--cf-${tone}-deep)` }) },
     caption: { enabled: true, text: caption, typography: typography(12), ...(tone && { color: `var(--cf-${tone}-deep)` }) },
-    style: { typography: typography(34, 'bold'), ...(tone && { color: `var(--cf-${tone}-deep)` }) },
+    style: { typography: typography(36, 'bold'), ...(tone && { color: `var(--cf-${tone}-deep)` }) },
     ...(tone && { widget: { backgroundColor: `var(--cf-${tone}-tint)`, borderEnabled: false } }),
   },
 });
@@ -57,9 +57,10 @@ const filter = (id: string, text: string, minWidth?: number) => ({
   dataMapping: { value: [{ id }] },
   format: {
     ...title(text),
+    widget: { backgroundColor: 'transparent', borderEnabled: false },
     style: {
-      dimensions: { height: 30, ...(minWidth && { minWidth }) },
-      defaultItem: { typography: typography(13), borderRadius: 8, borderColor: 'var(--cf-border)' },
+      dimensions: { height: 32, ...(minWidth && { minWidth }) },
+      defaultItem: { typography: typography(13), borderRadius: 999, borderColor: 'var(--cf-border)', backgroundColor: 'transparent' },
       activeItem: { color: 'var(--cf-on-accent)', backgroundColor: 'var(--cf-accent)', borderColor: 'var(--cf-accent)' },
     },
   },
@@ -76,12 +77,11 @@ function overview(compact: boolean): AgPageState {
     widgets: {
       condition: filter('runs.condition', 'Condition'),
       model: filter('runs.model', 'Model', compact ? 150 : undefined),
-      'kpi-attacks': kpi('Attack runs', sum('runs.attackRun'), 'attack e-mails'),
       'kpi-misled': kpi('Agent misled', { id: 'misledRate' }, 'followed the attacker', 'amber'),
       'kpi-harm': kpi('Wrong money paid', { id: 'harmRate' }, 'reached Braintree', 'harm'),
       'kpi-legit': kpi('Genuine requests', { id: 'legitRate' }, 'handled right', 'green'),
       'harm-by-condition': {
-        type: 'column-chart-grouped',
+        type: 'soft-bars' as 'column-chart-grouped',
         dataMapping: {
           categoryKey: [{ id: 'runs.condition' }],
           valueKey: [measure('misledRuns'), measure('harmRuns'), measure('stoppedRuns')],
@@ -91,7 +91,7 @@ function overview(compact: boolean): AgPageState {
         format: { ...title('Attack runs by condition'), style: bottomLegend },
       },
       decisions: {
-        type: 'donut-chart',
+        type: 'soft-donut' as 'donut-chart',
         dataMapping: { categoryKey: [{ id: 'calls.decision' }], valueKey: [measure('moneyCalls')] },
         sort: [{ field: { id: 'calls.decision' }, direction: 'asc' }],
         format: { ...title('Gate decisions on money calls'), style: bottomLegend },
@@ -99,27 +99,28 @@ function overview(compact: boolean): AgPageState {
       'model-pivot': {
         type: 'pivot-grid',
         dataMapping: {
-          rows: [{ id: 'runs.model' }, { id: 'runs.family' }],
-          columns: [{ id: 'runs.condition' }],
-          values: [measure('harmRuns')],
+          rows: [{ id: 'runs.model' }],
+          columns: [],
+          values: [measure('harmNoGate'), measure('harmCap'), measure('harmCounterfoil')],
         },
-        format: title('Wrong money paid, by model and attack family'),
+        format: title('Wrong money paid, by model'),
       },
     },
     widgetLayout: compact
       ? rows([
           [['condition'], [24], 7],
           [['model'], [24], 11],
-          [['kpi-attacks', 'kpi-misled'], [12, 12], 7],
-          [['kpi-harm', 'kpi-legit'], [12, 12], 7],
+          [['kpi-misled'], [24], 7],
+          [['kpi-harm'], [24], 7],
+          [['kpi-legit'], [24], 7],
           [['harm-by-condition'], [24], 24],
           [['decisions'], [24], 20],
           [['model-pivot'], [24], 24],
         ])
       : rows([
           [['condition', 'model'], [8, 16], 7],
-          [['kpi-attacks', 'kpi-misled', 'kpi-harm', 'kpi-legit'], [6, 6, 6, 6], 7],
-          [['harm-by-condition', 'decisions'], [12, 12], 20],
+          [['kpi-misled', 'kpi-harm', 'kpi-legit'], [8, 8, 8], 7],
+          [['harm-by-condition', 'decisions'], [15, 9], 21],
           [['model-pivot'], [24], 22],
         ]),
   };

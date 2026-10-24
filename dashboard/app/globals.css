@@ -5,7 +5,6 @@
   /* HOMI brand: salmon tile, navy wordmark, cream house. The page is an editorial, paper-white report. */
   --cf-canvas: #fbf9f5;
   --cf-surface: #ffffff;
-  --cf-page: #f4efe8;
   --cf-ink: #1f2d44;
   --cf-muted: #667085;
   --cf-rule: #1f2d44;
@@ -78,8 +77,7 @@ html, body { margin: 0; min-height: 100%; background: var(--cf-canvas); color: v
 .store3d-note, .store3d-hint { position: absolute; left: 12px; bottom: 12px; font-size: 12px; color: var(--cf-muted); background: rgba(255,255,255,.9); padding: 4px 10px; border-radius: 2px; }
 
 /* console */
-main { height: 1100px; --cf-canvas: var(--cf-page); background: var(--cf-page); }
-footer { background: var(--cf-page); }
+main { height: 1100px; }
 .message { padding: var(--cf-gutter); font-size: 14px; color: var(--cf-muted); }
 footer { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 4px var(--cf-gutter) 24px; font-size: 12px; color: var(--cf-muted); }
 
@@ -110,3 +108,15 @@ footer { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wr
   .cond:last-child { border-bottom: 0; }
   .cond strong { font-size: 44px; margin-top: 8px; }
 }
+
+/* soft chart widgets (soft-charts.tsx) */
+.soft { display: flex; flex-direction: column; height: 100%; padding: 4px 0 0; }
+.soft-svg { flex: 1; min-height: 0; width: 100%; overflow: hidden; }
+.soft-svg svg { display: block; }
+.soft-donut { flex: 1; min-height: 0; max-height: 240px; width: auto; align-self: center; }
+.soft-axis { font-size: 11px; fill: var(--cf-muted); }
+.soft-cat { font-size: 13px; fill: var(--cf-ink); }
+.soft-base { stroke: var(--cf-border); }
+.soft-total { font-size: 30px; font-weight: 700; fill: var(--cf-ink); }
+.soft-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 18px; font-size: 13px; color: var(--cf-ink); padding-top: 6px; }
+.soft-legend i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; border: 1px solid; margin-right: 7px; vertical-align: -1px; }

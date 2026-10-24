@@ -6,9 +6,10 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { enableStudioDevValidations, type AgStudioApi } from 'ag-studio';
-import { AgStudio, AgStudioProvider } from 'ag-studio-react';
+import { AgStudio, AgStudioProvider, createWidgets } from 'ag-studio-react';
 import { buildReport, layoutRows, PAGE_TITLES, ROW_HEIGHT } from './report';
 import { buildStudioData, modelName, type CounterfoilData } from './studio-data';
+import { SOFT_WIDGETS } from './soft-charts';
 import { Store3D } from './store-3d';
 import { canvasPadding, counterfoilTheme } from './theme';
 
@@ -20,6 +21,10 @@ if (process.env.NODE_ENV !== 'production') {
 const LICENSE_KEY = process.env.NEXT_PUBLIC_AG_STUDIO_LICENSE || undefined;
 
 const PHONE = '(max-width: 760px)';
+
+// Studio's widgets plus the two soft chart widgets the overview draws with (./soft-charts.tsx).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const WIDGETS = createWidgets<any>({ additionalTypes: SOFT_WIDGETS } as never);
 
 const CONDITIONS = [
   { label: 'No gate', note: 'Agent calls Braintree directly' },
@@ -133,8 +138,9 @@ export default function Page() {
             <AgStudio
               style={{ height: '100%', width: '100%' }}
               theme={theme}
-              layout={{ widgetBorderEnabled: true }}
+              layout={{ widgetBorderEnabled: false }}
               panels={{ view: { left: [], right: [] } }}
+              widgets={WIDGETS}
               data={studioData}
               initialState={report}
               mode="view"
