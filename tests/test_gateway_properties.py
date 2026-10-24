@@ -35,6 +35,7 @@ settings.register_profile("ci", max_examples=60, stateful_step_count=25, deadlin
 settings.register_profile(
     "thorough", max_examples=2000, stateful_step_count=60, deadline=None, suppress_health_check=[HealthCheck.too_slow]
 )
+settings.register_profile("mutation", max_examples=60, stateful_step_count=25, deadline=None, derandomize=True)
 settings.load_profile(os.environ.get("HYPOTHESIS_PROFILE", "ci"))
 
 RECORDS = load_records()
@@ -272,11 +273,19 @@ class GateMachine(RuleBasedStateMachine):
         if out.data is not None:
             assert ORDERS[order_no]["customer_id"] == ctx.customer_id, "another customer's order was read"
 
+    @staticmethod
+    def _well_formed(out):
+        assert out.decision in (PASS, APPROVAL, BLOCK)
+        for f in out.findings:
+            assert f.severity in (APPROVAL, BLOCK) and f.code.isupper() and f.code.replace("_", "").isalpha()
+            assert isinstance(f.detail, str) and f.detail, f"{f.code} has no explanation"
+
     def _call(self, ctx, tool, args, faithful_reader):
         if faithful_reader:
             ctx.reader = reader_for(tool, args, ctx.customer_id)
         before = len(self._money_calls())
         out = self.gw.handle(ctx, tool, dict(args))
+        self._well_formed(out)
         call = self._note_rail(before, tool, args)
         if out.decision == BLOCK or out.decision == APPROVAL:
             assert call is None, f"{out.decision} call reached the rail: {out.summary()}"
@@ -295,6 +304,7 @@ class GateMachine(RuleBasedStateMachine):
             self.gw.pending[approval_id]["args"]["amount"] = "1.00" if h.args.get("amount") != "1.00" else "2.00"
         before = len(self._money_calls())
         out = self.gw.approve(approval_id)
+        self._well_formed(out)
         call = self._note_rail(before, h.tool, h.args)
         if call is not None:
             assert approval_id not in self.used, "an approval executed twice"

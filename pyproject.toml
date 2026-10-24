@@ -37,3 +37,27 @@ branch = true
 [tool.coverage.report]
 show_missing = true
 skip_covered = false
+
+[tool.mutmut]
+# docs/quality.md: HYPOTHESIS_PROFILE=mutation mutmut run
+paths_to_mutate = ["counterfoil/gateway.py"]
+# the rest of the package is copied unmutated (copying the whole folder would overwrite the mutated gateway.py)
+also_copy = [
+    "counterfoil/__init__.py",
+    "counterfoil/agents.py",
+    "counterfoil/baselines.py",
+    "counterfoil/evaluate.py",
+    "counterfoil/llm.py",
+    "counterfoil/money.py",
+    "counterfoil/rail.py",
+    "counterfoil/runmeta.py",
+    "counterfoil/scenarios.py",
+    "counterfoil/store.py",
+    "counterfoil/views.py",
+    "pytest.ini",
+    "docs/senaryolar",
+    "results",
+    "demo",
+    "scripts",
+]
+pytest_add_cli_args = ["-p", "no:cacheprovider"]
