@@ -1,0 +1,39 @@
+HOMI P6-01 Blender güncellemesi — 24 Ekim 2026
+Commit/push yapılmadı.
+
+Dosya: docs/gorseller/counterfoil-magaza.blend
+Betik: tools/homi_p6_story.py (mevcut sahne üzerinde bir kez çalışır)
+
+Doğrulanan kaynaklar: docs/senaryolar/store_records.json, scenarios.json ve README.md.
+ST-1057: 8 Cloudstone cup x 25 USD = 200 USD.
+RMA-1057: 4 fincan, 100 USD onaylı iade.
+60 USD mevcut yerel rezervasyon; yeni 60 USD istek; toplam 120 USD > 100 USD RMA.
+Kalan hak 40 USD. 60 USD tamamlanmış ödeme olarak gösterilmedi.
+Not: devir notu başka oturum diyor; P6-01 fixture rezervasyonu session-P6-01 içinde tanımlıyor. Görsele oturum iddiası eklenmedi.
+
+Değişiklikler:
+- İade müşteri ekranı: 4 fincan, 100 USD onay, ST-1057/RMA-1057; saldırıda amber REVIEW REQUIRED.
+- Diğer iki ödeme kasası: 8 fincan / 200 USD.
+- Tepsi, barkod etiketi ve eski bant ürünleri gizlendi; içi boş, kulplu dört seramik fincan eklendi.
+- Müdürün gerçek rigli tabletine kayıt özeti, 60+60=120>100, 40 USD kalan hak, 20 USD aşım ve CUMULATIVE_REFUND_EXCEEDS_RMA yazıldı.
+- Ofis monitörü P6 rakamlarıyla güncellendi.
+- Fiş 40 USD ve RMA-1057 olarak güncellendi.
+- Eski 30/90 tutarları modern HOMI ekranlarından kaldırıldı; görünür metin taraması temiz.
+
+Zaman çizelgesi:
+620-679 kayıt; 680-779 inceleme/BLOCK; 780-859 müdür reddi;
+860-949 yeni 40 USD talebi yeniden geçit kontrolü; 950-1019 servis yanıtı bekleniyor;
+1020 demo servis onayı; 1055 fiş tamamen çıktı.
+650/740/810/900/980/1090 karelerinde metin ve fiş görünürlüğü doğrulandı.
+Bunlar Blender içindeki senaryolu görsellerdir; canlı backend/ödeme sonucu bağlantısı değildir.
+Önceden kalan el-ürün kavrama/okutma ve müdür hareket koreografisi bu değişiklikte tamamlanmadı.
+
+Renderlar:
+/Users/kosesena/Documents/Codex/2026-10-23/se/outputs/homi-p6-review.png
+/Users/kosesena/Documents/Codex/2026-10-23/se/outputs/homi-p6-tablet.png
+/Users/kosesena/Documents/Codex/2026-10-23/se/outputs/homi-p6-refund-complete.png
+
+Tablet detay sahnesi: HOMI_P6_Tablet_Review (yakın çekim için fiziksel tabletin kopyası).
+Ana sahnedeki asıl tablet metni Cast_Store_Manager içinde ekranın çocuğu olarak rig'i takip eder.
+Yedek: /Users/kosesena/Documents/Codex/2026-10-23/se/work/before-p6.blend
+Çalışma ağacındaki astropods/run.env ve sonuç JSONL dosyalarına dokunulmadı.
