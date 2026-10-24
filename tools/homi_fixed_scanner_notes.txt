@@ -1,0 +1,51 @@
+2026-10-24 — Sena's fixed scanner correction
+
+Saved blend: docs/gorseller/counterfoil-magaza.blend
+Script: tools/homi_fixed_scanner.py, run after the character/clothing revisions.
+No commit or push.
+
+- Removed finger meshes; restored skin-colored round hands for customer/manager.
+- Docked handheld scanner; fixed HS_02 vertical scanner now emits the brief red beam.
+- Customer's right arm moves each cup; left arm remains at the side.
+- PC_Cup_01..04 are children of PC_CustomerRpalm. Parent inverse cancels palm scale.
+  During carrying, cup local position is constant. At rest, baked local compensation
+  keeps cups stationary on the counter/tray despite hand motion.
+- Each cup is deposited in PC_ScannedReturnTray after its scan.
+- Barcode meshes/text retained. 646/682/718/754 scan pulses and counts unchanged.
+- Existing 768 approved100, 780 review, 820 reject60, 860 approve40/recheck,
+  1020 provider/receipt and 1055 receipt-text timing unchanged.
+- Verified all four world transforms at scan frames and final tray positions788.
+
+Render directory /Users/kosesena/Documents/Codex/2026-10-23/se/outputs/
+  homi-fixed-scanner.png
+  homi-fixed-scan-detail.png
+  homi-return-tray-complete.png
+  homi-fixed-scanner-preview.mp4 (960x540/12fps motion preview)
+
+Website:
+- Re-exported dashboard/public/3d/homi-return-station.glb from frame646 of saved blend.
+- Replaced mobile fallback PNG and versioned both asset URLs to avoid stale cache.
+- Site remains the existing orbitable static 3D view; Blender choreography is not
+  exported as animation by tools/export_station_glb.py.
+- npm run build passed. Production deployment status reported separately in chat.
+
+Follow-up: tools/homi_brows_office_spacing.py replaces cylinder eyebrows with
+thin curved mesh ribbons hugging the face. The operation room and its manager,
+props, animated arm locations and review cameras were moved +3.5m along Y.
+New renders: homi-flat-brows.png and homi-office-setback.png in the same output folder.
+Exporter includes full office geometry even outside its original till crop.
+
+Deployment coordination:
+Our final deployment is dpl_ALaNzgRRiHpLn9R9mKGmEH92mKcU:
+https://counterfoil-dashboard-9r5epdbol-sena-koses-projects.vercel.app
+Afterward, the shared production alias was replaced by a different deployment,
+dpl_BDiKMuXrNdXpRjb7FbzDdnpJoafx (created18:59:51 local). Its GLB is the old
+2,671,072-byte asset. Our local and released GLB is3,501,736 bytes, SHA256 prefix
+6d4a83b5ff388004. Do not re-export from an old blend or publish an old GLB.
+No further alias overwrite attempted to avoid fighting another publisher.
+
+Three-checkout correction: HOMI_Payment_01 was outside the old exporter X crop.
+Exporter now explicitly includes all three checkout collections. GLB verified
+with HP01_Top, HP03_Top and HR_Top present. Website camera widened to include all
+three. Updated source/GLB are local, not redeployed over the concurrent publisher.
+Render: homi-three-checkouts.png. Blender overview scene includes Payment01 too.

@@ -1,0 +1,61 @@
+HOMI P6-01 choreography handoff — 2026-10-24
+
+Saved asset:
+  docs/gorseller/counterfoil-magaza.blend
+Main scene: Counterfoil_Market_Composite
+New collection: HOMI_P6_Choreography
+
+Apply scripts in order to the pre-choreography P6 blend:
+  tools/homi_p6_choreography.py (one-shot, refuses duplicate collection)
+  tools/homi_p6_choreography_finish.py (visual QA refinements)
+Neither script saves or commits automatically. The deliverable blend is already saved.
+
+Changes:
+- Four Cloudstone cup labels: HOMI / Cloudstone cup / CUP / 25.00 USD,
+  curved onto cups, barcode stripes and human-readable 2001057000010.
+  Internal demo EAN-13 pattern with valid check digit; not a registered GS1 claim.
+- Customer picks up a handheld scanner and four cups sequentially. Handle
+  contact follows the cup transform; brief red beams connect lens to label.
+- Two-link stylized arms replace rigid arms from frame 620. Before 620 preserved.
+- Deliberate manager head/tablet pose and two fingertip taps. No added idle loop.
+- Tablet shows rejected $60, new $40, approved $40 with gateway recheck.
+  Arithmetic changes to $60 + $40 = $100 on approval.
+- Existing receipt timing and provider-confirmation separation retained.
+- Scripted visualization only; no live payment/API calls added.
+
+Timeline (24 fps):
+620 scan preparation
+632/668/704/740 start each cup pickup
+646–648 / 682–684 / 718–720 / 754–756 red scan pulses
+646/682/718/754 customer count 1/4, 2/4, 3/4, 4/4
+768 Approved return 100.00 USD
+780 REVIEW REQUIRED; manager looks down at tablet
+819 first tap, 820 REJECTED / $60 request
+848 NEW $40 / ready for approval
+859 second tap, 860 APPROVED $40 / GATEWAY RECHECK
+950 provider pending
+1020 provider confirmed, receipt begins existing extrusion
+1055 receipt fully out, receipt text visible
+
+Review scenes/cameras:
+HOMI_P6_Scan_Review: PC_ScanCamera (customer overview), PC_LabelCamera (barcode)
+HOMI_P6_Manager_Review: PC_ManagerCamera (actual handheld tablet closeup)
+HOMI_Checkout_Design_Review: HOMI_Checkout_Screen, HOMI_Review_Camera
+HOMI_P6_Tablet_Review: existing clean tablet insert, updated states too
+
+Render directory:
+/Users/kosesena/Documents/Codex/2026-10-23/se/outputs/
+  homi-p6-scan-contact.png          1920x1080, frame646
+  homi-p6-label-scan.png            1920x1080, frame646
+  homi-p6-scan-four.png             3840x2160, frame754
+  homi-p6-manager-rejected.png      frame830
+  homi-p6-manager-approved.png      1920x1080, frame874
+  homi-p6-receipt-40.png            3840x2160, frame1055
+  homi-p6-scan-preview.mp4          motion preview, 960x540 / 12fps,
+                                  source frames620–788 sampled every2
+
+QA: rendered cup contact, curved label/beam, count4/4, actual manager tablet
+rejection/approval and final receipt. Verified UI visibility boundaries and
+beam pulses at the four specified frames. Final movie edit not assembled.
+
+No commit or push. Unrelated astropods/run.env and results file left alone.

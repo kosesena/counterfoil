@@ -6,14 +6,15 @@
         --python tools/export_station_glb.py -- demo/static/3d/homi-return-station.glb   # the demo's story stand-in
 
 Reads the .blend without saving it. Every visible mesh, curve and text whose centre lies in the level-1 till
-area is baked at frame FRAME (default 640; customer at the station; 650 shows the P6 return screen) into a plain mesh, collection instances included;
+area is baked at frame FRAME (default 646, customer at the station; 650 shows the P6 return screen) into a plain mesh,
+collection instances included;
 walls and floor slabs (> 6 m) are left out because the page draws its own floor. Draco-compressed GLB.
 """
 import bpy, os, sys
 from mathutils import Vector
 OUT = sys.argv[-1]
 src = bpy.data.scenes["Counterfoil_Market_Composite"]; bpy.context.window.scene = src
-src.frame_set(int(os.environ.get("FRAME", "640"))); src.view_layers[0].update()
+src.frame_set(int(os.environ.get("FRAME", "646"))); src.view_layers[0].update()
 dg = bpy.context.evaluated_depsgraph_get()
 X0, X1, Y0, Y1 = -19.6, -8.4, -12.3, -5.6           # till area on level 1
 stage = bpy.data.scenes.new("__glb__"); made = 0; skipped = []; seen = set()
@@ -27,7 +28,9 @@ for inst in dg.object_instances:
     cs = [M @ Vector(c) for c in ob.bound_box]
     lo = Vector([min(c[i] for c in cs) for i in range(3)]); hi = Vector([max(c[i] for c in cs) for i in range(3)])
     c = (lo + hi) / 2
-    if not (X0 < c.x < X1 and Y0 < c.y < Y1 and -0.3 < c.z < 3.4): continue
+    is_office = orig.name.startswith(('HO_', 'Store_Manager_', 'PC_Store_Manager', 'PC_Manager'))
+    is_checkout = any(col.name in {'HOMI_Return_Station', 'HOMI_Return_Finish', 'HOMI_Payment_01', 'HOMI_Payment_03'} for col in orig.users_collection)
+    if not (is_office or is_checkout) and not (X0 < c.x < X1 and Y0 < c.y < Y1 and -0.3 < c.z < 3.4): continue
     if max(hi - lo) > 6.0: skipped.append(orig.name); continue        # walls, floor slabs, facade
     key = (orig.name, tuple(round(v, 3) for v in M.translation))
     if key in seen: continue                                            # same object reached twice
