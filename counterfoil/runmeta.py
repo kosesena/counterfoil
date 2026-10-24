@@ -27,7 +27,7 @@ def _run(*cmd: str) -> str:
 
 
 def machine() -> dict:
-    info = {"os": platform.platform(), "arch": platform.machine(), "python": sys.version.split()[0]}
+    info: dict[str, object] = {"os": platform.platform(), "arch": platform.machine(), "python": sys.version.split()[0]}
     if sys.platform == "darwin":
         info["cpu"] = _run("sysctl", "-n", "machdep.cpu.brand_string")
         mem = _run("sysctl", "-n", "hw.memsize")

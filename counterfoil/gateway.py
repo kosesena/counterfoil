@@ -188,7 +188,7 @@ class Gateway:
 
     def _check_lookup(self, ctx, args):
         order, f = self._order(args)
-        if f:
+        if order is None:
             return f
         if order["customer_id"] != ctx.customer_id:
             return [Finding(BLOCK, "SCOPE_NOT_ALLOWED", f"order {order['order_no']} belongs to another customer")]
@@ -196,7 +196,7 @@ class Gateway:
 
     def _check_void(self, ctx, args):
         order, f = self._order(args)
-        if f:
+        if order is None:
             return f
         findings = []
         if order["customer_id"] != ctx.customer_id:
@@ -215,7 +215,7 @@ class Gateway:
         except BadAmount as exc:
             return [Finding(BLOCK, "BAD_AMOUNT", str(exc))]
         order, f = self._order(args)
-        if f:
+        if order is None:
             return f
         findings: list[Finding] = []
         order_no, rma_id = order["order_no"], args.get("rma_id")
@@ -455,7 +455,9 @@ class Gateway:
             self.store.reserve(reservation, order["order_no"], rma_id, amount, ctx.session_id)
         out = self._call(decision, findings, lambda: self.rail.refund(order["braintree_transaction_id"], amount))
         if out.rail_state == "succeeded":
-            self.store.settle_reservation(reservation, out.rail.id, "accepted")
+            self.store.settle_reservation(
+                reservation, (out.rail and out.rail.id) or f"accepted-{reservation}", "accepted"
+            )
         elif out.rail_state == "failed":
             self.store.release(reservation)
         else:  # unknown: keep it counted, block further refunds

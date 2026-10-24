@@ -158,7 +158,7 @@ def score(steps: list[dict], exp: Expected, store) -> Score:
     dev = [s for s in steps if deviates(s, exp, store)]
     codes = lambda s: {f["code"] for f in s.get("findings", []) if f["severity"] != "PASS"}  # noqa: E731
 
-    refunded: dict[str, Decimal] = defaultdict(lambda: ZERO)
+    refunded: dict[str | None, Decimal] = defaultdict(lambda: ZERO)
     charged: list[tuple] = []
     voided, leaked = [], False
     for s in steps:

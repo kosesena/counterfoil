@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from typing import Any
 
 from openai import OpenAI
 
@@ -87,7 +88,7 @@ class LLM:
         self.client = OpenAI(base_url=self.config.base_url, api_key=self.config.api_key, timeout=self.config.timeout)
 
     def chat(self, messages: list[dict], tools: list[dict] | None = None, json_mode: bool = False):
-        kw = {"model": self.config.model, "messages": messages}
+        kw: dict[str, Any] = {"model": self.config.model, "messages": messages}
         if self.config.temperature is not None:
             kw["temperature"] = self.config.temperature
         if self.config.reasoning_effort:
