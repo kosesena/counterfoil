@@ -18,6 +18,8 @@ npm run dev                                      # http://localhost:3000
 npm run build                                    # static site in out/, host anywhere
 ```
 
+Live: **https://counterfoil-dashboard.vercel.app** (deployed as a static site: `npm run build`, then `vercel deploy --prod` from the `out/` copy).
+
 No credentials are needed. The data is a static JSON file.
 
 The AG Studio licence key is optional: set `NEXT_PUBLIC_AG_STUDIO_LICENSE`. Without it Studio shows a watermark and logs a licence notice. The AG Grid team said on the hackathon Discord that this is not penalised in judging.

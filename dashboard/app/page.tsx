@@ -69,6 +69,7 @@ export default function Page() {
           <b>Returns control</b>
           <span className="pill">powered by Counterfoil</span>
         </div>
+        <a className="live" href="https://counterfoil-demo.onrender.com" target="_blank" rel="noopener">Try it live →</a>
         <nav>
           {counterfoilReport.pages.map((p) => (
             <button key={p.id} className={p.id === pageId ? 'active' : ''} onClick={() => openPage(p.id)}>

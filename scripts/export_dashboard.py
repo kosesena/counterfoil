@@ -1,6 +1,6 @@
 """Flatten saved evaluation runs into the tables the AG Studio dashboard reads.
 
-    .venv/bin/python scripts/export_dashboard.py                       # every results/*.jsonl
+    .venv/bin/python scripts/export_dashboard.py                       # every results/*-r3-*.jsonl
     .venv/bin/python scripts/export_dashboard.py results/2026-10-23-dev-qwen2.5-8k.jsonl
 
 Writes dashboard/public/counterfoil-data.json with five related tables:
@@ -111,7 +111,8 @@ def export(paths: list[Path]) -> dict:
 
 
 def main() -> None:
-    paths = [Path(p) for p in sys.argv[1:]] or sorted((ROOT / "results").glob("*.jsonl"))
+    # default: the 3-repeat comparison runs (one file per model); earlier 1-repeat runs stay in results/ for the record
+    paths = [Path(p) for p in sys.argv[1:]] or sorted((ROOT / "results").glob("*-r3-*.jsonl"))
     data = export(paths)
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
