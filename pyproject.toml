@@ -18,6 +18,7 @@ ignore = ["E501"]                            # the formatter wraps code; long co
 "tests/**" = ["S101", "S105", "S106"]       # asserts and fixture tokens are what tests are made of
 "docs/senaryolar/validate.py" = ["S101"]     # a checker script: its asserts are the checks
 "counterfoil/runmeta.py" = ["S310"]          # urlopen only on a localhost Ollama endpoint
+"counterfoil/paypal.py" = ["S310"]           # urlopen only on the fixed https PayPal sandbox host
 
 [tool.mypy]
 python_version = "3.13"

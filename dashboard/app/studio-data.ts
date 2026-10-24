@@ -42,6 +42,7 @@ const MODEL_NAMES: Record<string, string> = {
   'claude-sonnet-5': 'Claude Sonnet 5',
   'claude-opus-5-5': 'Claude Opus 5.5',
   'gpt-5-6-terra': 'GPT-5.6 Terra',
+  'gpt-5-6-sol': 'GPT-5.6 Sol',
 };
 
 export const modelName = (id: unknown) => MODEL_NAMES[String(id)] ?? String(id);

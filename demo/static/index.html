@@ -96,6 +96,35 @@ td, th { border-bottom: 1px solid var(--line); padding: 5px 6px; text-align: lef
 .ledger .left b { color: var(--pass); }
 .review-act { display: flex; gap: 8px; margin-top: 12px; }
 .review-act .reject { background: transparent; color: var(--block); border: 1px solid var(--line); }
+/* HOMI story: scene left, data right, edges aligned; buttons only, nothing advances on its own */
+.story { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 0; padding: 0; overflow: hidden; }
+@media (max-width: 900px) { .story { grid-template-columns: 1fr; } }
+.story-stage { position: relative; aspect-ratio: 16 / 9; background: #e9e3da; min-width: 0; }
+.story-stage canvas, .story-still { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
+.story-stage[data-state="loading"]::after { content: "Loading the store… " attr(data-progress); position: absolute; left: 16px; bottom: 14px; font-size: 13px; color: #646a73; }
+.story-callout { position: absolute; z-index: 2; min-width: 170px; max-width: 280px; padding: 10px 12px; border-radius: 8px;
+  background: #163f33; color: #e9f3ee; box-shadow: 0 6px 22px rgba(0,0,0,.18); font-size: 12px; line-height: 1.35; pointer-events: none; }
+.story-callout b { display: block; font-size: 11px; letter-spacing: .06em; }
+.story-callout strong { display: block; font-size: 18px; margin: 2px 0; font-variant-numeric: tabular-nums; }
+.story-callout span { display: block; word-break: break-word; opacity: .9; }
+.story-callout.amber { background: #f2b84b; color: #2a1d05; }
+.story-callout.block { background: #3a1714; color: #ffd9d3; }
+.story-callout.paper { background: #fbfaf6; color: #1d1f22; border: 1px solid #dedbd3; }
+.story-side { display: flex; flex-direction: column; padding: 16px; border-left: 1px solid var(--line); min-width: 0; }
+@media (max-width: 900px) { .story-side { border-left: 0; border-top: 1px solid var(--line); } }
+.story-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.story-count { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; letter-spacing: .04em; }
+.story-src { font-size: 11px; font-weight: 700; letter-spacing: .04em; padding: 1px 7px; border-radius: 99px; background: var(--code); color: var(--muted); }
+.story-src.live { background: var(--pass-bg); color: var(--pass); }
+.story-side h3 { font-size: 18px; margin: 6px 0 12px; }
+.story-side .kv { gap: 6px 12px; }
+.story-side .kv code { font-size: 12px; word-break: break-all; }
+.story-nav { margin-top: auto; padding-top: 14px; display: flex; align-items: center; gap: 8px; }
+.story-dots { display: flex; gap: 4px; margin-right: auto; }
+.story-dots i { width: 18px; height: 3px; border-radius: 2px; background: var(--line); }
+.story-dots i.on { background: var(--accent); }
+.story-note { font-size: 12px; color: var(--muted); margin: 10px 0 0; }
+.story-note:empty { display: none; }
 footer { color: var(--muted); font-size: 13px; padding: 20px 16px 40px; max-width: 1280px; margin: 0 auto; }
 </style>
 </head>
@@ -107,6 +136,22 @@ footer { color: var(--muted); font-size: 13px; padding: 20px 16px 40px; max-widt
   before money moves. Pick an email, run it under three conditions, and watch what each one lets through.</p>
 </header>
 <main>
+  <section class="panel story" id="story" aria-label="HOMI story">
+    <div class="story-stage" id="storyStage" data-state="loading">
+      <div class="story-callout hidden" id="storyCallout"></div>
+    </div>
+    <div class="story-side">
+      <div class="story-head"><span class="story-count" id="storyCount">5 steps</span><span class="story-src" id="storySource"></span></div>
+      <h3 id="storyTitle">HOMI · return of order ST-1057</h3>
+      <dl class="kv" id="storyData"></dl>
+      <p class="story-note" id="storyNote"></p>
+      <div class="story-nav">
+        <div class="story-dots" id="storyDots"><i></i><i></i><i></i><i></i><i></i></div>
+        <button class="ghost" id="storyBack" disabled>Back</button>
+        <button id="storyNext">Start</button>
+      </div>
+    </div>
+  </section>
   <section class="panel">
     <div class="row">
       <div>
@@ -208,6 +253,11 @@ footer { color: var(--muted); font-size: 13px; padding: 20px 16px 40px; max-widt
   measured; live mode calls the model configured on the server. Source: github.com/kosesena/counterfoil (MIT).
 </footer>
 
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+               "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }
+</script>
+<script type="module" src="/static/story.js"></script>
 <script>
 "use strict";
 const CONDITIONS = [

@@ -277,6 +277,25 @@ def test_preset_without_key_keeps_live_off(monkeypatch):
     assert s.live is None and "ANTHROPIC_API_KEY" in s.live_reason
 
 
+def test_paypal_rest_rail_is_opt_in_and_redacted(monkeypatch):
+    from counterfoil.scenarios import build, load_scenarios
+    from demo.app import _make_rail, _secrets
+
+    monkeypatch.delenv("PAYPAL_CLIENT_ID", raising=False)
+    monkeypatch.delenv("PAYPAL_CLIENT_SECRET", raising=False)
+    monkeypatch.setenv("DEMO_RAIL", "paypal")
+    assert not Settings.from_env().paypal_rest  # no credentials → live PayPal stays off
+    monkeypatch.setenv("PAYPAL_CLIENT_ID", "pp-client-TESTSECRET")
+    monkeypatch.setenv("PAYPAL_CLIENT_SECRET", "pp-secret-TESTSECRET")
+    s = Settings.from_env()
+    assert s.paypal_rest and s.public()["rail"] == "paypal-sandbox"
+    assert {"pp-client-TESTSECRET", "pp-secret-TESTSECRET"} <= set(_secrets())
+    scenario = load_scenarios()[0]
+    store, fake, _ = build(scenario)
+    rail = _make_rail(s)(store, fake, scenario, "counterfoil")  # constructed only; no request is sent
+    assert rail.name == "paypal-sandbox" and type(rail.inner).__name__ == "PayPalSandboxRail"
+
+
 # -- PayPal checkout (Braintree sandbox) -------------------------------------------------------------------------
 
 
@@ -463,3 +482,33 @@ def test_approve_is_off_without_braintree_keys():
         json={"purchase_id": "deadbeefdeadbeef", "approval_id": "0" * 32, "decision": "approve"},
     )
     assert r.status_code == 503
+
+
+# -- HOMI story player -------------------------------------------------------------------------------
+def test_story_assets_are_served_and_cached():
+    c = client()
+    scene = c.get("/api/config").json()["story_scene"]
+    if scene:  # the scene is exported from Blender; it may be absent
+        assert scene == "/story/homi-story.glb"
+        glb = c.get(scene)
+        assert glb.status_code == 200 and glb.content[:4] == b"glTF"
+        assert glb.headers["cache-control"] == "public, max-age=3600"
+        meta = c.get("/story/homi-story.json").json()
+        assert [s["camera"] for s in meta["cameraStops"]] == [f"HOMI_STEP_{n}" for n in range(1, 6)]
+    for name in ("counterfoil-magaza.blend", "../app.py", "homi-logo.png"):  # only the two story files
+        assert c.get(f"/story/{name}").status_code == 404
+    for n in range(1, 6):  # phones get one still per step, no WebGL
+        assert c.get(f"/static/story/step-{n}.jpg").status_code == 200
+    js = c.get("/static/story.js")
+    assert js.status_code == 200 and js.headers["cache-control"] == "no-store"
+    assert c.get("/static/../app.py").status_code == 404
+
+
+def test_story_reads_the_recorded_p6_block():
+    row = client().post("/api/run", json={"scenario_id": "P6-01", "condition": "counterfoil"}).json()
+    refund = next(s for s in row["steps"] if s["tool"] == "refund")
+    assert refund["decision"] == "BLOCK"
+    finding = refund["findings"][0]
+    assert finding["code"] == "CUMULATIVE_REFUND_EXCEEDS_RMA"
+    # story.js parses this sentence into 60 + 60 = 120 > 100, 40 left
+    assert finding["detail"] == "60.00 requested; 0.00 refunded and 60.00 reserved of 100.00 approved; 40.00 left"
