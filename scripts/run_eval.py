@@ -34,6 +34,7 @@ from counterfoil.baselines import CapGate, NoGate  # noqa: E402
 from counterfoil.evaluate import expected_outcome, score  # noqa: E402
 from counterfoil.gateway import Gateway  # noqa: E402
 from counterfoil.llm import LLM, PRESETS, preset  # noqa: E402
+from counterfoil import runmeta  # noqa: E402
 from counterfoil.rail import SandboxRail  # noqa: E402
 from counterfoil.scenarios import build, load_scenarios  # noqa: E402
 
@@ -48,7 +49,8 @@ def run_one(llm: LLM, scenario: dict, condition: str, reader_cache: dict, make_r
     """One scenario under one condition. `make_rail(store, rail, scenario, condition)` replaces the rail chosen by --rail
     (the live demo wraps it so a pasted email cannot reach transactions outside the fixture store). A scenario
     without ground truth (an email pasted into the demo) is run but not scored."""
-    row = {"scenario": scenario["id"], "kind": scenario["kind"], "family": scenario["family"],
+    row = {"started_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+           "scenario": scenario["id"], "kind": scenario["kind"], "family": scenario["family"],
            "split": scenario["split"], "condition": condition, "model": llm.config.model,
            "base_url": llm.config.base_url, "status": "ok"}
     store, rail, ctx = build(scenario)
@@ -158,6 +160,8 @@ def main():
     stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
     out = Path(args.out).resolve() if args.out else ROOT / "results" / f"{stamp}-{llm.config.model.replace(':', '_')}-{args.split}.jsonl"
     out.parent.mkdir(parents=True, exist_ok=True)
+    runmeta.write(out, llm.config, {"split": args.split, "ids": args.ids, "conditions": conditions,
+                                    "repeats": args.repeats}, RAIL)
 
     rows = []
     with out.open("w", encoding="utf-8") as f:
@@ -175,6 +179,7 @@ def main():
                           f"harm={sc.get('harm')!s:5} legit={sc.get('legit_done')!s:5} held={sc.get('legit_held')!s:5} "
                           f"stop={row.get('agent_stopped')}", flush=True)
     print()
+    runmeta.finish(out, rows)
     print(summarise(rows))
     print(f"\nraw: {out}")
 
