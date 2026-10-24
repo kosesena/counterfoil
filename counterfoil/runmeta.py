@@ -3,6 +3,7 @@
 Written next to each results file as <name>.meta.json, so a number in the README can be traced to a machine, a
 commit and a model build. Never contains keys: only the model's base URL host is kept.
 """
+
 from __future__ import annotations
 
 import json
@@ -48,14 +49,22 @@ def code() -> dict:
 def model(cfg) -> dict:
     """The model as the client sees it; for a local Ollama model also its build (digest) and parameters."""
     host = urlparse(cfg.base_url).netloc
-    out = {"model": cfg.model, "endpoint_host": host, "temperature": cfg.temperature, "seed": cfg.seed,
-           "reasoning_effort": getattr(cfg, "reasoning_effort", None)}
+    out = {
+        "model": cfg.model,
+        "endpoint_host": host,
+        "temperature": cfg.temperature,
+        "seed": cfg.seed,
+        "reasoning_effort": getattr(cfg, "reasoning_effort", None),
+    }
     if host.startswith(("localhost", "127.0.0.1")):
         base = f"{urlparse(cfg.base_url).scheme}://{host}"
         try:
             out["ollama_version"] = json.load(urllib.request.urlopen(f"{base}/api/version", timeout=5)).get("version")
-            req = urllib.request.Request(f"{base}/api/show", data=json.dumps({"model": cfg.model}).encode(),
-                                         headers={"Content-Type": "application/json"})
+            req = urllib.request.Request(
+                f"{base}/api/show",
+                data=json.dumps({"model": cfg.model}).encode(),
+                headers={"Content-Type": "application/json"},
+            )
             show = json.load(urllib.request.urlopen(req, timeout=10))
             out["parameters"] = show.get("parameters")
             out["family"] = (show.get("details") or {}).get("family")
@@ -64,7 +73,7 @@ def model(cfg) -> dict:
             tags = json.load(urllib.request.urlopen(f"{base}/api/tags", timeout=5)).get("models", [])
             tag = cfg.model if ":" in cfg.model else f"{cfg.model}:latest"
             out["digest"] = next((m.get("digest") for m in tags if m.get("name") == tag), None)
-        except Exception as exc:                     # the run still counts; the record says what it could not see
+        except Exception as exc:  # the run still counts; the record says what it could not see
             out["ollama_error"] = repr(exc)
     elif host.endswith("astropods.ai"):
         out["provider_route"] = "Astro AI Gateway (Astropods) → Amazon Bedrock"
@@ -72,8 +81,15 @@ def model(cfg) -> dict:
 
 
 def write(out_path: Path, cfg, args: dict, rail: str) -> Path:
-    meta = {"started_at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "argv": sys.argv[1:],
-            "selection": args, "rail": rail, "machine": machine(), "code": code(), "model": model(cfg)}
+    meta = {
+        "started_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "argv": sys.argv[1:],
+        "selection": args,
+        "rail": rail,
+        "machine": machine(),
+        "code": code(),
+        "model": model(cfg),
+    }
     path = out_path.with_suffix(".meta.json")
     path.write_text(json.dumps(meta, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     return path

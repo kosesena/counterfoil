@@ -3,6 +3,7 @@
 
 Named presets (LLMConfig.preset / run_eval.py --model) cover the models in the comparison. Cloud presets read
 their key from the environment and never from the repo; seed is only sent where the provider documents it."""
+
 from __future__ import annotations
 
 import os
@@ -16,7 +17,7 @@ class LLMConfig:
     base_url: str
     model: str
     api_key: str
-    temperature: float | None = 0.0      # None: not sent (Claude 5 and GPT-5 families reject it)
+    temperature: float | None = 0.0  # None: not sent (Claude 5 and GPT-5 families reject it)
     seed: int | None = 7
     timeout: float = 300.0
     reasoning_effort: str | None = None  # GPT-5.6 on chat completions only allows tools with "none"
@@ -26,7 +27,7 @@ class LLMConfig:
         return cls(
             base_url=os.environ.get("LLM_BASE_URL", "http://localhost:11434/v1"),
             model=os.environ.get("LLM_MODEL", "qwen2.5-8k"),
-            api_key=os.environ.get("LLM_API_KEY", "ollama"),       # Ollama ignores the key
+            api_key=os.environ.get("LLM_API_KEY", "ollama"),  # Ollama ignores the key
         )
 
 
@@ -67,10 +68,17 @@ def preset(name: str) -> LLMConfig:
     if not key:
         raise RuntimeError(f"{name} needs {key_env} in the environment (.env)")
     # Claude 5-family models reject `temperature`; GPT-5 reasoning models only accept the default
-    fixed_sampling = model.startswith(("claude-opus-5", "claude-sonnet-5", "claude-haiku-5", "claude-fable", "gpt-5", "gpt6"))
-    return LLMConfig(base_url=base_url, model=model, api_key=key, seed=7 if send_seed else None,
-                     temperature=None if fixed_sampling else 0.0,
-                     reasoning_effort="none" if model.startswith("gpt-5-6") else None)
+    fixed_sampling = model.startswith(
+        ("claude-opus-5", "claude-sonnet-5", "claude-haiku-5", "claude-fable", "gpt-5", "gpt6")
+    )
+    return LLMConfig(
+        base_url=base_url,
+        model=model,
+        api_key=key,
+        seed=7 if send_seed else None,
+        temperature=None if fixed_sampling else 0.0,
+        reasoning_effort="none" if model.startswith("gpt-5-6") else None,
+    )
 
 
 class LLM:

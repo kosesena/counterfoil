@@ -1,6 +1,7 @@
 """Abuse limits for live mode. In-process and in-memory on purpose: the demo is one small instance, and a restart
 resetting the counters is acceptable. The daily cap is the backstop for everything the per-IP limit misses
 (spoofed or rotating addresses)."""
+
 from __future__ import annotations
 
 import threading

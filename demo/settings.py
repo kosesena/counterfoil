@@ -5,6 +5,7 @@ Live mode is off unless a model is configured on purpose: DEMO_MODEL names a cou
 from that preset's env var), or LLM_BASE_URL + LLM_MODEL + LLM_API_KEY are all set. Falling back to a local Ollama
 default, as run_eval does, would make a hosted demo look broken instead of clearly saying "replay only".
 """
+
 from __future__ import annotations
 
 import dataclasses
@@ -25,15 +26,15 @@ def _int(name: str, default: int, lo: int = 1) -> int:
 
 @dataclass(frozen=True)
 class Settings:
-    max_email_chars: int = 4000          # subject + body + HTML + attachment, all together
-    max_turns: int = 6                   # same budgets as the evaluation, so live runs are comparable
+    max_email_chars: int = 4000  # subject + body + HTML + attachment, all together
+    max_turns: int = 6  # same budgets as the evaluation, so live runs are comparable
     max_calls: int = 8
-    rate_limit: int = 6                  # live runs per client IP per window
+    rate_limit: int = 6  # live runs per client IP per window
     rate_window_s: int = 600
-    daily_llm_calls: int = 300           # every chat completion counts (Reader + each agent turn)
-    max_concurrent: int = 2              # live runs in flight; more → 503 instead of a queue that times out
+    daily_llm_calls: int = 300  # every chat completion counts (Reader + each agent turn)
+    max_concurrent: int = 2  # live runs in flight; more → 503 instead of a queue that times out
     llm_timeout_s: int = 60
-    replay_source: str = ""              # results/<stem>.jsonl to replay by default; "" → the qwen2.5 run
+    replay_source: str = ""  # results/<stem>.jsonl to replay by default; "" → the qwen2.5 run
     live: LLMConfig | None = None
     live_reason: str = "no model configured on the server (set DEMO_MODEL or LLM_BASE_URL/LLM_MODEL/LLM_API_KEY)"
     braintree: bool = False
@@ -50,7 +51,8 @@ class Settings:
             max_concurrent=_int("DEMO_MAX_CONCURRENT", cls.max_concurrent),
             llm_timeout_s=_int("DEMO_LLM_TIMEOUT_S", cls.llm_timeout_s),
             replay_source=os.environ.get("DEMO_REPLAY_SOURCE", ""),
-            braintree=os.environ.get("BRAINTREE_ENVIRONMENT") == "sandbox" and all(os.environ.get(v) for v in BRAINTREE_VARS),
+            braintree=os.environ.get("BRAINTREE_ENVIRONMENT") == "sandbox"
+            and all(os.environ.get(v) for v in BRAINTREE_VARS),
         )
         live, reason = live_config()
         if live is not None:
@@ -59,13 +61,21 @@ class Settings:
 
     def public(self) -> dict:
         """What the page may know: whether live mode works and which model, never where the key lives."""
-        return {"live_enabled": self.live is not None, "live_model": self.live.model if self.live else None,
-                "live_reason": "" if self.live else self.live_reason,
-                "rail": "braintree-sandbox" if self.braintree else "fake",
-                "paypal_checkout": self.braintree,
-                "limits": {"max_email_chars": self.max_email_chars, "max_turns": self.max_turns,
-                           "max_calls": self.max_calls, "rate_limit": self.rate_limit,
-                           "rate_window_s": self.rate_window_s, "daily_llm_calls": self.daily_llm_calls}}
+        return {
+            "live_enabled": self.live is not None,
+            "live_model": self.live.model if self.live else None,
+            "live_reason": "" if self.live else self.live_reason,
+            "rail": "braintree-sandbox" if self.braintree else "fake",
+            "paypal_checkout": self.braintree,
+            "limits": {
+                "max_email_chars": self.max_email_chars,
+                "max_turns": self.max_turns,
+                "max_calls": self.max_calls,
+                "rate_limit": self.rate_limit,
+                "rate_window_s": self.rate_window_s,
+                "daily_llm_calls": self.daily_llm_calls,
+            },
+        }
 
 
 def live_config() -> tuple[LLMConfig | None, str]:
@@ -73,7 +83,7 @@ def live_config() -> tuple[LLMConfig | None, str]:
     if name:
         try:
             return preset(name), ""
-        except (ValueError, RuntimeError) as exc:       # messages name the env var, never its value
+        except (ValueError, RuntimeError) as exc:  # messages name the env var, never its value
             return None, str(exc)
     if all(os.environ.get(v) for v in ("LLM_BASE_URL", "LLM_MODEL", "LLM_API_KEY")):
         return LLMConfig.from_env(), ""

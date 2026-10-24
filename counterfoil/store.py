@@ -7,6 +7,7 @@ Orders, catalog and customers are read-only fixtures. Refunds, reservations and 
 Refund states: accepted (rail took it, not yet settled; counts as spent), completed, pending/unknown
 (outcome not known: blocks new refunds on the order until reconciled), failed (does not count).
 """
+
 from __future__ import annotations
 
 import json
@@ -51,9 +52,9 @@ UNRESOLVED = ("pending", "unknown")
 @dataclass(frozen=True)
 class Entitlement:
     approved: Decimal
-    spent: Decimal                       # accepted + completed refunds on this RMA
-    reserved: Decimal                    # in-flight reservations on this RMA
-    unresolved: tuple[str, ...]          # refund ids on the ORDER (any RMA) whose outcome is not known
+    spent: Decimal  # accepted + completed refunds on this RMA
+    reserved: Decimal  # in-flight reservations on this RMA
+    unresolved: tuple[str, ...]  # refund ids on the ORDER (any RMA) whose outcome is not known
 
     @property
     def remaining(self) -> Decimal:
@@ -73,13 +74,15 @@ class Store:
         self.customers = {c["customer_id"]: c for c in records["customers"]}
         self.orders = {o["order_no"]: o for o in records["orders"]}
         self.db = sqlite3.connect(db_path, isolation_level=None, check_same_thread=False)
-        self._lock = threading.RLock()     # one connection is shared; every statement goes through the lock
+        self._lock = threading.RLock()  # one connection is shared; every statement goes through the lock
         with self._lock:
             self.db.executescript(SCHEMA)
             for order in self.orders.values():
                 for r in order.get("refunds", []):
-                    self.db.execute("INSERT OR IGNORE INTO refunds VALUES (?,?,?,?,?)",
-                                    (r["refund_id"], order["order_no"], r.get("rma_id"), r["amount"], r["status"]))
+                    self.db.execute(
+                        "INSERT OR IGNORE INTO refunds VALUES (?,?,?,?,?)",
+                        (r["refund_id"], order["order_no"], r.get("rma_id"), r["amount"], r["status"]),
+                    )
 
     @classmethod
     def from_file(cls, path: str | Path, db_path: str = ":memory:") -> "Store":
@@ -124,36 +127,55 @@ class Store:
         with self.transaction():
             rma = self.rma(order_no, rma_id)
             approved = parse_amount(rma["approved_refund_amount"]) if rma else Decimal("0.00")
-            rows = self.db.execute("SELECT amount, status FROM refunds WHERE order_no=? AND rma_id IS ?",
-                                   (order_no, rma_id)).fetchall()
+            rows = self.db.execute(
+                "SELECT amount, status FROM refunds WHERE order_no=? AND rma_id IS ?", (order_no, rma_id)
+            ).fetchall()
             spent = sum((Decimal(a) for a, s in rows if s in SPENT), Decimal("0.00"))
-            reserved = sum((Decimal(a) for (a,) in self.db.execute(
-                "SELECT amount FROM reservations WHERE order_no=? AND rma_id IS ? AND status='active' AND refund_id IS NULL",
-                (order_no, rma_id))), Decimal("0.00"))
-            unresolved = tuple(rid for (rid,) in self.db.execute(
-                f"SELECT refund_id FROM refunds WHERE order_no=? AND status IN {UNRESOLVED}", (order_no,)))
+            reserved = sum(
+                (
+                    Decimal(a)
+                    for (a,) in self.db.execute(
+                        "SELECT amount FROM reservations WHERE order_no=? AND rma_id IS ? AND status='active' AND refund_id IS NULL",
+                        (order_no, rma_id),
+                    )
+                ),
+                Decimal("0.00"),
+            )
+            unresolved = tuple(
+                rid
+                for (rid,) in self.db.execute(
+                    f"SELECT refund_id FROM refunds WHERE order_no=? AND status IN {UNRESOLVED}", (order_no,)
+                )
+            )
             return Entitlement(approved, spent, reserved, unresolved)
 
     def order_refunded_total(self, order_no: str) -> Decimal:
         """Everything this store believes went out on the order, any RMA or none (accepted, completed, unknown)."""
-        rows = self.sql("SELECT amount FROM refunds WHERE order_no=? AND status IN ('accepted','completed','pending','unknown')",
-                        (order_no,))
+        rows = self.sql(
+            "SELECT amount FROM refunds WHERE order_no=? AND status IN ('accepted','completed','pending','unknown')",
+            (order_no,),
+        )
         return sum((Decimal(a) for (a,) in rows), Decimal("0.00"))
 
     def reserve(self, reservation_id: str, order_no: str, rma_id: str | None, amount: Decimal, session_id: str) -> None:
         with self.transaction():
-            self.db.execute("INSERT INTO reservations VALUES (?,?,?,?,?,NULL,'active')",
-                            (reservation_id, order_no, rma_id, str(amount), session_id))
+            self.db.execute(
+                "INSERT INTO reservations VALUES (?,?,?,?,?,NULL,'active')",
+                (reservation_id, order_no, rma_id, str(amount), session_id),
+            )
 
     def settle_reservation(self, reservation_id: str, refund_id: str, status: str) -> None:
         """Reservation → refund row in one transaction, so the amount is never counted as neither."""
         with self.transaction():
-            row = self.db.execute("SELECT order_no, rma_id, amount FROM reservations WHERE reservation_id=?",
-                                  (reservation_id,)).fetchone()
+            row = self.db.execute(
+                "SELECT order_no, rma_id, amount FROM reservations WHERE reservation_id=?", (reservation_id,)
+            ).fetchone()
             new_state = "released" if status == "failed" else "settled"
             self.db.execute("INSERT OR REPLACE INTO refunds VALUES (?,?,?,?,?)", (refund_id, *row, status))
-            self.db.execute("UPDATE reservations SET status=?, refund_id=? WHERE reservation_id=?",
-                            (new_state, refund_id, reservation_id))
+            self.db.execute(
+                "UPDATE reservations SET status=?, refund_id=? WHERE reservation_id=?",
+                (new_state, refund_id, reservation_id),
+            )
 
     def release(self, reservation_id: str) -> None:
         with self.transaction():
@@ -169,7 +191,11 @@ class Store:
         rows = self.sql("SELECT status FROM charges WHERE request_id=?", (request_id,))
         return rows[0][0] if rows else None
 
-    def record_charge(self, request_id: str, customer_id: str, amount: Decimal, status: str, rail_id: str | None = None) -> None:
+    def record_charge(
+        self, request_id: str, customer_id: str, amount: Decimal, status: str, rail_id: str | None = None
+    ) -> None:
         with self.transaction():
-            self.db.execute("INSERT OR REPLACE INTO charges VALUES (?,?,?,?,?)",
-                            (request_id, customer_id, str(amount), status, rail_id))
+            self.db.execute(
+                "INSERT OR REPLACE INTO charges VALUES (?,?,?,?,?)",
+                (request_id, customer_id, str(amount), status, rail_id),
+            )
