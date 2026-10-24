@@ -12,8 +12,8 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 
 // Blender (x, y, z) is glTF (x, z, -y). Station centre and the hero camera from the .blend.
-const TARGET = new THREE.Vector3(-13.5, 0.9, 8.7);
-const CAMERA = new THREE.Vector3(-9.4, 2.6, 4.4);
+const TARGET = new THREE.Vector3(-12.8, 1.0, 7.0);
+const CAMERA = new THREE.Vector3(-1.0, 12.0, 19.0);
 
 export function Store3D() {
   const mount = useRef<HTMLDivElement>(null);
@@ -56,7 +56,7 @@ export function Store3D() {
     controls.target.copy(TARGET);
     controls.enableDamping = true;
     controls.minDistance = 2.5;
-    controls.maxDistance = 14;
+    controls.maxDistance = 26;
     controls.maxPolarAngle = Math.PI * 0.48;      // stay above the floor
     controls.enablePan = false;
     controls.update();
@@ -65,7 +65,7 @@ export function Store3D() {
     const loader = new GLTFLoader().setDRACOLoader(draco);
     let disposed = false;
     loader.load(
-      '3d/homi-return-station.glb',
+      '3d/homi-return-station.glb?v=20261024-three-checkouts',
       (gltf) => {
         if (disposed) return;
         // Brand marks keep their exact colours: the PayPal acceptance logo is drawn unlit and outside
@@ -115,7 +115,7 @@ export function Store3D() {
     <div className="store3d" ref={mount}>
       {state === 'still' && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src="3d/homi-return-station.png" alt="HOMI self-service return station" />
+        <img src="3d/homi-return-station.png?v=20261024-three-checkouts" alt="HOMI self-service return station" />
       )}
       {state === 'loading' && <span className="store3d-note">Loading the store…</span>}
       {state === 'error' && <span className="store3d-note">The 3D store could not be loaded.</span>}
