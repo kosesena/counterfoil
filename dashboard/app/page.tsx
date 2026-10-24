@@ -10,6 +10,8 @@ import { AgStudio, AgStudioProvider, createWidgets } from 'ag-studio-react';
 import { buildReport, layoutRows, PAGE_TITLES, ROW_HEIGHT } from './report';
 import { buildStudioData, modelName, type CounterfoilData } from './studio-data';
 import { SOFT_WIDGETS } from './soft-charts';
+import { CASE_WIDGET } from './case-file';
+import { buildCaseHarness } from './case-agent';
 import { Store3D } from './store-3d';
 import { canvasPadding, counterfoilTheme } from './theme';
 
@@ -22,9 +24,9 @@ const LICENSE_KEY = process.env.NEXT_PUBLIC_AG_STUDIO_LICENSE || undefined;
 
 const PHONE = '(max-width: 760px)';
 
-// Studio's widgets plus the two soft chart widgets the overview draws with (./soft-charts.tsx).
+// Studio's widgets plus our own: the soft charts (./soft-charts.tsx) and the case file (./case-file.tsx).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const WIDGETS = createWidgets<any>({ additionalTypes: SOFT_WIDGETS } as never);
+const WIDGETS = createWidgets<any>({ additionalTypes: [...SOFT_WIDGETS, CASE_WIDGET] } as never);
 
 const CONDITIONS = [
   { label: 'No gate', note: 'Agent calls Braintree directly' },
@@ -130,6 +132,19 @@ export default function Page() {
         </section>
       )}
 
+      {pageId === 'review' && (
+        <section className="intro">
+          <p>
+            Every refund or charge Counterfoil did not let straight through. <b>APPROVAL</b> waits for the merchant; <b>BLOCK</b> never
+            reaches Braintree. Step through the cases on the right, or narrow them with the buttons: the case agent reads the store
+            record and lays each call out next to what the record allows. It cannot approve anything.
+          </p>
+          <a href="https://counterfoil-demo.onrender.com" target="_blank" rel="noopener">
+            Approve a held call in the live demo →
+          </a>
+        </section>
+      )}
+
       <main style={studioHeight ? { height: studioHeight } : undefined}>
         {error && <p className="message">Could not load counterfoil-data.json ({error}). Run scripts/export_dashboard.py first.</p>}
         {!error && !studioData && <p className="message">Loading…</p>}
@@ -146,6 +161,8 @@ export default function Page() {
               mode="view"
               onApiReady={(e) => {
                 apiRef.current = e.api;
+                // The case agent runs in view mode, where Studio has no assistant panel, so it is built here, not via `ai`.
+                buildCaseHarness(e.api);
               }}
             />
           </AgStudioProvider>

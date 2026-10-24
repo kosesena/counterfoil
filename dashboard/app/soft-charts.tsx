@@ -1,6 +1,6 @@
 'use client';
 
-// Two AG Studio custom widgets that draw the charts the way the design sketch does: rounded bars with
+// AG Studio custom widgets that draw the charts the way the design sketch does: rounded bars with
 // a pale fill and a firmer edge, no gridlines, and a donut with the total in its centre. Studio still
 // owns the data: each widget asks its widgetApi for rows (filters and cross-filters applied), so the
 // condition and model buttons drive these exactly as they drive Studio's own charts.
@@ -185,6 +185,67 @@ export function SoftDonut(params: AgWidgetParams<SoftWidget>) {
   );
 }
 
+// Horizontal bars, longest first: one per check, toned by what the check does to a call (the second
+// category field): amber for APPROVAL (held for a human), terracotta for BLOCK.
+export function SoftRank(params: AgWidgetParams<SoftWidget>) {
+  const rows = useRows(params);
+  const [name, tone] = params.dataMapping.categoryKey ?? [];
+  const value = params.dataMapping.valueKey?.[0];
+  const items = (rows ?? []).map((r) => ({
+    name: String(name ? r[name.key] : ''),
+    v: value ? Number(r[value.key]) || 0 : 0,
+    tone: TONES[tone && r[tone.key] === 'BLOCK' ? 1 : 0],
+  }));
+  const max = Math.max(1, ...items.map((i) => i.v));
+
+  return (
+    <div className="soft soft-rank">
+      <ol>
+        {items.map((i) => (
+          <li key={i.name}>
+            <span className="soft-rank-name">{i.name}</span>
+            <span className="soft-rank-track">
+              <i style={{ width: `${(i.v / max) * 100}%`, background: i.tone.fill, borderColor: i.tone.edge }} />
+            </span>
+            <b>{i.v}</b>
+          </li>
+        ))}
+      </ol>
+      <Legend items={[{ name: 'Holds for a human', tone: TONES[0] }, { name: 'Blocks', tone: TONES[1] }]} />
+    </div>
+  );
+}
+
+// Counts with their denominator, never a summed amount: the value fields are the parts ("25 blocked",
+// "3 held for a person") and the last one is what they are counted out of ("of 94 attack money calls").
+// Part colours come from the definition: the attack tally reads harm then amber, the genuine one green then amber.
+function tally(tones: string[]) {
+  return function SoftTally(params: AgWidgetParams<SoftWidget>) {
+    const rows = useRows(params);
+    const fields = params.dataMapping.valueKey ?? [];
+    const row = rows?.[0] ?? {};
+    const parts = fields.slice(0, -1);
+    const of = fields[fields.length - 1];
+    const n = (f: (typeof fields)[number]) => Number(row[f.key]) || 0;
+    return (
+      <div className="soft-tally">
+        <div>
+          {parts.map((f, i) => (
+            <span key={f.key} style={{ color: `var(--cf-${tones[i % tones.length]}-deep)` }}>
+              <strong>{rows ? n(f) : '…'}</strong> {params.widgetApi.getFieldName(f)}
+            </span>
+          ))}
+        </div>
+        {of && (
+          <small>
+            of {rows ? n(of) : '…'} {params.widgetApi.getFieldName(of)}
+          </small>
+        )}
+      </div>
+    );
+  };
+}
+
 const mapping = {
   categoryKey: { type: 'fieldset' as const, supportedRoles: ['category' as const], intent: 'category' as const, sort: true },
   valueKey: { type: 'fieldset' as const, supportedRoles: ['numeric' as const], intent: 'value' as const },
@@ -200,4 +261,10 @@ const definition = (id: string, label: string, comp: typeof SoftBars): AgWidgetD
   minSize: { width: 4, height: 8 },
 });
 
-export const SOFT_WIDGETS = [definition('soft-bars', 'Soft bars', SoftBars), definition('soft-donut', 'Soft donut', SoftDonut)];
+export const SOFT_WIDGETS = [
+  definition('soft-bars', 'Soft bars', SoftBars),
+  definition('soft-donut', 'Soft donut', SoftDonut),
+  definition('soft-rank', 'Soft ranking', SoftRank),
+  definition('tally-attack', 'Attack tally', tally(['harm', 'amber'])),
+  definition('tally-genuine', 'Genuine tally', tally(['green', 'amber'])),
+];

@@ -52,6 +52,17 @@ const kpi = (text: string, value: { id: string; aggregation?: 'sum' }, caption: 
   },
 });
 
+// A count tile with its denominator (SoftTally in ./soft-charts.tsx); the last measure is the denominator.
+const tally = (type: string, text: string, measures: string[], caption: string, tone: 'harm' | 'green') => ({
+  type: type as 'value',
+  dataMapping: { valueKey: measures.map((id) => ({ id })) } as never,
+  format: {
+    title: { enabled: true, text, typography: typography(13, 'normal') },
+    caption: { enabled: true, text: caption, typography: typography(12) },
+    widget: { backgroundColor: `var(--cf-${tone}-tint)`, borderEnabled: false },
+  },
+});
+
 const filter = (id: string, text: string, minWidth?: number) => ({
   type: 'button-filter' as const,
   dataMapping: { value: [{ id }] },
@@ -172,8 +183,112 @@ function calls(compact: boolean): AgPageState {
   };
 }
 
-export const PAGE_TITLES: Record<string, string> = { overview: 'Overview', calls: 'Agent calls' };
+// The calls the gate did not let through: held for a human (APPROVAL) or refused (BLOCK). The page opens
+// on Counterfoil, the only condition whose checks read the store record. The case file is filled in by
+// the case agent (./case-agent.ts) for one held call at a time.
+function review(compact: boolean): AgPageState {
+  const notPassed = [
+    { field: { id: 'calls.moneyCall' }, model: { operator: 'equals' as const, value: 1 } },
+    { field: { id: 'calls.decision' }, model: { operator: 'notEqual' as const, value: 'PASS' } },
+  ];
+  return {
+    id: 'review',
+    filter: {
+      page: [{ field: { id: 'runs.condition' }, model: { operator: 'isIn', value: ['Counterfoil'] }, filterWidgetId: 'condition' }],
+      widget: { pending: notPassed, case: notPassed },
+    },
+    widgets: {
+      condition: filter('runs.condition', 'Condition'),
+      model: filter('runs.model', 'Model', compact ? 150 : undefined),
+      decision: filter('calls.decision', 'Decision'),
+      // counts with their denominators, across the runs the filters leave; no summed dollar figure
+      'tally-attack': tally(
+        'tally-attack',
+        'Attack e-mails: what happened to the money calls',
+        ['attackBlocked', 'attackHeld', 'attackMoneyCalls'],
+        'The rest matched the store record and passed: no wrong money reached Braintree.',
+        'harm',
+      ),
+      'tally-genuine': tally(
+        'tally-genuine',
+        'Genuine e-mails',
+        ['genuineCompleted', 'genuineToReview', 'genuineRuns'],
+        'Sent to review: the $300 return above the $200 auto-refund limit, as store policy requires.',
+        'green',
+      ),
+      pending: {
+        type: 'grid',
+        dataMapping: {
+          cols: [
+            { id: 'calls.decision' },
+            { id: 'calls.checks' },
+            { id: 'orders.customerEmail' },
+            { id: 'calls.orderNo' },
+            { id: 'calls.rmaId' },
+            { id: 'orders.paymentMethod' },
+            measure('allows'),
+            measure('handedOff'),
+            measure('asked'),
+            { id: 'runs.model' },
+            { id: 'runs.scenarioId' },
+            { id: 'runs.repeat' },
+          ],
+        },
+        format: {
+          ...title('Pending approvals and blocked calls: the store record, the Reader and the agent side by side'),
+          // one row per call; a total would add the same refund up once per model and repeat
+          style: { columnAutoSize: false, columnWidth: 140, grandTotalRow: { enabled: false } },
+        },
+      },
+      case: {
+        type: 'case-file' as 'value',
+        dataMapping: { callKey: [{ id: 'calls.id' }] } as never,
+        format: title('Why held, why blocked'),
+      },
+      checks: {
+        type: 'soft-rank' as 'bar-chart-grouped',
+        dataMapping: {
+          categoryKey: [{ id: 'findings.check' }, { id: 'findings.severity' }],
+          valueKey: [measure('checksFired')],
+        },
+        sort: [{ field: { id: 'checksFired' }, direction: 'desc' }],
+        format: title('Checks that fired'),
+      },
+      mix: {
+        type: 'soft-donut' as 'donut-chart',
+        dataMapping: { categoryKey: [{ id: 'calls.decision' }], valueKey: [measure('moneyCalls')] },
+        sort: [{ field: { id: 'calls.decision' }, direction: 'asc' }],
+        format: { ...title('Decision mix on money calls'), style: bottomLegend },
+      },
+    },
+    widgetLayout: compact
+      ? rows([
+          [['condition'], [24], 7],
+          [['model'], [24], 11],
+          [['tally-attack'], [24], 10],
+          [['tally-genuine'], [24], 10],
+          [['decision'], [24], 7],
+          [['case'], [24], 46],
+          [['pending'], [24], 30],
+          [['checks'], [24], 20],
+          [['mix'], [24], 20],
+        ])
+      : {
+          ...rows([
+            [['condition', 'model'], [8, 16], 7],
+            [['tally-attack', 'tally-genuine'], [12, 12], 9],
+          ]),
+          decision: at([0, 16, 13, 7]),
+          pending: at([0, 23, 13, 38]),
+          case: at([13, 16, 11, 45]),
+          checks: at([0, 61, 15, 20]),
+          mix: at([15, 61, 9, 20]),
+        },
+  };
+}
+
+export const PAGE_TITLES: Record<string, string> = { overview: 'Overview', review: 'Held for review', calls: 'Agent calls' };
 
 export function buildReport(compact: boolean): AgReportState {
-  return { selectedPageId: 'overview', pages: [overview(compact), calls(compact)] };
+  return { selectedPageId: 'overview', pages: [overview(compact), review(compact), calls(compact)] };
 }
