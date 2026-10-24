@@ -33,8 +33,8 @@ const title = (text: string) => ({ title: { enabled: true, text } });
 const sum = (id: string) => ({ id, aggregation: 'sum' as const });
 const measure = (id: string) => ({ id });
 
-const typography = (fontSize: number, fontWeight: 'normal' | 'bold' = 'normal') => ({
-  fontFamily: 'var(--cf-font)',
+const typography = (fontSize: number, fontWeight: 'normal' | 'bold' = 'normal', fontFamily = 'var(--cf-font)') => ({
+  fontFamily,
   fontSize,
   fontWeight,
   fontStyle: 'normal' as const,
@@ -46,7 +46,7 @@ const kpi = (text: string, value: { id: string; aggregation?: 'sum' }, caption: 
   format: {
     title: { enabled: true, text, typography: typography(12, 'bold') },
     caption: { enabled: true, text: caption, typography: typography(12) },
-    style: { typography: typography(32, 'bold'), ...(color && { color }) },
+    style: { typography: typography(34, 'normal', 'var(--cf-mono)'), ...(color && { color }) },
   },
 });
 
@@ -57,8 +57,8 @@ const filter = (id: string, text: string, minWidth?: number) => ({
     ...title(text),
     style: {
       dimensions: { height: 30, ...(minWidth && { minWidth }) },
-      defaultItem: { typography: typography(13), borderRadius: 6, borderColor: 'var(--cf-border)' },
-      activeItem: { color: '#ffffff', backgroundColor: 'var(--cf-navy)', borderColor: 'var(--cf-navy)' },
+      defaultItem: { typography: typography(13), borderRadius: 4, borderColor: 'var(--cf-border)' },
+      activeItem: { color: 'var(--cf-on-accent)', backgroundColor: 'var(--cf-accent)', borderColor: 'var(--cf-accent)' },
     },
   },
 });

@@ -1,7 +1,7 @@
 'use client';
 
-// HOMI's returns control: a header, the store's return station next to the result per condition,
-// and one AG Studio instance over the exported evaluation data. The page is static: it fetches
+// HOMI's returns control: an editorial opening (headline, the store's return station, the result per
+// condition) over a dark console, which is one AG Studio instance on the exported evaluation data. The page is static: it fetches
 // public/counterfoil-data.json in the browser, so it can be hosted anywhere with no credentials.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -82,33 +82,45 @@ export default function Page() {
               {text}
             </button>
           ))}
+          <a className="live" href="https://counterfoil-demo.onrender.com" target="_blank" rel="noopener">
+            Try it live →
+          </a>
         </nav>
-        <a className="live" href="https://counterfoil-demo.onrender.com" target="_blank" rel="noopener">
-          Try it live →
-        </a>
       </header>
 
-      {pageId === 'overview' && (
+      {pageId === 'overview' && data && (
         <section className="hero">
-          <Store3D />
-          <div className="result">
-            <span className="eyebrow">Attack runs · wrong money reached Braintree</span>
-            <h1>Hidden instructions fool the agent. Counterfoil keeps the money right.</h1>
-            <div className="conditions">
-              {compare.map((c) => (
-                <div key={c.label} className={`cond ${c.harm ? 'bad' : 'good'}`}>
-                  <div>
-                    <b>{c.label}</b>
-                    <small>{c.note}</small>
-                  </div>
-                  <strong>
-                    {c.harm}
-                    <span>/{c.total}</span>
-                  </strong>
-                  <i style={{ width: `${c.total ? (100 * c.harm) / c.total : 0}%` }} />
-                </div>
-              ))}
+          <div className="lead">
+            <div>
+              <span className="eyebrow">Evaluation · {data.runs.length} runs · {models.length} models</span>
+              <h1>
+                Hidden instructions fool the agent. <em>Counterfoil</em> keeps the money right.
+              </h1>
             </div>
+            <p>
+              Each attack e-mail tries to make HOMI&apos;s AI agent refund or charge the wrong amount. Without a gate,{' '}
+              {compare[0].harm} of {compare[0].total} attack runs paid wrong money through Braintree. With Counterfoil,{' '}
+              {compare[2].harm === 0 ? 'none did' : `${compare[2].harm} did`}.
+            </p>
+          </div>
+          <div className="station">
+            <Store3D />
+          </div>
+          <div className="caption">
+            <span>HOMI self-service return station · Braintree sandbox, mocked PayPal</span>
+            <span>Fig. 1</span>
+          </div>
+          <div className="conditions">
+            {compare.map((c) => (
+              <div key={c.label} className={`cond ${c.harm ? 'bad' : 'good'}`}>
+                <b>{c.label}</b>
+                <small>{c.note}</small>
+                <strong>
+                  {c.harm}
+                  <span> / {c.total}</span>
+                </strong>
+              </div>
+            ))}
           </div>
         </section>
       )}
