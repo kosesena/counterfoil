@@ -128,6 +128,7 @@ See [`dashboard/README.md`](dashboard/README.md) for details.
 - qwen2.5 locally through Ollama.
 - Claude Haiku 4.5 and Claude Opus 5.5 through the Astro AI Gateway.
 - Presets also exist for qwen3, llama3.1, hermes3, the Claude 5.5 family via Anthropic's API, and GPT-6 Astra (`counterfoil/llm.py`). Runs on Vultr Serverless Inference, which uses the same OpenAI-compatible client, are planned.
+- **Why no Gemma 2 (or other completion-only models):** the payments agent works only through tool calls (`refund`, `charge`, `void`, `lookup_transaction`). Ollama lists `gemma2:9b` as completion-only, with no `tools` capability, so it can't make those calls. Every run would then end with "no money moved". That would look like a gate success but would really be the model failing. Describing the tools in the prompt and parsing JSON out of the reply would make it run, but the agent would no longer work the same way as for the other models, so the comparison wouldn't be fair. Every local model in the table (qwen2.5, qwen3, llama3.1, hermes3) supports native tool calls.
 
 The agent prompts are deliberately ordinary, not hardened against injection: the evaluation measures the gate.
 
