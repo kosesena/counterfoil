@@ -114,8 +114,10 @@ The agent prompts are deliberately ordinary, not hardened against injection: the
 
 **Building tools**
 
-- OpenAI Codex wrote the scenario e-mails and Reader contracts, and reviewed the code and agents. Every finding was fixed with a test: `docs/inceleme/`.
-- Claude was used for research checks and documentation.
+Counterfoil was built by Sena Köse with two AI coding agents. Sena set the problem, the design and every decision.
+
+- **Claude Code** (Anthropic, Claude Opus 5.5) wrote most of the code under that direction: the gateway and its rules, the Braintree rail adapters, the two agents, the evaluation runner and scorer, the AG Studio dashboard, the live demo server, the Blender store scenes, and this documentation and its source checks.
+- **OpenAI Codex** wrote the scenario e-mails and Reader contracts, designed the HOMI self-service return station, and reviewed the code, the scoring and the agents. Every review finding was fixed with a test: `docs/inceleme/`.
 
 ## Related work
 
