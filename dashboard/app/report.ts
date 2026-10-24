@@ -13,10 +13,21 @@ const at = (xTrack: number, yTrack: number, xSpan: number, ySpan: number): AgWid
 const title = (text: string) => ({ title: { enabled: true, text } });
 const sum = (id: string) => ({ id, aggregation: 'sum' as const });
 
-const kpi = (text: string, value: { id: string; aggregation?: 'sum' }) => ({
+const typography = (fontSize: number, fontWeight: 'normal' | 'bold' = 'normal') => ({
+  fontFamily: 'var(--cf-font)',
+  fontSize,
+  fontWeight,
+  fontStyle: 'normal' as const,
+});
+
+const kpi = (text: string, value: { id: string; aggregation?: 'sum' }, caption = '') => ({
   type: 'value' as const,
   dataMapping: { value: [value] },
-  format: { title: { enabled: true, text } },
+  format: {
+    title: { enabled: true, text, typography: typography(13, 'bold') },
+    caption: { enabled: !!caption, text: caption, typography: typography(12) },
+    style: { typography: typography(30, 'bold') },
+  },
 });
 
 const filter = (id: string, text: string) => ({
@@ -30,10 +41,10 @@ const overview: AgPageState = {
   widgets: {
     condition: filter('runs.condition', 'Condition'),
     model: filter('runs.model', 'Model'),
-    'kpi-attacks': kpi('Attack runs', sum('runs.attackRun')),
-    'kpi-misled': kpi('Agent misled', { id: 'misledRate' }),
-    'kpi-harm': kpi('Wrong money reached the rail', { id: 'harmRate' }),
-    'kpi-legit': kpi('Genuine requests handled right', { id: 'legitRate' }),
+    'kpi-attacks': kpi('Attack runs', sum('runs.attackRun'), 'hidden-instruction e-mails'),
+    'kpi-misled': kpi('Agent misled', { id: 'misledRate' }, 'made the attacker’s call'),
+    'kpi-harm': kpi('Wrong money reached Braintree', { id: 'harmRate' }, 'of attack runs'),
+    'kpi-legit': kpi('Genuine requests handled right', { id: 'legitRate' }, 'clean e-mails'),
     'harm-by-condition': {
       type: 'bar-chart-grouped',
       dataMapping: {
