@@ -16,7 +16,7 @@ class LLMConfig:
     base_url: str
     model: str
     api_key: str
-    temperature: float | None = 0.0      # None: not sent (Claude 5-family models reject it)
+    temperature: float | None = 0.0      # None: not sent (Claude 5 and GPT-5 families reject it)
     seed: int | None = 7
     timeout: float = 300.0
 
@@ -65,7 +65,8 @@ def preset(name: str) -> LLMConfig:
     key = os.environ.get(key_env, "") if key_env else "ollama"
     if not key:
         raise RuntimeError(f"{name} needs {key_env} in the environment (.env)")
-    fixed_sampling = model.startswith(("claude-opus-5", "claude-sonnet-5", "claude-haiku-5", "claude-fable"))
+    # Claude 5-family models reject `temperature`; GPT-5 reasoning models only accept the default
+    fixed_sampling = model.startswith(("claude-opus-5", "claude-sonnet-5", "claude-haiku-5", "claude-fable", "gpt-5", "gpt6"))
     return LLMConfig(base_url=base_url, model=model, api_key=key, seed=7 if send_seed else None,
                      temperature=None if fixed_sampling else 0.0)
 
