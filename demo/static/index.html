@@ -82,6 +82,20 @@ details summary { cursor: pointer; color: var(--accent); font-size: 14px; }
 table { border-collapse: collapse; width: 100%; font-size: 13px; }
 td, th { border-bottom: 1px solid var(--line); padding: 5px 6px; text-align: left; vertical-align: top; }
 .hidden { display: none !important; }
+/* the store manager's review of a held call: the call, why it was held, the record it was checked against */
+.review { border: 1px solid var(--line); border-left: 3px solid var(--hold); border-radius: 8px; background: var(--panel); padding: 12px 14px; margin: 8px 0 4px; max-width: 560px; }
+.review-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+.review-head b { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
+.review .kv { margin: 0 0 6px; }
+.review-sub { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 10px 0 4px; }
+.ledger { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.ledger div { padding: 6px 9px; border-left: 1px solid var(--line); }
+.ledger div:first-child { border-left: 0; }
+.ledger span { display: block; font-size: 11px; color: var(--muted); }
+.ledger b { font-variant-numeric: tabular-nums; }
+.ledger .left b { color: var(--pass); }
+.review-act { display: flex; gap: 8px; margin-top: 12px; }
+.review-act .reject { background: transparent; color: var(--block); border: 1px solid var(--line); }
 /* HOMI story: scene left, data right, edges aligned; buttons only, nothing advances on its own */
 .story { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 0; padding: 0; overflow: hidden; }
 @media (max-width: 900px) { .story { grid-template-columns: 1fr; } }
@@ -538,25 +552,70 @@ function refundStep(s, label) {
     s.rail_error ? h("div", { class: "err" }, s.rail_error) : null,
     ...(s.findings || []).filter((f) => f.severity !== "PASS").map((f) => h("div", { class: "finding" }, h("code", {}, f.code), " ", f.detail)));
 }
+// A held call waits here for the visitor, acting as HOMI's manager. Only Approve sends it on to Braintree.
+function reviewCard(s, onDecide) {
+  const a = s.args || {}, rec = s.record || {}, cur = a.currency || "USD";
+  const call = s.tool === "charge"
+    ? [["Call", `charge ${a.amount} ${cur}`], ["Items", (a.items || []).map((i) => `${i.qty ?? i.adet} × ${i.sku}`).join(", ") || "—"],
+       ["Payment method", a.vaulted_payment_method_token]]
+    : [["Call", `${s.tool} ${a.amount} ${cur}`], ["Order", a.order_no], ["RMA", a.rma_id || "none cited"]];
+  const cell = (k, v, cls) => h("div", { class: cls }, h("span", {}, k), h("b", {}, v));
+  const ledger = s.tool === "charge"
+    ? h("div", { class: "ledger" }, ...(rec.catalog || []).map((c) => cell(`${c.sku} unit price`, c.unit_price)),
+        cell("Quantity on record", "none"))
+    : h("div", { class: "ledger" }, cell("Approved", rec.approved), cell("Refunded", rec.refunded), cell("Reserved", rec.reserved),
+        cell("Left", rec.left, "left"));
+  const act = h("div", { class: "review-act" });
+  const go = (decision) => async () => { for (const b of act.children) b.disabled = true; await onDecide(s.approval_id, decision); };
+  act.append(h("button", { onclick: go("approve") }, "Approve"), h("button", { class: "reject", onclick: go("reject") }, "Reject"));
+  return h("div", { class: "review" },
+    h("div", { class: "review-head" }, h("b", {}, "HOMI manager · review"), h("span", { class: "dec APPROVAL" }, "HELD")),
+    h("dl", { class: "kv" }, ...call.flatMap(([k, v]) => [h("dt", {}, k), h("dd", {}, v)])),
+    h("div", { class: "review-sub" }, "Why it was held"),
+    ...(s.findings || []).filter((f) => f.severity !== "PASS").map((f) => h("div", { class: "finding" }, h("code", {}, f.code), " ", f.detail)),
+    h("div", { class: "review-sub" }, s.tool === "charge" ? "Store catalog" : `Store record · ${rec.rma_id || rec.order_no || ""}`),
+    ledger, act);
+}
+function decided(s) {
+  const out = [];
+  // the findings the manager accepted are on the line above; only new ones (a re-check that failed) show here
+  const seen = new Set((s.findings || []).map((f) => f.code));
+  if (s.approved) out.push(refundStep({ ...s.approved, tool: s.tool, args: s.args, findings: s.approved.findings.filter((f) => !seen.has(f.code)) }, `manager approves the ${s.tool}:`));
+  if (s.rejected) out.push(h("li", { class: "shown BLOCK" }, h("span", { class: "dec BLOCK" }, "REJECTED"), ` manager rejects the ${s.tool}; nothing sent to Braintree`));
+  return out;
+}
+function renderRun(r, condition) {
+  const onDecide = async (approval_id, decision) => {
+    $("payErr").textContent = "";
+    try { renderRun(await api("/api/checkout/approve", { purchase_id: pay.purchase.id, approval_id, decision }), condition); }
+    catch (e) { $("payErr").textContent = e.message; renderRun(r, condition); }
+  };
+  const item = (s, label) => {
+    const li = refundStep(s.approval_id ? { ...s, findings: [] } : s, label);  // a held call's findings are on its card
+    if (s.approval_id) li.append(reviewCard(s, onDecide));
+    return [li, ...decided(s)];
+  };
+  const tl = h("ul", { class: "tl" }, ...r.steps.flatMap((s) => item(s)));
+  if (r.correction) tl.append(...item(r.correction, "manager re-creates the refund the records allow:"));
+  const waiting = [...r.steps, r.correction].some((s) => s && s.approval_id);
+  const money = r.braintree_calls.filter((c) => c[0] !== "find");
+  const moved = money.map((c) => `${c[0]} ${c[2]}`).join(" + ");
+  $("refundOut").replaceChildren(h("h3", {}, condition === "counterfoil" ? "Through Counterfoil" : "No gate",
+    h("small", {}, ` · agent calls recorded from ${r.replayed_from.model}`)), tl,
+    h("div", { class: `verdict ${waiting ? "held" : money.length ? "neutral" : "ok"}` },
+      waiting ? "Held for the manager. Nothing held has reached Braintree."
+        : money.length ? `Braintree sandbox: ${moved} (${pay.purchase.currency})` : "No money moved."));
+  if (!waiting && condition === "counterfoil" && state.scenario.id === "P6-01") {
+    // the HOMI story panel tells this purchase and this run, once the manager has answered
+    const order = state.config.store.orders.find((o) => o.order_no === pay.purchase.order_no);
+    window.dispatchEvent(new CustomEvent("homi:live", { detail: { purchase: pay.purchase, run: r, order } }));
+    if ($("story")) $("refundOut").append(h("p", { class: "note" }, h("a", { href: "#story" }, "Your run, step by step in the HOMI store ↑")));
+  }
+}
 async function refundRun(condition) {
   $("payErr").textContent = "";
   try {
-    const r = await api("/api/checkout/refund", { purchase_id: pay.purchase.id, scenario_id: state.scenario.id, condition, source: $("source").value });
-    const tl = h("ul", { class: "tl" }, ...r.steps.map((s) => refundStep(s)));
-    if (r.correction) tl.append(refundStep(r.correction, "manager re-creates the refund the records allow:"));
-    if (r.correction && r.correction.approved) tl.append(refundStep({ ...r.correction.approved, tool: "refund", args: r.correction.args }, "manager approves it:"));
-    const money = r.braintree_calls.filter((c) => c[0] !== "find");
-    $("refundOut").replaceChildren(h("h3", {}, condition === "counterfoil" ? "Through Counterfoil" : "No gate",
-      h("small", {}, ` · agent calls recorded from ${r.replayed_from.model}`)), tl,
-      h("div", { class: `verdict ${money.length ? "neutral" : "ok"}` }, money.length
-        ? `Sandbox refunds on your transaction: ${money.map((c) => c[2]).join(" + ")} (${pay.purchase.currency})`
-        : "No money left your transaction."));
-    if (condition === "counterfoil" && state.scenario.id === "P6-01") {
-      // the HOMI story at the top of the page now tells this purchase and this refund run
-      const order = state.config.store.orders.find((o) => o.order_no === pay.purchase.order_no);
-      window.dispatchEvent(new CustomEvent("homi:live", { detail: { purchase: pay.purchase, run: r, order } }));
-      $("refundOut").append(h("p", { class: "note" }, h("a", { href: "#story" }, "Your run, step by step in the HOMI store ↑")));
-    }
+    renderRun(await api("/api/checkout/refund", { purchase_id: pay.purchase.id, scenario_id: state.scenario.id, condition, source: $("source").value }), condition);
   } catch (e) { $("payErr").textContent = e.message; }
 }
 
