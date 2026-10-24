@@ -219,6 +219,8 @@ class Gateway:
             return f
         findings: list[Finding] = []
         order_no, rma_id = order["order_no"], args.get("rma_id")
+        if rma_id is not None and not isinstance(rma_id, str):  # a list or object here used to crash the ledger query
+            return [Finding(BLOCK, "RMA_UNKNOWN", f"{rma_id!r} is not a return record id")]
         if order["customer_id"] != ctx.customer_id:
             findings.append(
                 Finding(
