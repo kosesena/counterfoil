@@ -1,0 +1,9 @@
+html, body { margin: 0; height: 100%; background: #f6f7f4; color: #14231c; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+header { display: flex; align-items: baseline; gap: 16px; padding: 14px 24px; border-bottom: 1px solid #dfe3dc; background: #fff; }
+header h1 { margin: 0; font-size: 18px; }
+header p { margin: 0; font-size: 13px; color: #5b6b62; }
+main { height: calc(100vh - 56px); }
+.message { padding: 24px; font-size: 14px; }
+nav { margin-left: auto; display: flex; gap: 6px; }
+nav button { font: inherit; font-size: 13px; padding: 6px 12px; border: 1px solid #cfd6cc; border-radius: 6px; background: #fff; color: #14231c; cursor: pointer; }
+nav button.active { background: #14231c; border-color: #14231c; color: #fff; }
