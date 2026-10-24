@@ -19,6 +19,7 @@ class LLMConfig:
     temperature: float | None = 0.0      # None: not sent (Claude 5 and GPT-5 families reject it)
     seed: int | None = 7
     timeout: float = 300.0
+    reasoning_effort: str | None = None  # GPT-5.6 on chat completions only allows tools with "none"
 
     @classmethod
     def from_env(cls) -> "LLMConfig":
@@ -68,7 +69,8 @@ def preset(name: str) -> LLMConfig:
     # Claude 5-family models reject `temperature`; GPT-5 reasoning models only accept the default
     fixed_sampling = model.startswith(("claude-opus-5", "claude-sonnet-5", "claude-haiku-5", "claude-fable", "gpt-5", "gpt6"))
     return LLMConfig(base_url=base_url, model=model, api_key=key, seed=7 if send_seed else None,
-                     temperature=None if fixed_sampling else 0.0)
+                     temperature=None if fixed_sampling else 0.0,
+                     reasoning_effort="none" if model.startswith("gpt-5-6") else None)
 
 
 class LLM:
@@ -80,6 +82,8 @@ class LLM:
         kw = {"model": self.config.model, "messages": messages}
         if self.config.temperature is not None:
             kw["temperature"] = self.config.temperature
+        if self.config.reasoning_effort:
+            kw["reasoning_effort"] = self.config.reasoning_effort
         if self.config.seed is not None:
             kw["seed"] = self.config.seed
         if tools:

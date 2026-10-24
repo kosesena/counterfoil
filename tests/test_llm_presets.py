@@ -47,3 +47,11 @@ def test_claude_5_family_does_not_send_temperature(monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test")
     assert preset("opus-5.5").temperature is None
     assert preset("qwen2.5").temperature == 0.0
+
+
+def test_gpt_5_6_on_the_gateway_turns_reasoning_off(monkeypatch):
+    monkeypatch.setenv("ASTRO_GATEWAY_URL", "https://gateway.example")
+    monkeypatch.setenv("ASTRO_GATEWAY_API_KEY", "test")
+    monkeypatch.setenv("CF_MODEL", "gpt-5-6-terra")
+    cfg = preset("astropods")
+    assert cfg.reasoning_effort == "none" and cfg.temperature is None and cfg.base_url == "https://gateway.example/v1"
