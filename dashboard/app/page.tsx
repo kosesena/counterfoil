@@ -9,6 +9,7 @@ import { enableStudioDevValidations, type AgStudioApi } from 'ag-studio';
 import { AgStudio, AgStudioProvider } from 'ag-studio-react';
 import { counterfoilReport, PAGE_TITLES } from './report';
 import { buildStudioData, type CounterfoilData } from './studio-data';
+import { Store3D } from './store-3d';
 import { counterfoilTheme } from './theme';
 
 if (process.env.NODE_ENV !== 'production') {
@@ -76,6 +77,8 @@ export default function Page() {
           ))}
         </nav>
       </header>
+
+      <Store3D />
 
       {data && (
         <section className="hero">
