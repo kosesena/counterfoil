@@ -69,7 +69,7 @@ attacker's.
 | **P4** instruction smuggled through the Reader's `note` | Raise 30 → 50 (P4-01), 25 → 40 (P4-02) | The call differs from the Reader's fixed fields | APPROVAL (`READER_CALL_MISMATCH`) | `Gateway._reader_check` |
 | **P5** tool or scope escalation | Unlisted export tool (P5-01); lookup of another customer's order (P5-02) | Tool allowlist per session; reads scoped to the sender's orders; every later money call in that session is held | BLOCK (`TOOL_NOT_ALLOWED`, `SCOPE_NOT_ALLOWED`), then APPROVAL (`PRIOR_BLOCKED_ATTEMPT`) | `Gateway.check`, `_check_lookup` |
 | **P6** split refund | 60 + 60 against a 100 RMA, across calls (P6-01) or sessions (P6-02) | Remaining entitlement counts completed refunds *and* live reservations; check-and-reserve is one SQLite transaction | BLOCK (`CUMULATIVE_REFUND_EXCEEDS_RMA`, `CONCURRENT_REFUND`) | `_check_refund`, `_execute_refund`, `Store.transaction` |
-| **P7** reorder quantity inflation | Charge 150 instead of 25 (P7-01), 160 instead of 80 (P7-02) | Charge must equal catalog price × the quantity the Reader extracted; the vaulted method must belong to the sender; one charge per e-mail | APPROVAL (`CHARGE_AMOUNT_MISMATCH`, `ITEMS_MISMATCH`); BLOCK (`PAYMENT_METHOD_NOT_OWNED`, `DUPLICATE_CHARGE`) | `Gateway._check_charge`, `_execute_charge` |
+| **P7** reorder quantity inflation | Charge 150 instead of 25 (P7-01), 160 instead of 80 (P7-02) | No store record says how many the customer ordered, so every charge is held for a human to confirm the itemised total; it must also equal catalog price × the Reader's quantity, use the sender's own vaulted method, once per e-mail | APPROVAL (`CHARGE_NEEDS_CONFIRMATION`, `CHARGE_AMOUNT_MISMATCH`, `ITEMS_MISMATCH`); BLOCK (`PAYMENT_METHOD_NOT_OWNED`, `DUPLICATE_CHARGE`) | `Gateway._check_charge`, `_execute_charge` |
 
 Cross-cutting guarantees, each with tests in `tests/test_gateway_mechanics.py` and property tests in
 `tests/test_gateway_properties.py`:
@@ -90,12 +90,13 @@ These are limits of the design, not bugs. They are listed so nobody reads the me
    HOMI station, a careless support agent), a refund up to that record's amount to the order's owner is legitimate as
    far as the gate can tell. The gate bounds the loss to what the store itself authorised; it does not judge whether
    the store should have authorised it.
-2. **Charges are only as good as the Reader's quantities.** For refunds the bound comes from the store (the RMA). For a
-   reorder there is no store-side record of what the customer wants, so the bound is the Reader's extracted items
-   (`kalemler`) × catalog price. If an injection reaches the Reader's *fixed fields* rather than just its `note` (the
-   Reader itself reads "six cups"), the call, the Reader and the catalog all agree and the charge passes. In P7-01 the
-   Reader extracted one cup and the gate held the 150.00 charge; a stronger injection against the Reader would not be
-   held. The money still goes only to the sender's own vaulted method, at catalog prices, once per e-mail.
+2. **For a charge, the human is the control.** For refunds the bound comes from the store (the RMA). For a reorder
+   there is no store-side record of what the customer wants: the only source is the e-mail, through the Reader. A
+   qwen3 run showed the Reader itself following hidden HTML (6 × CUP instead of 1), after which call, Reader and
+   catalog all agreed. So every charge is now held (`CHARGE_NEEDS_CONFIRMATION`) with the itemised total spelled out;
+   the gate cannot tell a genuine "six cups" from an injected one, and a confirmer who does not check the basket
+   against the customer gets what they confirmed. The cost is that genuine reorders wait for a human too. The money
+   can still only go to the sender's own vaulted method, at catalog prices, once per e-mail.
 3. **APPROVAL is not BLOCK.** A held call executes if the manager approves it. The findings tell the manager what is
    wrong; a manager who approves anyway gets what they approved (bound to those exact arguments, once).
 4. **Sender identity is the mailbox's job.** The customer id comes from the envelope sender. A spoofed sender address

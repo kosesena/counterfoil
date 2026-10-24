@@ -5,10 +5,10 @@ reproduced with the commands under each heading.
 
 | Measure | Number |
 |---|---|
-| Tests | **300** collected: 297 pass, 2 skipped (parametrised cases with nothing to check: an unlisted tool has no rail endpoint), 1 expected failure (P1-02 scoring, explained in the test) |
+| Tests | **301** collected: 298 pass, 2 skipped (parametrised cases with nothing to check: an unlisted tool has no rail endpoint), 1 expected failure (P1-02 scoring, explained in the test) |
 | Line + branch coverage, whole package | **94 %** |
 | Line + branch coverage, `counterfoil/gateway.py` | **99 %** (2 defensive lines) |
-| Mutation score, `counterfoil/gateway.py` | **94.9 %** (1201 of 1265 mutants killed; the 64 survivors are explained below) |
+| Mutation score, `counterfoil/gateway.py` | **94.8 %** (1217 of 1284 mutants killed; the 67 survivors are explained below) |
 | Property tests | 8 hypothesis tests: a stateful model of the gate with 7 invariants, money parsing, and two fuzzers |
 | Static checks | ruff (pyflakes, pycodestyle, isort, bugbear, pyupgrade, simplify, bandit), ruff format, mypy (`check_untyped_defs`) |
 | Supply chain | pip-audit on runtime and dev requirements: no known vulnerabilities; CodeQL `security-extended` |
@@ -58,7 +58,7 @@ or the rail raising before or after it acted (a timeout). After every step:
 4. **Every refund the rail executed is in the store's ledger**: no money moves unrecorded, including when the rail
    acts and then times out.
 5. **A call that executes without a human owns what it touches** (order, payment method), a lookup only returns the
-   sender's own order, and **an unattended charge equals catalog price × the Reader's items**.
+   sender's own order, and **no charge executes without a human** (`CHARGE_NEEDS_CONFIRMATION`).
 6. **One charge per e-mail reaches the rail**, approvals included.
 7. **Amounts are exact**: every amount in the ledger is a `Decimal` with two places; `parse_amount` accepts only
    positive two-place values up to the maximum, never a float, and sums of parsed amounts equal the exact cent sums.
@@ -93,7 +93,7 @@ The `mutation` hypothesis profile is derandomised, so a mutant is never killed o
 | Run | Killed | Survived | Score |
 |---|---|---|---|
 | Before (existing tests + property tests) | 962 | 295 (+ 8 not covered) | 76.0 % |
-| After `tests/test_gateway_rules.py` and the finding-shape invariant | 1201 | 64 | 94.9 % |
+| After `tests/test_gateway_rules.py` and the finding-shape invariant (gate incl. `CHARGE_NEEDS_CONFIRMATION`, 1284 mutants) | 1217 | 67 | 94.8 % |
 
 The first run's survivors showed real gaps, now closed by tests:
 

@@ -346,6 +346,21 @@ class Gateway:
                     f"{amount} requested, catalog price × Reader quantity is {expected}",
                 )
             )
+        # No store record says how many the customer ordered: the quantity comes from the e-mail, via the Reader.
+        # A Reader that obeys hidden text agrees with the call on every field (qwen3, P7-01, 24 Oct), so the checks
+        # above cannot be the basis. A human confirms the itemised total before any charge.
+        basket = ", ".join(
+            f"{q} × {s} @ {self.store.catalog[s]['unit_price']}"
+            for s, q in sorted(requested.items())
+            if s in self.store.catalog
+        )
+        findings.append(
+            Finding(
+                APPROVAL,
+                "CHARGE_NEEDS_CONFIRMATION",
+                f"no store record of the quantity; confirm {basket or 'the items'} = {amount} {currency}",
+            )
+        )
         return findings
 
     @staticmethod

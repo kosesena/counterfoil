@@ -9,7 +9,7 @@ clock jumps and a rail that sometimes fails or times out after moving money. Aft
 - per return record, the money that left (accepted, completed and unknown refunds) never exceeds the approved amount,
   unless a manager explicitly approved an RMA_AMOUNT_MISMATCH on it;
 - every refund the rail executed is in the store's ledger, with the same amount: no money moves unrecorded;
-- a call that executes without a human owns what it touches, and a charge without a human is catalog × Reader items;
+- a call that executes without a human owns what it touches, and no charge executes without a human;
 - one charge per e-mail reaches the rail, approvals included;
 - amounts are exact Decimals with two places: no float drift, whatever the input.
 
@@ -169,11 +169,9 @@ class GateMachine(RuleBasedStateMachine):
             assert self.store.owns_token(ctx.customer_id, args["vaulted_payment_method_token"])
         if human is None and tool in ("refund", "void"):
             assert ORDERS[args["order_no"]]["customer_id"] == ctx.customer_id, "money moved on another customer's order"
-        if human is None and tool == "charge":
-            items = {}
-            for it in ctx.reader["kalemler"]:
-                items[it["sku"]] = items.get(it["sku"], 0) + it["adet"]
-            assert parse_amount(args["amount"]) == sum((PRICE[s] * q for s, q in items.items()), Decimal("0.00"))
+        if tool == "charge":
+            # no store record says how many the customer ordered, so every charge waits for a human
+            assert human is not None, "a charge reached the rail without confirmation"
 
     # -- rules ---------------------------------------------------------------------------------------
     @rule(

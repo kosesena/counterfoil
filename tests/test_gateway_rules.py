@@ -261,10 +261,17 @@ def test_lookup_returns_the_order_view():
     assert out.decision == PASS and out.data and out.data["order_no"] == "ST-1042"
 
 
+def confirmed_charge(gw, ctx, args):
+    """Every charge is held for the customer's confirmation of the itemised total; confirm it."""
+    held = gw.handle(ctx, "charge", dict(args))
+    assert codes(held) == {"CHARGE_NEEDS_CONFIRMATION": APPROVAL}, held.summary()
+    return gw.approve(held.approval_id)
+
+
 def test_a_charge_is_recorded_against_the_email_with_the_rail_id():
     gw, rail, _ = gate()
-    out = gw.handle(session("CUS-01", "charge", CHARGE), "charge", dict(CHARGE))
-    assert out.decision == PASS and out.executed
+    out = confirmed_charge(gw, session("CUS-01", "charge", CHARGE), CHARGE)
+    assert out.decision == APPROVAL and out.executed
     assert rail.money_calls() == [("charge", "fixture-vault-01", Decimal("25.00"), "s1:charge")]
     assert gw.store.sql("SELECT * FROM charges") == [("s1:charge", "CUS-01", "25.00", "accepted", out.rail.id)]
 
@@ -272,7 +279,7 @@ def test_a_charge_is_recorded_against_the_email_with_the_rail_id():
 def test_a_second_charge_from_one_email_is_refused_by_the_check_not_only_by_the_claim():
     gw, rail, _ = gate()
     ctx = session("CUS-01", "charge", CHARGE)
-    gw.handle(ctx, "charge", dict(CHARGE))
+    assert confirmed_charge(gw, ctx, CHARGE).executed
     out = gw.handle(ctx, "charge", dict(CHARGE))
     assert codes(out) == {"DUPLICATE_CHARGE": BLOCK} and "already produced" in out.findings[0].detail
     assert len(rail.money_calls()) == 1
@@ -316,7 +323,7 @@ def test_the_charge_is_claimed_before_the_rail_is_called():
         return real(*a)
 
     rail.charge = charge
-    assert gw.handle(session("CUS-01", "charge", CHARGE), "charge", dict(CHARGE)).executed
+    assert confirmed_charge(gw, session("CUS-01", "charge", CHARGE), CHARGE).executed
     assert seen == [[("25.00", "requested")]]
 
 
@@ -540,14 +547,14 @@ def test_reader_and_call_may_name_quantities_either_way():
     ctx = session("CUS-01", "charge", CHARGE)
     ctx.reader["kalemler"] = [{"sku": "CUP", "qty": 1}]  # Reader used the call's key
     call = dict(CHARGE, items=[{"sku": "CUP", "adet": 1}])  # and the agent the Reader's
-    assert gw.handle(ctx, "charge", call).decision == PASS
+    assert codes(gw.handle(ctx, "charge", call)) == {"CHARGE_NEEDS_CONFIRMATION": APPROVAL}  # no ITEMS_MISMATCH
 
 
 def test_repeated_sku_lines_are_added_up():
     gw, rail, _ = gate()
     ctx = session("CUS-01", "charge", dict(CHARGE, items=[{"sku": "CUP", "qty": 2}], amount="50.00"))
     call = dict(CHARGE, items=[{"sku": "CUP", "qty": 1}, {"sku": "CUP", "qty": 1}], amount="50.00")
-    assert gw.handle(ctx, "charge", call).decision == PASS
+    assert codes(gw.handle(ctx, "charge", call)) == {"CHARGE_NEEDS_CONFIRMATION": APPROVAL}
 
 
 # -- small pieces --------------------------------------------------------------------------------------
