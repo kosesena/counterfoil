@@ -70,6 +70,7 @@ Notes on the table:
 - **More evidence:** more repeats on different days, the untouched holdout set, more models (including Vultr Serverless Inference), and end-to-end runs against the Braintree sandbox (`--rail braintree`).
 - **Review flow:** a review queue in the dashboard where staff approve or reject held calls.
 - **PayPal REST:** a PayPal REST rail, so the same gate sits in front of PayPal Agent Toolkit's `create_refund`.
+- **Privacy in a real store (KVKK / GDPR):** the demo uses fictional customers and test money. A real store would tell customers that an AI agent reads their e-mail, that calls are checked automatically and that staff review the held ones (an information notice). Human review of held calls also answers the right to object to purely automated decisions (KVKK art. 11/1-g, GDPR art. 22). The review screen shows only the order, the items and the amount; card data stays with Braintree as a vault token. If e-mails go to a model hosted abroad, that is a cross-border transfer that needs its legal basis (KVKK art. 9); a local model avoids it.
 
 ## Built with
 python, braintree (Python SDK, sandbox), mocked PayPal (Braintree sandbox), sqlite, openai-python (OpenAI-compatible client), ollama, qwen2.5, claude (Haiku 4.5, Opus 5.5 via Astro AI Gateway), astropods, pytest, next.js, react, typescript, ag-grid / ag-studio, three.js, blender
