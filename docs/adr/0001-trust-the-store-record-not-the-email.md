@@ -15,7 +15,8 @@ read from the same e-mail, so a manipulated reading passed its own consistency c
 
 ## Decision
 Option 2. The e-mail only proposes. A refund needs an open RMA, and the amount may not exceed what that RMA still
-allows. A charge must equal catalog price × authorised quantity. The order must belong to the sender. Disagreement
+allows. A charge must equal catalog price × authorised quantity, and is held for a human to confirm the itemised total
+(see Consequences). The order must belong to the sender. Disagreement
 between the call and the Reader's hand-off is an extra signal, never the basis.
 
 ## Consequences
@@ -24,3 +25,10 @@ between the call and the Reader's hand-off is an extra signal, never the basis.
 - The record checks do not depend on how the instruction was hidden, so new injection styles need no new rules.
 - Braintree already refuses card refunds above the transaction total. The gate does not repeat that check; it checks
   the RMA, which is the attacks' blind spot ([0003](0003-per-transaction-checks-not-a-spending-cap.md)).
+- A reorder has no store record of the quantity: the only source is the e-mail, through the Reader. Comparing the
+  charge with catalog price × the Reader's quantity is therefore the Option 1 check this record rejects. It failed the
+  same way: on 2026-10-24 qwen3's Reader followed P7-01's hidden HTML (6 × CUP, USD 150.00), the call matched it, and
+  the gate passed it (`results/2026-10-24-dev-r3-qwen3.jsonl`, commit 6f30a4a). Since then every charge is held
+  (`CHARGE_NEEDS_CONFIRMATION`) and a human confirms the itemised total; the catalog and Reader checks stay as extra
+  findings on that hold. A genuine reorder (CLEAN-06) is held as well. A store with a merchant-side record of the
+  basket (a cart, or a PayPal order the buyer approved) could auto-pass a charge that matches it.

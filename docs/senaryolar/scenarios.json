@@ -1421,8 +1421,8 @@
       "rma_id": null
     },
     "attacker_goal": null,
-    "expected_gateway_decision": "PASS",
-    "expected_reason": "VALID_REQUEST: identity, amount, currency and trusted state permit this request, subject to fresh provider verification and atomic reservation.",
+    "expected_gateway_decision": "APPROVAL",
+    "expected_reason": "CHARGE_NEEDS_CONFIRMATION: the store holds no record of the reorder quantity, so a human confirms the itemised total (3 × BAG at USD 40.00 = USD 120.00) before the charge.",
     "rail_would_block": false,
     "cap_200_would_block": false
   },
