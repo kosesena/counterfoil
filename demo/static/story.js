@@ -9,7 +9,8 @@
 // HOMI_STEP_1..5, one frame range per step (clips named HOMI_STEP_n, or scene extras homi_steps = [[start, end], ...]
 // with homi_fps), and the screen/tablet materials HOMI_SCREEN_MAT / HOMI_TABLET_MAT drawn as canvas textures from the
 // data. Until then: the till exported from the .blend at the P6 return (frame 650) with hand-set camera poses, a
-// customer moved along a path, the station screen and receipt drawn from the data, and the tablet as HTML. Phones (< 760px) get one still per step, no WebGL.
+// customer who pushes the cart in with the four cups and puts them on the return tray, the station screen and receipt
+// drawn from the data, and the tablet as HTML. Phones (< 760px) get one still per step, no WebGL.
 
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
@@ -26,15 +27,15 @@ const $ = (id) => document.getElementById(id);
 // glTF coordinates (Blender x, z, -y). Station HR at x -13.5, its screen faces +x; exit gates at z 11.65.
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const POSES = [
-  { pos: V(-9.6, 3.0, 9.0), at: V(-12.6, 0.9, 11.9) },     // 0 · before the start: the gates
-  { pos: V(-9.6, 3.0, 9.0), at: V(-12.6, 0.9, 11.4) },     // 1 · through the gates
-  { pos: V(-11.3, 2.4, 10.9), at: V(-13.45, 1.25, 8.9) },  // 2 · at the return station, four cups
+  { pos: V(-9.3, 3.5, 8.4), at: V(-12.6, 1.35, 12.0) },    // 0 · before the start: the gates
+  { pos: V(-9.3, 3.5, 8.4), at: V(-12.6, 1.35, 11.5) },    // 1 · through the gates
+  { pos: V(-13.1, 3.4, 12.4), at: V(-13.45, 1.2, 9.3) },   // 2 · scanning the four cups
   { pos: V(-12.5, 1.95, 7.25), at: V(-13.49, 1.62, 8.75) },// 3 · the screen
-  { pos: V(-17.75, 2.75, 10.25), at: V(-18.62, 1.1, 9.5) },// 4 · the manager's tablet
+  { pos: V(-17.75, 3.0, 6.8), at: V(-18.61, 1.1, 6.0) },   // 4 · the manager's tablet
   { pos: V(-11.9, 1.3, 7.05), at: V(-13.07, 0.66, 7.56) }, // 5 · the receipt slot
 ];
 // HTML stand-in for the tablet's screen (static GLB only; too small to draw on), pinned to this point.
-const ANCHORS = { 4: V(-18.62, 1.16, 9.52) };
+const ANCHORS = { 4: V(-18.61, 1.16, 6.02) };
 const STEP_S = 1.6;            // seconds per step in the static scene
 
 const story = { step: 0, data: null, live: false, view: null, source: null, scene: null };
@@ -220,7 +221,7 @@ function drawCanvas({ c, g, t }, L) {
   g.fillStyle = ink; g.textBaseline = "top";
   g.font = `600 ${H * 0.09}px system-ui, sans-serif`; g.fillText("HOMI", W * 0.07, H * 0.06);
   if (L.top) { g.font = `500 ${H * 0.045}px system-ui, sans-serif`; fit(g, L.top, W * 0.86, H * 0.045); g.fillText(L.top, W * 0.07, H * 0.18); }
-  g.font = `700 ${H * 0.08}px system-ui, sans-serif`; g.fillText(L.head, W * 0.07, H * 0.3);
+  g.font = `700 ${H * 0.08}px system-ui, sans-serif`; fit(g, L.head, W * 0.86, H * 0.08); g.fillText(L.head, W * 0.07, H * 0.3);
   g.font = `700 ${H * 0.17}px system-ui, sans-serif`; fit(g, L.big, W * 0.86, H * 0.17); g.fillText(L.big, W * 0.07, H * 0.45);
   g.font = `500 ${H * 0.06}px system-ui, sans-serif`; fit(g, L.sub, W * 0.86, H * 0.06); g.fillText(L.sub, W * 0.07, H * 0.74);
   t.needsUpdate = true;
@@ -316,15 +317,22 @@ async function glView() {
   }
 
   // -- the static GLB: a customer to move, a screen to tint, a receipt to print ---------------------------------
-  let walker = null, tablet = null, receipt = null;
+  let walker = null, cart = null, cups = null, tablet = null, receipt = null;
   if (!animated) {
-    const people = [];
-    root.traverse((o) => { if (o.isMesh && o.name.startsWith("Customer_")) people.push(o); });
-    if (people.length) {
-      walker = new THREE.Group(); walker.position.set(-12.3, 0, 8.75);
-      scene.add(walker); root.updateMatrixWorld(true); walker.updateMatrixWorld(true);
-      for (const o of people) walker.attach(o);
-    }
+    // pull the customer, the cart and the four returned cups out of the baked scene so they can move;
+    // each group's pivot is where the .blend left it at frame 650 (the customer at the station)
+    const group = (test, x, z) => {
+      const parts = [];
+      root.traverse((o) => { if (o.isMesh && test.test(o.name)) parts.push(o); });
+      if (!parts.length) return null;
+      const g = new THREE.Group(); g.position.set(x, 0, z);
+      scene.add(g); root.updateMatrixWorld(true); g.updateMatrixWorld(true);
+      for (const o of parts) g.attach(o);
+      return g;
+    };
+    walker = group(/^(PC_)?Customer/, -12.63, 9.65);
+    cart = group(/^(Axle|Basket|Caster|Chassis|Folded_child|HOMI_Cart|Handle_|Hub_|Lower_shelf|Rear_|Rubber_wheel|Soft_grip|Wheel_hub)/, -12.28, 9.85);
+    cups = group(/^(P6_ReturnCup|P6_CupHandle|PC_Label|PC_EAN)/, -13.38, 9.9);
     const tint = (name) => {
       const o = root.getObjectByName(name);
       if (!o || !o.isMesh) return null;
@@ -333,7 +341,7 @@ async function glView() {
       return o.material;
     };
     // the station screen's text is baked at one frame; a canvas drawn from the run's data replaces it
-    root.traverse((o) => { if (/^(HF_UI|HF_Simulation|HR_UI|HR_AgentAvatar|HR_AvatarEye)/.test(o.name)) o.visible = false; });
+    root.traverse((o) => { if (/^(HF_UI|HF_Simulation|HR_UI|HR_AgentAvatar|HR_AvatarEye|PC_ScanUI)/.test(o.name)) o.visible = false; });
     const face = canvasTex(1024, 880);
     face.t.flipY = true;
     const screenPlane = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.77), new THREE.MeshBasicMaterial({ map: face.t, toneMapped: false }));
@@ -352,13 +360,28 @@ async function glView() {
   const CYAN = new THREE.Color(0x7fd6ff);
   // the static scene as a function of story time s (0 = before step 1, n = end of step n)
   function pose(s) {
+    // step 1: through the gates pushing the cart (cups in the basket); step 2: park the cart, step up to the
+    // station, put the cups on the return tray
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const t1 = ease(clamp01(s)), t2 = clamp01(s - 1);
+    const walkZ = lerp(14.4, 11.0, t1);
     if (walker) {
-      const out = { x: -12.55, z: 13.9 }, inside = { x: -12.55, z: 10.7 }, till = { x: -12.3, z: 8.75 };
-      let x, z, heading;
-      if (s <= 1) { const t = ease(clamp01(s)); x = out.x; z = out.z + (inside.z - out.z) * t; heading = -Math.PI / 2; }
-      else { const t = clamp01(s - 1), e = ease(t); x = inside.x + (till.x - inside.x) * e; z = inside.z + (till.z - inside.z) * e; heading = -Math.PI / 2 * (1 - ease(clamp01((t - 0.6) / 0.4))); }
-      walker.position.set(x, 0, z); walker.rotation.y = heading;
-      walker.position.y = s < 2 && s > 0 && (s % 1) > 0.02 && (s % 1) < 0.98 ? Math.abs(Math.sin(s * 22)) * 0.02 : 0;
+      const k = ease(clamp01((t2 - 0.25) / 0.75));
+      walker.position.set(lerp(-12.55, -12.63, k), 0, s <= 1 ? walkZ : lerp(11.0, 9.65, k));
+      walker.rotation.y = -Math.PI / 2 * (1 - ease(clamp01((t2 - 0.6) / 0.4)));
+      const moving = (s > 0 && s < 1) || (t2 > 0.25 && t2 < 1);
+      walker.position.y = moving ? Math.abs(Math.sin(s * 22)) * 0.02 : 0;
+    }
+    if (cart) {                       // handle towards the customer, 1.1 m ahead while walking; parked beside the station
+      const k = ease(clamp01(t2 / 0.6));
+      cart.position.set(lerp(-12.55, -11.7, k), 0, lerp(walkZ - 1.1, 9.4, k));
+      cart.rotation.y = lerp(Math.PI / 2, 0, k);
+    }
+    if (cups && cart) {
+      const k = ease(clamp01((t2 - 0.7) / 0.3));
+      const basket = new THREE.Vector3(0.05, 0, 0).applyAxisAngle(THREE.Object3D.DEFAULT_UP, cart.rotation.y).add(cart.position);
+      cups.position.set(lerp(basket.x, -13.38, k), lerp(-0.17, 0, k) + Math.sin(Math.PI * k) * 0.3, lerp(basket.z, 9.9, k));
+      cups.rotation.y = lerp(cart.rotation.y, 0, k);
     }
     if (tablet) tablet.emissive.copy(CYAN).multiplyScalar(clamp01((s - 3.2) / 0.5) * 0.6);
     if (receipt) {

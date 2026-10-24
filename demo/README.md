@@ -30,7 +30,7 @@ Files in `demo/static/` (code: `story.js`; three.js 0.170.0 and its Draco decode
   (`[[start, end], ...]` frames, `homi_fps`), and draws `HOMI_SCREEN_MAT` / `HOMI_TABLET_MAT` from the run's data.
 - `3d/homi-return-station.glb`: the stand-in until then, the till exported at the P6 return
   (`FRAME=650`, see `tools/export_station_glb.py`), with hand-set camera poses.
-- `story/step-1..5.jpg`: what phones (< 760 px) see instead of WebGL.
+- `story/step-1..5.jpg`: what phones (< 760 px) see instead of WebGL (1–2 from the stand-in scene, 3–5 Codex's renders).
 
 ## Run locally
 
