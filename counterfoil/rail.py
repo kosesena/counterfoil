@@ -184,9 +184,11 @@ class SandboxRail(BraintreeRail):
             o = self.orders.get(fixture_id)
             if o is None:
                 return None
-            r = self.gw.transaction.sale({"amount": str(o["total"]), "payment_method_nonce": "fake-paypal-one-time-nonce",
-                                          "order_id": f"{self.tag}:{o['order_no']}",
-                                          "options": {"submit_for_settlement": True}})
+            sale = {"amount": str(o["total"]), "payment_method_nonce": "fake-paypal-one-time-nonce",
+                    "order_id": f"{self.tag}:{o['order_no']}", "options": {"submit_for_settlement": True}}
+            if os.environ.get("BRAINTREE_MERCHANT_ACCOUNT_ID"):
+                sale["merchant_account_id"] = os.environ["BRAINTREE_MERCHANT_ACCOUNT_ID"]
+            r = self.gw.transaction.sale(sale)
             if not r.is_success:
                 raise RuntimeError(f"sandbox setup sale for {o['order_no']} failed: {r.message}")
             self.real[fixture_id] = r.transaction.id

@@ -62,6 +62,7 @@ class Settings:
         return {"live_enabled": self.live is not None, "live_model": self.live.model if self.live else None,
                 "live_reason": "" if self.live else self.live_reason,
                 "rail": "braintree-sandbox" if self.braintree else "fake",
+                "paypal_checkout": self.braintree,
                 "limits": {"max_email_chars": self.max_email_chars, "max_turns": self.max_turns,
                            "max_calls": self.max_calls, "rate_limit": self.rate_limit,
                            "rate_window_s": self.rate_window_s, "daily_llm_calls": self.daily_llm_calls}}

@@ -27,6 +27,7 @@ from counterfoil.rail import SandboxRail
 from counterfoil.scenarios import load_records, load_scenarios
 from scripts.run_eval import CONDITIONS, run_one
 
+from .checkout import Checkout
 from .limits import LRU, DailyBudget, MeteredLLM, RateLimiter
 from .replay import Replays
 from .scope import ScopedRail
@@ -49,6 +50,20 @@ class EmailIn(BaseModel):
     body_text: str = ""
     body_html: str | None = None
     attachment_text: str | None = None
+
+
+class BuyIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    scenario_id: str = Field(max_length=32)
+    nonce: str = Field(min_length=4, max_length=256)
+
+
+class RefundIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    purchase_id: str = Field(min_length=8, max_length=64)
+    scenario_id: str = Field(max_length=32)
+    condition: Literal["none", "cap", "counterfoil"] = "counterfoil"
+    source: str | None = Field(None, max_length=120)
 
 
 class RunIn(BaseModel):
@@ -96,6 +111,7 @@ def create_app(settings: Settings | None = None, llm_factory=None, results: Path
     slots = threading.BoundedSemaphore(settings.max_concurrent)
     reader_cache = LRU()
     live_llm = MeteredLLM(llm_factory(settings.live), budget) if settings.live else None
+    checkout = Checkout(settings.braintree)
 
     app = FastAPI(title="Counterfoil live demo", docs_url=None, redoc_url=None, openapi_url=None)
 
@@ -140,6 +156,54 @@ def create_app(settings: Settings | None = None, llm_factory=None, results: Path
         if body.mode == "replay":
             return _replay(body)
         return _live(body, request)
+
+    # -- real PayPal purchase (Braintree sandbox) + the recorded agent calls replayed onto it ------------------
+    def _checkout_guard(request: Request, scenario_id: str):
+        if not checkout.enabled:
+            raise HTTPException(503, "PayPal checkout is off: the server has no Braintree sandbox keys")
+        if scenario_id not in scenarios or "ground_truth" not in scenarios[scenario_id]:
+            raise HTTPException(404, "unknown scenario")
+        wait = limiter.retry_after(_client_ip(request))
+        if wait:
+            raise HTTPException(429, f"rate limit: try again in {wait:.0f}s", headers={"Retry-After": str(int(wait) + 1)})
+
+    @app.get("/api/checkout/token")
+    def checkout_token():
+        if not checkout.enabled:
+            raise HTTPException(503, "PayPal checkout is off: the server has no Braintree sandbox keys")
+        try:
+            return {"client_token": checkout.client_token()}
+        except Exception:
+            log.exception("client token failed")
+            raise HTTPException(502, "Braintree did not issue a client token")
+
+    @app.post("/api/checkout/buy")
+    def checkout_buy(body: BuyIn, request: Request):
+        _checkout_guard(request, body.scenario_id)
+        try:
+            return checkout.buy(body.nonce, scenarios[body.scenario_id])
+        except ValueError as exc:                 # Braintree's own decline message, no secrets in it
+            raise HTTPException(402, f"payment failed: {exc}")
+        except Exception:
+            log.exception("checkout failed")
+            raise HTTPException(502, "the sandbox payment failed on the server")
+
+    @app.post("/api/checkout/refund")
+    def checkout_refund(body: RefundIn, request: Request):
+        _checkout_guard(request, body.scenario_id)
+        source = body.source or replays.default
+        row = replays.get(source, body.scenario_id, body.condition) if source in replays.sources else None
+        if row is None:
+            raise HTTPException(404, f"no saved run of {body.scenario_id} under {body.condition}")
+        try:
+            out = checkout.refund_run(body.purchase_id, scenarios[body.scenario_id], body.condition, row)
+        except KeyError as exc:
+            raise HTTPException(404, str(exc))
+        except Exception:
+            log.exception("checkout refund run failed")
+            raise HTTPException(502, "the sandbox refund run failed on the server")
+        out["replayed_from"] = {"source": source, "model": row.get("model")}
+        return redact(out, _secrets())
 
     def _replay(body: RunIn) -> dict:
         if body.email is not None:

@@ -158,6 +158,36 @@ footer { color: var(--muted); font-size: 13px; padding: 20px 16px 40px; max-widt
   </section>
 
   <section class="cols" id="cols"></section>
+
+  <section class="panel hidden" id="payBox">
+    <h2>3 · Buy it for real with PayPal, then let the agent refund it</h2>
+    <p class="note">This step is real money movement in the Braintree sandbox (PayPal's payment platform, test money).
+    Pay for the selected scenario's order with the PayPal button. Then the agent's recorded refund calls for that
+    scenario are sent through a gate onto <b>your</b> transaction: the gate decides now, and anything it lets through is
+    a real sandbox refund of your purchase. No model runs here, so this costs nothing.</p>
+    <div class="row" style="margin-top:8px">
+      <div class="grow"><b id="payOrder"></b><div class="note" id="payItems"></div></div>
+      <button id="payPaypal">Pay with PayPal (sandbox account)</button>
+      <button id="payStart" class="ghost">Pay by test card</button>
+    </div>
+    <p class="note" style="margin-top:6px">PayPal accounts cannot be opened from Türkiye, so this sandbox has no linked
+    PayPal login. The PayPal button pays with Braintree's mocked PayPal account (<code>fake-paypal-one-time-nonce</code>):
+    a real sandbox transaction whose instrument is <code>paypal_account</code>. The card option uses Braintree Drop-in
+    with a test card (4111 1111 1111 1111, any future date).</p>
+    <div id="dropin" style="margin-top:10px"></div>
+    <div class="row" style="margin-top:8px">
+      <button id="payConfirm" class="hidden">Confirm payment</button>
+      <span class="note" id="payStatus"></span>
+    </div>
+    <div id="refundBox" class="hidden" style="margin-top:12px">
+      <div class="row">
+        <button id="refundNone" class="ghost">Agent's refund with no gate</button>
+        <button id="refundCf">Agent's refund through Counterfoil</button>
+      </div>
+      <div id="refundOut" style="margin-top:10px"></div>
+    </div>
+    <p class="err" id="payErr"></p>
+  </section>
 </main>
 <footer>
   Fictional store, fictional customers, test money. Replay mode shows saved evaluation runs (results/*.jsonl) exactly as
@@ -394,6 +424,86 @@ async function runAll() {
   }
 }
 
+// --- 3 · real PayPal purchase (Braintree Drop-in, sandbox) -----------------------------------------------
+const pay = { dropin: null, purchase: null };
+function payOrder() {
+  const no = state.scenario && state.scenario.reader_contract && state.scenario.reader_contract.siparis_no;
+  return no ? state.config.store.orders.find((o) => o.order_no === no) : null;
+}
+function showPayOrder() {
+  if (!state.config || !state.config.paypal_checkout) return;
+  const o = payOrder(); const ok = !!o && state.input === "scenario";
+  $("payStart").disabled = !ok; $("payPaypal").disabled = !ok;
+  $("payOrder").textContent = ok ? `HOMI order ${o.order_no} · ${o.currency} ${o.total}` : "Pick a scenario above to buy its order.";
+  $("payItems").textContent = ok ? o.items.map((i) => `${i.qty} × ${i.sku} at ${i.unit_price}`).join(", ") : "";
+}
+function loadDropin() {
+  if (window.braintree && window.braintree.dropin) return Promise.resolve();
+  return new Promise((ok, bad) => {
+    const sc = h("script", { src: "https://js.braintreegateway.com/web/dropin/1.43.0/js/dropin.min.js" });
+    sc.onload = ok; sc.onerror = () => bad(new Error("could not load the PayPal button"));
+    document.head.append(sc);
+  });
+}
+async function payStart() {
+  $("payErr").textContent = ""; $("refundBox").classList.add("hidden"); $("refundOut").replaceChildren();
+  const o = payOrder(); if (!o) return;
+  $("payStart").disabled = true; $("payStatus").textContent = "Loading PayPal…";
+  try {
+    await loadDropin();
+    const { client_token } = await api("/api/checkout/token");
+    if (pay.dropin) { await pay.dropin.teardown(); pay.dropin = null; }
+    $("dropin").replaceChildren();
+    pay.dropin = await braintree.dropin.create({ authorization: client_token, container: "#dropin" });
+    $("payConfirm").classList.remove("hidden");
+    $("payStatus").textContent = "Enter the test card, then confirm.";
+  } catch (e) { $("payErr").textContent = e.message; $("payStatus").textContent = ""; }
+  finally { $("payStart").disabled = false; }
+}
+async function payPaypal() {
+  if (!payOrder()) return;
+  if (pay.dropin) { await pay.dropin.teardown(); pay.dropin = null; $("dropin").replaceChildren(); $("payConfirm").classList.add("hidden"); }
+  await payWith("fake-paypal-one-time-nonce");
+}
+async function payConfirm() {
+  try { const { nonce } = await pay.dropin.requestPaymentMethod(); await payWith(nonce); }
+  catch (e) { $("payErr").textContent = e.message; }
+}
+async function payWith(nonce) {
+  $("payErr").textContent = ""; $("refundBox").classList.add("hidden"); $("refundOut").replaceChildren();
+  try {
+    $("payStatus").textContent = "Charging the sandbox…";
+    pay.purchase = await api("/api/checkout/buy", { scenario_id: state.scenario.id, nonce });
+    const p = pay.purchase;
+    $("payStatus").replaceChildren(h("span", {}, "Paid ", h("b", {}, `${p.currency} ${p.amount}`), ` · Braintree transaction `,
+      h("code", {}, p.transaction_id), ` · ${p.instrument}` + (p.payer_email ? ` (${p.payer_email})` : "")));
+    $("payConfirm").classList.add("hidden");
+    $("refundBox").classList.remove("hidden");
+  } catch (e) { $("payErr").textContent = e.message; $("payStatus").textContent = ""; }
+}
+function refundStep(s, label) {
+  const amount = s.args && s.args.amount ? ` ${s.args.amount}` : "";
+  return h("li", { class: `shown ${s.decision}` }, h("span", { class: `dec ${s.decision}` }, s.decision), ` ${label || s.tool}${amount}`,
+    s.braintree_id ? h("div", { class: "note" }, "Braintree: ", h("code", {}, s.braintree_id)) : null,
+    s.rail_error ? h("div", { class: "err" }, s.rail_error) : null,
+    ...(s.findings || []).filter((f) => f.severity !== "PASS").map((f) => h("div", { class: "finding" }, h("code", {}, f.code), " ", f.detail)));
+}
+async function refundRun(condition) {
+  $("payErr").textContent = "";
+  try {
+    const r = await api("/api/checkout/refund", { purchase_id: pay.purchase.id, scenario_id: state.scenario.id, condition, source: $("source").value });
+    const tl = h("ul", { class: "tl" }, ...r.steps.map((s) => refundStep(s)));
+    if (r.correction) tl.append(refundStep(r.correction, "manager re-creates the refund the records allow:"));
+    if (r.correction && r.correction.approved) tl.append(refundStep({ ...r.correction.approved, tool: "refund", args: r.correction.args }, "manager approves it:"));
+    const money = r.braintree_calls.filter((c) => c[0] !== "find");
+    $("refundOut").replaceChildren(h("h3", {}, condition === "counterfoil" ? "Through Counterfoil" : "No gate",
+      h("small", {}, ` · agent calls recorded from ${r.replayed_from.model}`)), tl,
+      h("div", { class: `verdict ${money.length ? "neutral" : "ok"}` }, money.length
+        ? `Sandbox refunds on your transaction: ${money.map((c) => c[2]).join(" + ")} (${pay.purchase.currency})`
+        : "No money left your transaction."));
+  } catch (e) { $("payErr").textContent = e.message; }
+}
+
 async function init() {
   const [config, scenarios] = await Promise.all([api("/api/config"), api("/api/scenarios")]);
   state.config = config; state.scenarios = scenarios;
@@ -406,9 +516,18 @@ async function init() {
   $("source").addEventListener("change", renderScenarios);
   for (const id of ["cFromOther", "cSubject", "cBody", "cHtml", "cAtt"]) $(id).addEventListener("input", countChars);
   $("runAll").addEventListener("click", runAll);
+  if (config.paypal_checkout) {
+    $("payBox").classList.remove("hidden");
+    $("payStart").addEventListener("click", payStart);
+    $("payPaypal").addEventListener("click", payPaypal);
+    $("payConfirm").addEventListener("click", payConfirm);
+    $("refundNone").addEventListener("click", () => refundRun("none"));
+    $("refundCf").addEventListener("click", () => refundRun("counterfoil"));
+    document.addEventListener("click", (e) => { if (e.target.closest(".sc")) setTimeout(showPayOrder, 0); });
+  }
   setMode("replay");
-  state.scenario = scenarios.find((s) => s.id === "P3-01") || null;
-  renderScenarios(); showEmail(); countChars();
+  state.scenario = scenarios.find((s) => s.id === "P6-01") || null;
+  renderScenarios(); showEmail(); countChars(); showPayOrder();
 }
 init().catch((e) => { $("runErr").textContent = "Could not load the demo: " + e.message; });
 </script>

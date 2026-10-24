@@ -212,3 +212,19 @@ def test_preset_without_key_keeps_live_off(monkeypatch):
     monkeypatch.setenv("DEMO_MODEL", "haiku-5.5")
     s = Settings.from_env()
     assert s.live is None and "ANTHROPIC_API_KEY" in s.live_reason
+
+
+# -- PayPal checkout (Braintree sandbox) -------------------------------------------------------------------------
+
+def test_checkout_is_off_without_braintree_keys():
+    c = client()
+    assert c.get("/api/config").json()["paypal_checkout"] is False
+    assert c.get("/api/checkout/token").status_code == 503
+    assert c.post("/api/checkout/buy", json={"scenario_id": "P6-01", "nonce": "fake-paypal-one-time-nonce"}).status_code == 503
+
+
+def test_checkout_rejects_unknown_purchases_and_scenarios():
+    c = client(dataclasses.replace(Settings(), braintree=True))
+    assert c.post("/api/checkout/buy", json={"scenario_id": "NOPE", "nonce": "fake-nonce"}).status_code == 404
+    r = c.post("/api/checkout/refund", json={"purchase_id": "deadbeefdeadbeef", "scenario_id": "P6-01", "condition": "counterfoil"})
+    assert r.status_code == 404

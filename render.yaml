@@ -29,3 +29,6 @@ services:
         sync: false
       - key: BRAINTREE_PRIVATE_KEY
         sync: false
+      # optional: id of a USD merchant account (the sandbox's default account may settle in another currency)
+      - key: BRAINTREE_MERCHANT_ACCOUNT_ID
+        sync: false
