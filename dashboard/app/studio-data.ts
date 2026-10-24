@@ -7,6 +7,8 @@ export type CounterfoilData = {
   asOf: string;
   runs: Record<string, unknown>[];
   calls: Record<string, unknown>[];
+  findings: Record<string, unknown>[];
+  ledger: Record<string, unknown>[];
   scenarios: Record<string, unknown>[];
   orders: Record<string, unknown>[];
   returns: Record<string, unknown>[];
@@ -133,13 +135,51 @@ export function buildStudioData(data: CounterfoilData): AgDataSourcesDefinition 
           ['orderNo', 'Order', 'textFormat'],
           ['rmaId', 'Return Authorisation', 'textFormat'],
           ['amount', 'Requested Amount', 'currencyFormat'],
+          ['readerAmount', 'Reader Handed Off', 'currencyFormat'],
+          ['storeAllows', 'Store Record Allows', 'currencyFormat'],
           ['decision', 'Decision', 'textFormat'],
+          ['passed', 'Passed', 'integerFormat', true],
+          ['held', 'Held', 'integerFormat', true],
+          ['blocked', 'Blocked', 'integerFormat', true],
+          ['heldAmount', 'Held Amount', 'currencyFormat', true],
+          ['blockedAmount', 'Blocked Amount', 'currencyFormat', true],
           ['reasons', 'Reason Codes', 'textFormat'],
+          ['checks', 'Check That Fired', 'textFormat'],
           ['detail', 'Reason Detail', 'textFormat'],
           ['railState', 'Rail Result', 'textFormat'],
           ['rail', 'Rail', 'textFormat'],
           ['braintreeTransaction', 'Braintree Sale', 'textFormat'],
           ['braintreeResult', 'Braintree Refund/Charge', 'textFormat'],
+        ]),
+      },
+      {
+        id: 'findings',
+        name: 'Checks Fired',
+        description: 'One row per gate check that fired on a call. A call held or blocked for two reasons has two rows.',
+        data: data.findings ?? [],
+        fields: fields([
+          ['id', 'Finding ID', 'textFormat', true],
+          ['callId', 'Call ID', 'textFormat', true],
+          ['code', 'Check Code', 'textFormat'],
+          ['check', 'Check', 'textFormat'],
+          ['severity', 'Check Severity', 'textFormat'],
+          ['fired', 'Times Fired', 'integerFormat', true],
+        ]),
+      },
+      {
+        id: 'ledger',
+        name: 'Refund Ledger',
+        description: 'The refunds and reservations already on the order when the gate held or blocked a call, oldest first.',
+        data: data.ledger ?? [],
+        fields: fields([
+          ['id', 'Ledger ID', 'textFormat', true],
+          ['callId', 'Call ID', 'textFormat', true],
+          ['orderNo', 'Ledger Order', 'textFormat', true],
+          ['rmaId', 'Ledger RMA', 'textFormat'],
+          ['amount', 'Ledger Amount', 'currencyFormat'],
+          ['status', 'Ledger Status', 'textFormat'],
+          ['source', 'Ledger Source', 'textFormat'],
+          ['sameRma', 'Same RMA', 'integerFormat', true],
         ]),
       },
       {
@@ -167,6 +207,8 @@ export function buildStudioData(data: CounterfoilData): AgDataSourcesDefinition 
         fields: fields([
           ['orderNo', 'Order No', 'textFormat'],
           ['customerId', 'Customer', 'textFormat'],
+          ['customerEmail', 'Customer E-mail', 'textFormat'],
+          ['paymentMethod', 'Payment Method', 'textFormat'],
           ['total', 'Order Total', 'currencyFormat'],
           ['currency', 'Order Currency', 'textFormat'],
           ['braintreeTransactionId', 'Braintree Transaction', 'textFormat'],
@@ -192,6 +234,8 @@ export function buildStudioData(data: CounterfoilData): AgDataSourcesDefinition 
       manyToOne('call-order', 'calls.orderNo', 'orders.orderNo'),
       manyToOne('call-return', 'calls.rmaId', 'returns.rmaId'),
       manyToOne('return-order', 'returns.orderNo', 'orders.orderNo'),
+      manyToOne('finding-call', 'findings.callId', 'calls.id'),
+      manyToOne('ledger-call', 'ledger.callId', 'calls.id'),
     ],
     expressions: [
       total('misledRuns', 'Agent misled', 'runs.agentMisled'),
@@ -203,6 +247,15 @@ export function buildStudioData(data: CounterfoilData): AgDataSourcesDefinition 
       total('harmCounterfoil', 'Counterfoil', 'runs.harmCounterfoil'),
       total('requested', 'Requested', 'calls.amount', 'currencyFormat'),
       total('approved', 'Store approved', 'returns.approvedAmount', 'currencyFormat'),
+      total('passedCalls', 'PASS', 'calls.passed'),
+      total('heldCalls', 'APPROVAL', 'calls.held'),
+      total('blockedCalls', 'BLOCK', 'calls.blocked'),
+      total('heldAmount', 'Held for review', 'calls.heldAmount', 'currencyFormat'),
+      total('blockedAmount', 'Blocked', 'calls.blockedAmount', 'currencyFormat'),
+      total('allows', 'Store record allows', 'calls.storeAllows', 'currencyFormat'),
+      total('handedOff', 'Reader handed off', 'calls.readerAmount', 'currencyFormat'),
+      total('asked', 'Agent asked', 'calls.amount', 'currencyFormat'),
+      total('checksFired', 'Times fired', 'findings.fired'),
       {
         id: 'guardLevel',
         name: 'Guard level',

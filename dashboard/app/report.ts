@@ -172,8 +172,95 @@ function calls(compact: boolean): AgPageState {
   };
 }
 
-export const PAGE_TITLES: Record<string, string> = { overview: 'Overview', calls: 'Agent calls' };
+// The calls the gate did not let through: held for a human (APPROVAL) or refused (BLOCK). The page opens
+// on Counterfoil, the only condition whose checks read the store record. The case file is filled in by
+// the case agent (./case-agent.ts) for one held call at a time.
+function review(compact: boolean): AgPageState {
+  const notPassed = [
+    { field: { id: 'calls.moneyCall' }, model: { operator: 'equals' as const, value: 1 } },
+    { field: { id: 'calls.decision' }, model: { operator: 'notEqual' as const, value: 'PASS' } },
+  ];
+  return {
+    id: 'review',
+    filter: {
+      page: [{ field: { id: 'runs.condition' }, model: { operator: 'isIn', value: ['Counterfoil'] }, filterWidgetId: 'condition' }],
+      widget: { pending: notPassed, case: notPassed },
+    },
+    widgets: {
+      condition: filter('runs.condition', 'Condition'),
+      decision: filter('calls.decision', 'Decision'),
+      'kpi-held': kpi('Held for a human', { id: 'heldCalls' }, 'APPROVAL: waits for the merchant', 'amber'),
+      'kpi-held-amount': kpi('Amount held for review', { id: 'heldAmount' }, 'asked on held calls, genuine ones included', 'amber'),
+      'kpi-blocked': kpi('Blocked', { id: 'blockedCalls' }, 'BLOCK: never reaches Braintree', 'harm'),
+      'kpi-passed': kpi('Passed', { id: 'passedCalls' }, 'PASS: matched the store record', 'green'),
+      pending: {
+        type: 'grid',
+        dataMapping: {
+          cols: [
+            { id: 'calls.decision' },
+            { id: 'calls.checks' },
+            { id: 'orders.customerEmail' },
+            { id: 'calls.orderNo' },
+            { id: 'calls.rmaId' },
+            { id: 'orders.paymentMethod' },
+            measure('allows'),
+            measure('handedOff'),
+            measure('asked'),
+            { id: 'runs.model' },
+            { id: 'runs.scenarioId' },
+            { id: 'runs.repeat' },
+          ],
+        },
+        format: {
+          ...title('Pending approvals and blocked calls: the store record, the Reader and the agent side by side'),
+          style: { columnAutoSize: false, columnWidth: 140 },
+        },
+      },
+      case: {
+        type: 'case-file' as 'value',
+        dataMapping: { callKey: [{ id: 'calls.id' }] } as never,
+        format: title('Why held, why blocked'),
+      },
+      checks: {
+        type: 'soft-rank' as 'bar-chart-grouped',
+        dataMapping: {
+          categoryKey: [{ id: 'findings.check' }, { id: 'findings.severity' }],
+          valueKey: [measure('checksFired')],
+        },
+        sort: [{ field: { id: 'checksFired' }, direction: 'desc' }],
+        format: title('Checks that fired'),
+      },
+      mix: {
+        type: 'soft-donut' as 'donut-chart',
+        dataMapping: { categoryKey: [{ id: 'calls.decision' }], valueKey: [measure('moneyCalls')] },
+        sort: [{ field: { id: 'calls.decision' }, direction: 'asc' }],
+        format: { ...title('Decision mix on money calls'), style: bottomLegend },
+      },
+    },
+    widgetLayout: compact
+      ? rows([
+          [['condition'], [24], 7],
+          [['decision'], [24], 7],
+          [['kpi-held'], [24], 7],
+          [['kpi-held-amount'], [24], 7],
+          [['kpi-blocked'], [24], 7],
+          [['kpi-passed'], [24], 7],
+          [['case'], [24], 46],
+          [['pending'], [24], 30],
+          [['checks'], [24], 20],
+          [['mix'], [24], 20],
+        ])
+      : rows([
+          [['condition', 'decision'], [12, 12], 7],
+          [['kpi-held', 'kpi-held-amount', 'kpi-blocked', 'kpi-passed'], [6, 6, 6, 6], 7],
+          [['pending', 'case'], [13, 11], 38],
+          [['checks', 'mix'], [15, 9], 20],
+        ]),
+  };
+}
+
+export const PAGE_TITLES: Record<string, string> = { overview: 'Overview', review: 'Held for review', calls: 'Agent calls' };
 
 export function buildReport(compact: boolean): AgReportState {
-  return { selectedPageId: 'overview', pages: [overview(compact), calls(compact)] };
+  return { selectedPageId: 'overview', pages: [overview(compact), review(compact), calls(compact)] };
 }

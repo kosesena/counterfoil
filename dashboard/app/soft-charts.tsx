@@ -1,6 +1,6 @@
 'use client';
 
-// Two AG Studio custom widgets that draw the charts the way the design sketch does: rounded bars with
+// AG Studio custom widgets that draw the charts the way the design sketch does: rounded bars with
 // a pale fill and a firmer edge, no gridlines, and a donut with the total in its centre. Studio still
 // owns the data: each widget asks its widgetApi for rows (filters and cross-filters applied), so the
 // condition and model buttons drive these exactly as they drive Studio's own charts.
@@ -185,6 +185,37 @@ export function SoftDonut(params: AgWidgetParams<SoftWidget>) {
   );
 }
 
+// Horizontal bars, longest first: one per check, toned by what the check does to a call (the second
+// category field): amber for APPROVAL (held for a human), terracotta for BLOCK.
+export function SoftRank(params: AgWidgetParams<SoftWidget>) {
+  const rows = useRows(params);
+  const [name, tone] = params.dataMapping.categoryKey ?? [];
+  const value = params.dataMapping.valueKey?.[0];
+  const items = (rows ?? []).map((r) => ({
+    name: String(name ? r[name.key] : ''),
+    v: value ? Number(r[value.key]) || 0 : 0,
+    tone: TONES[tone && r[tone.key] === 'BLOCK' ? 1 : 0],
+  }));
+  const max = Math.max(1, ...items.map((i) => i.v));
+
+  return (
+    <div className="soft soft-rank">
+      <ol>
+        {items.map((i) => (
+          <li key={i.name}>
+            <span className="soft-rank-name">{i.name}</span>
+            <span className="soft-rank-track">
+              <i style={{ width: `${(i.v / max) * 100}%`, background: i.tone.fill, borderColor: i.tone.edge }} />
+            </span>
+            <b>{i.v}</b>
+          </li>
+        ))}
+      </ol>
+      <Legend items={[{ name: 'Holds for a human', tone: TONES[0] }, { name: 'Blocks', tone: TONES[1] }]} />
+    </div>
+  );
+}
+
 const mapping = {
   categoryKey: { type: 'fieldset' as const, supportedRoles: ['category' as const], intent: 'category' as const, sort: true },
   valueKey: { type: 'fieldset' as const, supportedRoles: ['numeric' as const], intent: 'value' as const },
@@ -200,4 +231,8 @@ const definition = (id: string, label: string, comp: typeof SoftBars): AgWidgetD
   minSize: { width: 4, height: 8 },
 });
 
-export const SOFT_WIDGETS = [definition('soft-bars', 'Soft bars', SoftBars), definition('soft-donut', 'Soft donut', SoftDonut)];
+export const SOFT_WIDGETS = [
+  definition('soft-bars', 'Soft bars', SoftBars),
+  definition('soft-donut', 'Soft donut', SoftDonut),
+  definition('soft-rank', 'Soft ranking', SoftRank),
+];
