@@ -1,0 +1,225 @@
+"""FastAPI app for the live demo.
+
+    uvicorn demo.app:app --reload          # http://localhost:8000
+
+Every run goes through scripts/run_eval.run_one, the same function that produced the published numbers, so the demo
+cannot drift from the evaluation. The server adds only what a public URL needs: replay of saved runs (default, no
+key), a metered live mode, input limits, and a rail that cannot leave the fixture store.
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import logging
+import os
+import re
+import threading
+import uuid
+from pathlib import Path
+from typing import Literal
+
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, JSONResponse
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from counterfoil.llm import LLM
+from counterfoil.rail import SandboxRail
+from counterfoil.scenarios import load_records, load_scenarios
+from scripts.run_eval import CONDITIONS, run_one
+
+from .limits import LRU, DailyBudget, MeteredLLM, RateLimiter
+from .replay import Replays
+from .scope import ScopedRail
+from .settings import Settings
+
+ROOT = Path(__file__).resolve().parent.parent
+STATIC = Path(__file__).resolve().parent / "static"
+MAX_BODY_BYTES = 64 * 1024
+log = logging.getLogger("counterfoil.demo")
+SECRET_ENV = re.compile(r"KEY|SECRET|TOKEN|PASSWORD|PRIVATE|BRAINTREE_MERCHANT_ID|BRAINTREE_PUBLIC")
+# Every scenario is set on the same business date; a pasted email gets it too, so refund windows behave the same.
+AS_OF = "2026-10-23T12:00:00Z"
+ALL_TOOLS = ["refund", "void", "charge", "lookup_transaction"]
+
+
+class EmailIn(BaseModel):
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+    from_: str = Field(alias="from", min_length=3, max_length=254, pattern=r"^[^@\s]+@[^@\s]+$")
+    subject: str = Field("", max_length=300)
+    body_text: str = ""
+    body_html: str | None = None
+    attachment_text: str | None = None
+
+
+class RunIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    scenario_id: str | None = Field(None, max_length=32)
+    email: EmailIn | None = None
+    condition: Literal["none", "cap", "counterfoil"] = "counterfoil"
+    mode: Literal["replay", "live"] = "replay"
+    source: str | None = Field(None, max_length=120)      # replay only: which results/*.jsonl
+
+    @model_validator(mode="after")
+    def _one_input(self):
+        if (self.scenario_id is None) == (self.email is None):
+            raise ValueError("give exactly one of scenario_id or email")
+        return self
+
+
+def _secrets() -> list[str]:
+    return [v for k, v in os.environ.items() if SECRET_ENV.search(k) and v and len(v) >= 6 and v != "sandbox"]
+
+
+def redact(obj, secrets: list[str]):
+    """Belt and braces: provider error messages end up in rows (reader_error, agent_error); a key must not."""
+    if not secrets:
+        return obj
+    text = json.dumps(obj, ensure_ascii=False, default=str)
+    for s in secrets:
+        text = text.replace(s, "[redacted]")
+    return json.loads(text)
+
+
+def _client_ip(request: Request) -> str:
+    return request.client.host if request.client else "unknown"
+
+
+def create_app(settings: Settings | None = None, llm_factory=None, results: Path = ROOT / "results") -> FastAPI:
+    """`llm_factory(config)` builds the live client; tests pass a scripted fake so live mode runs without a network."""
+    settings = settings or Settings.from_env()
+    llm_factory = llm_factory or LLM
+    scenarios = {s["id"]: s for s in load_scenarios()}
+    records = load_records()
+    replays = Replays(results, settings.replay_source)
+    limiter = RateLimiter(settings.rate_limit, settings.rate_window_s)
+    budget = DailyBudget(settings.daily_llm_calls)
+    slots = threading.BoundedSemaphore(settings.max_concurrent)
+    reader_cache = LRU()
+    live_llm = MeteredLLM(llm_factory(settings.live), budget) if settings.live else None
+
+    app = FastAPI(title="Counterfoil live demo", docs_url=None, redoc_url=None, openapi_url=None)
+
+    @app.middleware("http")
+    async def _body_limit(request: Request, call_next):
+        if int(request.headers.get("content-length") or 0) > MAX_BODY_BYTES:
+            return JSONResponse({"detail": "request body too large"}, status_code=413)
+        response = await call_next(request)
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        return response
+
+    @app.get("/", include_in_schema=False)
+    def index():
+        return FileResponse(STATIC / "index.html")
+
+    @app.get("/healthz", include_in_schema=False)
+    def healthz():
+        return {"ok": True}
+
+    @app.get("/api/config")
+    def config():
+        return {**settings.public(), "daily_llm_calls_left": budget.remaining() if settings.live else 0,
+                "replay_sources": list(replays.sources.values()), "replay_default": replays.default,
+                "store": _store_summary(records)}
+
+    @app.get("/api/scenarios")
+    def list_scenarios():
+        return [{k: s.get(k) for k in ("id", "kind", "family", "technique", "split", "email", "attacker_goal",
+                                        "expected_gateway_decision", "expected_reason", "rail_would_block",
+                                        "cap_200_would_block")}
+                | {"reader_contract": s["preconditions"].get("reader_contract"), "replay": replays.available(s["id"])}
+                for s in scenarios.values()]
+
+    @app.post("/api/run")
+    def run(body: RunIn, request: Request):
+        if body.email is not None:
+            e = body.email
+            size = len(e.subject) + len(e.body_text) + len(e.body_html or "") + len(e.attachment_text or "")
+            if size > settings.max_email_chars:
+                raise HTTPException(422, f"email is {size} characters; the demo accepts up to {settings.max_email_chars}")
+        if body.mode == "replay":
+            return _replay(body)
+        return _live(body, request)
+
+    def _replay(body: RunIn) -> dict:
+        if body.email is not None:
+            raise HTTPException(400, "a pasted email has no saved run; use live mode")
+        if body.scenario_id not in scenarios:
+            raise HTTPException(404, "unknown scenario")
+        source = body.source or replays.default
+        if source not in replays.sources:
+            raise HTTPException(404, "unknown replay source")
+        row = replays.get(source, body.scenario_id, body.condition)
+        if row is None:
+            raise HTTPException(404, f"no saved run of {body.scenario_id} under {body.condition} in {source}")
+        row["demo"] = {"mode": "replay", "source": source}
+        return row
+
+    def _live(body: RunIn, request: Request) -> dict:
+        if live_llm is None:
+            raise HTTPException(503, f"live mode is off: {settings.live_reason}")
+        if body.scenario_id is not None and body.scenario_id not in scenarios:
+            raise HTTPException(404, "unknown scenario")
+        wait = limiter.retry_after(_client_ip(request))
+        if wait:
+            raise HTTPException(429, f"rate limit: try again in {wait:.0f}s (replay mode is not limited)",
+                                headers={"Retry-After": str(int(wait) + 1)})
+        if budget.remaining() <= 0:
+            raise HTTPException(429, "the demo's daily LLM budget is used up; replay mode still works")
+        if not slots.acquire(blocking=False):
+            raise HTTPException(503, "the live demo is busy, try again in a minute")
+        try:
+            scenario = scenarios[body.scenario_id] if body.scenario_id else _pasted(body.email, records)
+            cached = scenario["id"] in reader_cache
+            row = run_one(live_llm, scenario, body.condition, reader_cache, make_rail=_make_rail(settings),
+                          max_turns=settings.max_turns, max_calls=settings.max_calls)
+        except Exception:                      # the message could carry provider details; the log has them
+            log.exception("live run failed")
+            raise HTTPException(500, "the run failed on the server")
+        finally:
+            slots.release()
+        row["demo"] = {"mode": "live", "reader_cached": cached}
+        if body.email is not None:
+            row["email"] = scenario["email"]
+        return redact(row, _secrets())
+
+    return app
+
+
+def _make_rail(settings: Settings):
+    def make(store, fake_rail, scenario, condition):
+        if settings.braintree:
+            inner = SandboxRail(store, f"demo-{uuid.uuid4().hex[:8]}-{scenario['id']}-{condition}")
+            return ScopedRail(inner, store, "braintree-sandbox")
+        return ScopedRail(fake_rail, store, "fake")
+    return make
+
+
+def _pasted(email: EmailIn, records: dict) -> dict:
+    """A pasted email becomes a scenario with no ground truth (so it is not scored) against the baseline store.
+    The sender is resolved from the From address like any other email; an unknown sender gets no customer."""
+    mail = {"from": email.from_.strip(), "to": records["store"]["support_email"], "subject": email.subject,
+            "body_text": email.body_text, "body_html": email.body_html or None,
+            "attachment_text": email.attachment_text or None}
+    digest = hashlib.sha256(json.dumps(mail, sort_keys=True).encode()).hexdigest()[:12]
+    sender = next((c["customer_id"] for c in records["customers"] if c["email"].lower() == mail["from"].lower()), None)
+    return {"id": f"CUSTOM-{digest}", "kind": "custom", "family": "CUSTOM", "split": "custom", "email": mail,
+            "preconditions": {"as_of": AS_OF, "session_id": f"session-CUSTOM-{digest}",
+                              "authenticated_customer_id": sender, "allowed_tools": ALL_TOOLS}}
+
+
+def _store_summary(records: dict) -> dict:
+    """The fixture store as a judge needs it to write an email: who can write in, and what they bought."""
+    emails = {c["customer_id"]: c["email"] for c in records["customers"]}
+    return {"name": records["store"]["name"], "support_email": records["store"]["support_email"],
+            "customers": [c["email"] for c in records["customers"]],
+            "orders": [{"order_no": o["order_no"], "customer": emails.get(o["customer_id"]), "total": o["total"],
+                        "currency": o["currency"], "status": o["status"], "created_at": o.get("created_at"),
+                        "items": o["items"],
+                        "returns": [{"rma_id": r["rma_id"], "approved_refund_amount": r["approved_refund_amount"],
+                                     "status": r["status"]} for r in o.get("returns", [])]}
+                       for o in records["orders"]]}
+
+
+assert set(CONDITIONS) == {"none", "cap", "counterfoil"}, "RunIn.condition must list run_eval's conditions"
+app = create_app()
