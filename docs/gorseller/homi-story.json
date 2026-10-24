@@ -1,0 +1,125 @@
+{
+  "file": "docs/gorseller/homi-story.glb",
+  "bytes": 24614628,
+  "megabytes": 24.614628,
+  "fps": 24,
+  "frameToSeconds": "(frame - 1) / 24",
+  "animation": "HOMI_STORY",
+  "autoplay": false,
+  "initialCamera": "HOMI_OVERVIEW",
+  "overviewFrame": 170,
+  "cameraStops": [
+    {
+      "camera": "HOMI_STEP_1",
+      "frames": [
+        1,
+        619
+      ],
+      "seconds": [
+        0,
+        25.75
+      ],
+      "previewFrame": 170,
+      "label": "Entry and security gates"
+    },
+    {
+      "camera": "HOMI_STEP_2",
+      "frames": [
+        620,
+        779
+      ],
+      "seconds": [
+        25.791666666666668,
+        32.416666666666664
+      ],
+      "previewFrame": 646,
+      "label": "Scan four cups; approved return100"
+    },
+    {
+      "camera": "HOMI_STEP_3",
+      "frames": [
+        780,
+        819
+      ],
+      "seconds": [
+        32.458333333333336,
+        34.083333333333336
+      ],
+      "previewFrame": 800,
+      "label": "Agent requests60; review required"
+    },
+    {
+      "camera": "HOMI_STEP_4",
+      "frames": [
+        820,
+        949
+      ],
+      "seconds": [
+        34.125,
+        39.5
+      ],
+      "previewFrame": 830,
+      "label": "Reject60; approve new40; gateway recheck"
+    },
+    {
+      "camera": "HOMI_STEP_5",
+      "frames": [
+        950,
+        1140
+      ],
+      "seconds": [
+        39.541666666666664,
+        47.458333333333336
+      ],
+      "previewFrame": 1055,
+      "label": "Provider confirms40; receipt"
+    }
+  ],
+  "materials": [
+    "HOMI_SCREEN_MAT",
+    "HOMI_TABLET_MAT"
+  ],
+  "nodes": 10735,
+  "channels": 830,
+  "sampledFrames": 834,
+  "notes": [
+    "Use an AnimationMixer, pause it and setTime after each user button; the GLB does not autoplay.",
+    "Visibility parent scale tracks use STEP. Do not discard these tracks.",
+    "Screen lettering is separate mesh nodes, with source_name and text extras. Hide/replace these when rendering live data.",
+    "Mesh geometry is Draco compressed; animation accessors are standard float32.",
+    "Step 2 prioritizes hand/cup/scanner; show scan count in the web overlay, as the customer partially occludes the physical screen.",
+    "Step 1 is an entrance camera stop; seek previewFrame170 for the button snapshot. A static camera does not follow the entire walk to the checkout."
+  ],
+  "events": {
+    "scanCounts": {
+      "1/4": 646,
+      "2/4": 682,
+      "3/4": 718,
+      "4/4": 754
+    },
+    "returnApproved100": 768,
+    "reviewRequired": 780,
+    "reject60": 820,
+    "fresh40Ready": 848,
+    "approve40AndRecheck": 860,
+    "providerPending": 950,
+    "providerConfirmed": 1020,
+    "receiptFullyOut": 1055
+  },
+  "environment": {
+    "scope": "Full store, facade, street, cars and all storeys",
+    "initialCamera": "HOMI_OVERVIEW",
+    "laneLabelsLeftToRight": [
+      "01 RETURNS",
+      "02 CHECKOUT",
+      "03 CHECKOUT"
+    ],
+    "exitGatePanelX": [
+      -14.06,
+      -12.56,
+      -11.06
+    ],
+    "originalSizeTargetMB": 15,
+    "sizeTargetExceeded": true
+  }
+}
