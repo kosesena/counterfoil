@@ -1,5 +1,11 @@
 # Counterfoil
 
+[![tests](https://github.com/kosesena/counterfoil/actions/workflows/tests.yml/badge.svg)](https://github.com/kosesena/counterfoil/actions/workflows/tests.yml)
+[![coverage 94%](https://img.shields.io/badge/coverage-94%25-brightgreen)](docs/quality.md)
+[![gateway mutation score](https://img.shields.io/badge/gateway%20mutation%20score-94.9%25-brightgreen)](docs/quality.md#mutation-testing)
+[![property tests: hypothesis](https://img.shields.io/badge/property%20tests-hypothesis-blue)](docs/quality.md#property-based-tests)
+[![threat model](https://img.shields.io/badge/threat%20model-P1%E2%80%93P7-informational)](docs/threat-model.md)
+
 **A merchant-side gate between an AI payments agent and Braintree.** Before a refund or charge reaches the payment rail, Counterfoil checks it against the store's own record of that transaction.
 
 ## The problem
@@ -88,7 +94,7 @@ The sandbox experiment showed one more thing. Mocked PayPal accepted refunds abo
 
 ```bash
 python -m venv .venv && .venv/bin/pip install -r requirements.txt
-.venv/bin/python -m pytest                      # gateway rules, mechanics, scoring; no LLM, no network
+.venv/bin/python -m pytest                      # gateway rules, mechanics, invariants, scoring; no LLM, no network
 .venv/bin/python docs/senaryolar/validate.py    # checks the scenario and store fixtures
 .venv/bin/python scripts/run_eval.py --rescore results/2026-10-23-dev-qwen2.5-8k.jsonl   # re-score a saved run
 ```
@@ -134,6 +140,17 @@ Counterfoil was built by Sena Köse with two AI coding agents. Sena set the prob
 ## Related work
 
 IntentGuard, AgentGuard, Countersign, AgentCore Payments and AP2 guard the buyer side with generic rules (caps, allowlists, signed intents); an n8n refund gateway sends every refund to a human. Counterfoil is merchant-side and per-transaction. Scoring follows AgentDojo and τ-bench; the two-agent split follows Dual LLM and CaMeL. Details: [`docs/arastirma/2026-10-23-rakipler.md`](docs/arastirma/2026-10-23-rakipler.md).
+
+## Engineering
+
+- **Tests:** 300, with 94 % line and branch coverage (99 % on the gate). The gate's invariants (a blocked call never
+  reaches the rail, an approval executes once and only as approved, refunds per return record stay within it, no
+  money moves unrecorded) are property tests over generated call sequences; mutation testing kills 94.9 % of the
+  mutants of `counterfoil/gateway.py`. Numbers and how to reproduce them: [`docs/quality.md`](docs/quality.md).
+- **CI:** ruff (lint, including the bandit security rules, and format), mypy, pytest with a coverage floor, pip-audit,
+  and CodeQL. Dev tools: `pip install -r requirements-dev.txt`.
+- **Security:** [`docs/threat-model.md`](docs/threat-model.md) lists the assets, actors and trust boundaries, which
+  attack families the gate stops and which it cannot. Reporting: [`SECURITY.md`](SECURITY.md).
 
 ## License
 
