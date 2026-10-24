@@ -24,11 +24,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
+from dotenv import load_dotenv  # noqa: E402
+
+load_dotenv(ROOT / ".env")          # API keys for the cloud presets; .env is git-ignored
+
 from counterfoil.agents import read_email, run_transaction_agent  # noqa: E402
 from counterfoil.baselines import CapGate, NoGate  # noqa: E402
 from counterfoil.evaluate import expected_outcome, score  # noqa: E402
 from counterfoil.gateway import Gateway  # noqa: E402
-from counterfoil.llm import LLM  # noqa: E402
+from counterfoil.llm import LLM, PRESETS, preset  # noqa: E402
 from counterfoil.scenarios import build, load_scenarios  # noqa: E402
 
 CONDITIONS = {"none": NoGate, "cap": CapGate, "counterfoil": Gateway}
@@ -118,6 +122,8 @@ def main():
     p.add_argument("--repeats", type=int, default=1)
     p.add_argument("--out", default="")
     p.add_argument("--rescore", default="", help="re-score a saved JSONL with the current scorer (no LLM)")
+    p.add_argument("--model", default="", choices=["", *PRESETS],
+                   help="named model preset; default: LLM_BASE_URL / LLM_MODEL / LLM_API_KEY from the environment")
     args = p.parse_args()
 
     if args.rescore:
@@ -131,7 +137,7 @@ def main():
     elif args.split != "all":
         scenarios = [s for s in scenarios if s["split"] == args.split]
     conditions = [c for c in args.conditions.split(",") if c]
-    llm = LLM()
+    llm = LLM(preset(args.model) if args.model else None)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
     out = Path(args.out).resolve() if args.out else ROOT / "results" / f"{stamp}-{llm.config.model.replace(':', '_')}-{args.split}.jsonl"
     out.parent.mkdir(parents=True, exist_ok=True)

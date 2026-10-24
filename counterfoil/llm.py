@@ -1,5 +1,8 @@
 """OpenAI-compatible chat client. Local Ollama by default; Vultr Serverless Inference uses the same API
-(LLM_BASE_URL=https://api.vultrinference.com/v1, LLM_API_KEY=..., LLM_MODEL=<a tool-calling model>)."""
+(LLM_BASE_URL=https://api.vultrinference.com/v1, LLM_API_KEY=..., LLM_MODEL=<a tool-calling model>).
+
+Named presets (LLMConfig.preset / run_eval.py --model) cover the models in the comparison. Cloud presets read
+their key from the environment and never from the repo; seed is only sent where the provider documents it."""
 from __future__ import annotations
 
 import os
@@ -24,6 +27,37 @@ class LLMConfig:
             model=os.environ.get("LLM_MODEL", "qwen2.5-8k"),
             api_key=os.environ.get("LLM_API_KEY", "ollama"),       # Ollama ignores the key
         )
+
+
+# name: (base_url, model id, env var holding the key, send seed?)
+PRESETS: dict[str, tuple[str, str, str, bool]] = {
+    # local, Ollama; the -8k tags are the same weights with num_ctx 8192 (Ollama's default context is smaller)
+    "qwen2.5": ("http://localhost:11434/v1", "qwen2.5-8k", "", True),
+    "qwen3": ("http://localhost:11434/v1", "qwen3-8k", "", True),
+    "llama3.1": ("http://localhost:11434/v1", "llama3.1-8k", "", True),
+    "hermes3": ("http://localhost:11434/v1", "hermes3-8k", "", True),
+    # Anthropic, through its OpenAI-compatible endpoint
+    "haiku-5.5": ("https://api.anthropic.com/v1/", "claude-haiku-5-5", "ANTHROPIC_API_KEY", False),
+    "sonnet-5.5": ("https://api.anthropic.com/v1/", "claude-sonnet-5-5", "ANTHROPIC_API_KEY", False),
+    "opus-5.5": ("https://api.anthropic.com/v1/", "claude-opus-5-5", "ANTHROPIC_API_KEY", False),
+    "fable-5.1": ("https://api.anthropic.com/v1/", "claude-fable-5-1", "ANTHROPIC_API_KEY", False),
+    # OpenAI; the API id of GPT-6 Astra is not confirmed yet, so it must come from ASTRA_MODEL_ID
+    "gpt6-astra": ("https://api.openai.com/v1", "", "OPENAI_API_KEY", True),
+}
+
+
+def preset(name: str) -> LLMConfig:
+    if name not in PRESETS:
+        raise ValueError(f"unknown model preset {name!r}; choose from {', '.join(PRESETS)}")
+    base_url, model, key_env, send_seed = PRESETS[name]
+    if name == "gpt6-astra":
+        model = os.environ.get("ASTRA_MODEL_ID", "")
+        if not model:
+            raise RuntimeError("set ASTRA_MODEL_ID to the API id of GPT-6 Astra (see your OpenAI model list)")
+    key = os.environ.get(key_env, "") if key_env else "ollama"
+    if not key:
+        raise RuntimeError(f"{name} needs {key_env} in the environment (.env)")
+    return LLMConfig(base_url=base_url, model=model, api_key=key, seed=7 if send_seed else None)
 
 
 class LLM:
