@@ -96,6 +96,9 @@ export function buildStudioData(data: CounterfoilData): AgDataSourcesDefinition 
           ['reasons', 'Reason Codes', 'textFormat'],
           ['detail', 'Reason Detail', 'textFormat'],
           ['railState', 'Rail Result', 'textFormat'],
+          ['rail', 'Rail', 'textFormat'],
+          ['braintreeTransaction', 'Braintree Sale', 'textFormat'],
+          ['braintreeResult', 'Braintree Refund/Charge', 'textFormat'],
         ]),
       },
       {

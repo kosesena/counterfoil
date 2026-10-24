@@ -105,6 +105,8 @@ const calls: AgPageState = {
           { id: 'calls.decision' },
           { id: 'calls.reasons' },
           { id: 'calls.railState' },
+          { id: 'calls.braintreeTransaction' },
+          { id: 'calls.braintreeResult' },
           { id: 'calls.detail' },
         ],
       },

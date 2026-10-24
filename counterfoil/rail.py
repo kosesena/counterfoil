@@ -161,3 +161,75 @@ class BraintreeRail:
             return None
         return {"id": t.id, "amount": str(t.amount), "status": t.status, "refund_ids": list(t.refund_ids),
                 "payment_instrument_type": t.payment_instrument_type}
+
+
+class SandboxRail(BraintreeRail):
+    """Braintree sandbox behind the store's fixture ids, for end-to-end evaluation runs.
+
+    The scenarios name fixture transactions (fixture-txn-001) and vaulted methods (fixture-vault-02). The first time a
+    run touches one, a real sandbox counterpart is created: a mocked-PayPal sale for the order total (plus any refunds
+    the store already completed), or a vaulted mocked-PayPal customer. Everything after that hits Braintree for real,
+    so a run leaves real sandbox transactions behind; `money_calls()` reports them next to the fixture id.
+    """
+
+    def __init__(self, store, run_tag: str):
+        super().__init__()
+        self.store, self.tag = store, run_tag
+        self.orders = {o["braintree_transaction_id"]: o for o in store.orders.values()}
+        self.real: dict[str, str] = {}           # fixture id -> sandbox id
+        self.calls: list[tuple] = []
+
+    def _txn(self, fixture_id: str) -> str | None:
+        if fixture_id not in self.real:
+            o = self.orders.get(fixture_id)
+            if o is None:
+                return None
+            r = self.gw.transaction.sale({"amount": str(o["total"]), "payment_method_nonce": "fake-paypal-one-time-nonce",
+                                          "order_id": f"{self.tag}:{o['order_no']}",
+                                          "options": {"submit_for_settlement": True}})
+            if not r.is_success:
+                raise RuntimeError(f"sandbox setup sale for {o['order_no']} failed: {r.message}")
+            self.real[fixture_id] = r.transaction.id
+            done = self.store.db.execute("SELECT amount FROM refunds WHERE order_no=? AND status='completed'",
+                                         (o["order_no"],)).fetchall()
+            for (amount,) in done:                 # history the scenario says already happened
+                self.gw.transaction.refund(r.transaction.id, str(amount))
+        return self.real[fixture_id]
+
+    def _vault(self, fixture_token: str) -> str:
+        if fixture_token not in self.real:
+            c = self.gw.customer.create({"payment_method_nonce": "fake-paypal-billing-agreement-nonce"})
+            if not c.is_success:
+                raise RuntimeError(f"sandbox vault setup failed: {c.message}")
+            self.real[fixture_token] = c.customer.payment_methods[0].token
+        return self.real[fixture_token]
+
+    def money_calls(self) -> list[tuple]:
+        return [c for c in self.calls if c[0] in ("refund", "void", "charge")]
+
+    def refund(self, transaction_id, amount):
+        real = self._txn(transaction_id)
+        out = RailResult(False, error="91504 Transaction not found.") if real is None else super().refund(real, amount)
+        self.calls.append(("refund", transaction_id, amount, real, out.id))
+        return out
+
+    def void(self, transaction_id):
+        real = self._txn(transaction_id)
+        out = RailResult(False, error="91504 Transaction not found.") if real is None else super().void(real)
+        self.calls.append(("void", transaction_id, real))
+        return out
+
+    def charge(self, payment_method_token, amount, order_id):
+        out = super().charge(self._vault(payment_method_token), amount, f"{self.tag}:{order_id}")
+        self.calls.append(("charge", payment_method_token, amount, order_id, out.id))
+        return out
+
+    def refunded_total(self, transaction_id):
+        real = self._txn(transaction_id)
+        return None if real is None else super().refunded_total(real)
+
+    def find(self, transaction_id):
+        real = self._txn(transaction_id)
+        self.calls.append(("find", transaction_id, real))
+        data = None if real is None else super().find(real)
+        return None if data is None else {**data, "id": transaction_id, "braintree_id": real}

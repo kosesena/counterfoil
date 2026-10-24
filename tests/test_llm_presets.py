@@ -31,3 +31,19 @@ def test_astra_needs_its_model_id(monkeypatch):
     monkeypatch.delenv("ASTRA_MODEL_ID", raising=False)
     with pytest.raises(RuntimeError, match="ASTRA_MODEL_ID"):
         preset("gpt6-astra")
+
+
+def test_reader_accepts_a_fenced_json_object():
+    from types import SimpleNamespace
+    from counterfoil.agents import read_email
+
+    fenced = '```json\n{"musteri_email": "a@b.c", "siparis_no": "ST-1", "tutar": "30.00"}\n```'
+    llm = SimpleNamespace(chat=lambda *a, **k: SimpleNamespace(content=fenced))
+    out, raw = read_email(llm, {"from": "a@b.c", "subject": "s", "body": "b"})
+    assert out and out["siparis_no"] == "ST-1" and raw == fenced
+
+
+def test_claude_5_family_does_not_send_temperature(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test")
+    assert preset("opus-5.5").temperature is None
+    assert preset("qwen2.5").temperature == 0.0

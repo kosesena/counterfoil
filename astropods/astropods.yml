@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=https://astropods.com/schema/package.json
+# Runs the Counterfoil evaluation inside an Astropods container so the agents can use the
+# Astro AI Gateway (hackathon credit) without a provider key ever leaving the platform.
+#   cd astropods && ast project start            # results are printed as CFROW lines in the logs
+spec: blueprint/v1
+name: counterfoil-eval
+
+agent:
+  build:
+    context: ..
+    dockerfile: astropods/Dockerfile
+
+models:
+  default:
+    provider: gateway
+    models: [claude-haiku-4-5, claude-sonnet-5, claude-opus-5-5, gpt-5-6-luna, gpt-5-6-terra, mistral-large-3, nova-pro]

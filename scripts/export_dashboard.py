@@ -69,6 +69,9 @@ def export(paths: list[Path]) -> dict:
                 "agentSeconds": r.get("agent_seconds"),
                 "correctAmount": amount(sc.get("ground_truth", {}).get("correct_amount")),
             })
+            # Sandbox runs (--rail braintree) log [tool, fixture id, amount, sandbox txn id, sandbox result id]
+            # per money call that reached the rail, in order; pair them with the steps the rail accepted.
+            sandbox = [c for c in r.get("rail_money_calls", []) if len(c) >= 5]
             for i, step in enumerate(r.get("steps", [])):
                 args = step.get("args") or {}
                 findings = step.get("findings") or []
@@ -80,7 +83,13 @@ def export(paths: list[Path]) -> dict:
                     "reasons": ", ".join(f["code"] for f in findings) or None,
                     "detail": "; ".join(f["detail"] for f in findings) or None,
                     "railState": step.get("rail_state"),
+                    "rail": r.get("rail", "fake"),
+                    "braintreeTransaction": None, "braintreeResult": None,
                 })
+                if sandbox and step["tool"] in MONEY_TOOLS and step.get("rail_state") not in (None, "not_called"):
+                    c = sandbox.pop(0)
+                    calls[-1]["braintreeTransaction"] = c[3] if step["tool"] != "charge" else None
+                    calls[-1]["braintreeResult"] = c[-1] if c[-1] not in ("None", "") else None
     used = {r["scenarioId"] for r in runs}
     scenario_rows = [{
         "id": sid, "kind": s["kind"], "family": s["family"], "technique": s.get("technique"),

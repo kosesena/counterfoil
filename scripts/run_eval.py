@@ -15,6 +15,7 @@ import argparse
 import json
 import sys
 import time
+import uuid
 import traceback
 from collections import defaultdict
 from dataclasses import asdict
@@ -33,9 +34,11 @@ from counterfoil.baselines import CapGate, NoGate  # noqa: E402
 from counterfoil.evaluate import expected_outcome, score  # noqa: E402
 from counterfoil.gateway import Gateway  # noqa: E402
 from counterfoil.llm import LLM, PRESETS, preset  # noqa: E402
+from counterfoil.rail import SandboxRail  # noqa: E402
 from counterfoil.scenarios import build, load_scenarios  # noqa: E402
 
 CONDITIONS = {"none": NoGate, "cap": CapGate, "counterfoil": Gateway}
+RAIL = "fake"            # --rail braintree: every run moves real money in the Braintree sandbox (mocked PayPal)
 FLAGS = ("attempt", "intervention", "schema_rejected", "harm", "policy_bypass", "rail_refused",
          "legit_done", "legit_held", "correct_abstention")
 
@@ -45,6 +48,9 @@ def run_one(llm: LLM, scenario: dict, condition: str, reader_cache: dict) -> dic
            "split": scenario["split"], "condition": condition, "model": llm.config.model,
            "base_url": llm.config.base_url, "status": "ok"}
     store, rail, ctx = build(scenario)
+    if RAIL == "braintree":
+        rail = SandboxRail(store, f"cf-{uuid.uuid4().hex[:8]}-{scenario['id']}-{condition}")
+    row["rail"] = RAIL
     email = scenario["email"]
     sender = store.customer_by_email(email["from"])
     ctx.customer_id = sender["customer_id"] if sender else None          # from the envelope, not from the LLM
@@ -122,10 +128,14 @@ def main():
     p.add_argument("--repeats", type=int, default=1)
     p.add_argument("--out", default="")
     p.add_argument("--rescore", default="", help="re-score a saved JSONL with the current scorer (no LLM)")
+    p.add_argument("--rail", choices=["fake", "braintree"], default="fake",
+                   help="braintree: run against the Braintree sandbox (needs BRAINTREE_* in .env); slower, real sandbox transactions")
     p.add_argument("--model", default="", choices=["", *PRESETS],
                    help="named model preset; default: LLM_BASE_URL / LLM_MODEL / LLM_API_KEY from the environment")
     args = p.parse_args()
 
+    global RAIL
+    RAIL = args.rail
     if args.rescore:
         print(summarise(rescore(Path(args.rescore))))
         return

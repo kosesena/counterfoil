@@ -82,8 +82,11 @@ def read_email(llm: LLM, email: dict) -> tuple[dict | None, str]:
     msg = llm.chat([{"role": "system", "content": READER_SYSTEM}, {"role": "user", "content": email_text(email)}],
                    json_mode=True)
     raw = msg.content or ""
+    body = raw.strip()
+    if body.startswith("```"):          # gateways that ignore json_mode wrap the object in a ```json fence
+        body = body.split("\n", 1)[-1].rsplit("```", 1)[0]
     try:
-        data = json.loads(raw)
+        data = json.loads(body)
     except json.JSONDecodeError:
         return None, raw
     if not isinstance(data, dict):

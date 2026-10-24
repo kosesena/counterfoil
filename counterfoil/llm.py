@@ -16,7 +16,7 @@ class LLMConfig:
     base_url: str
     model: str
     api_key: str
-    temperature: float = 0.0
+    temperature: float | None = 0.0      # None: not sent (Claude 5-family models reject it)
     seed: int | None = 7
     timeout: float = 300.0
 
@@ -41,6 +41,9 @@ PRESETS: dict[str, tuple[str, str, str, bool]] = {
     "sonnet-5.5": ("https://api.anthropic.com/v1/", "claude-sonnet-5-5", "ANTHROPIC_API_KEY", False),
     "opus-5.5": ("https://api.anthropic.com/v1/", "claude-opus-5-5", "ANTHROPIC_API_KEY", False),
     "fable-5.1": ("https://api.anthropic.com/v1/", "claude-fable-5-1", "ANTHROPIC_API_KEY", False),
+    # Astro AI Gateway (Astropods hackathon credit); only reachable inside an `ast project` container,
+    # which injects ASTRO_GATEWAY_URL / ASTRO_GATEWAY_API_KEY; the model comes from CF_MODEL or MODEL_DEFAULT
+    "astropods": ("", "", "ASTRO_GATEWAY_API_KEY", False),
     # OpenAI; the API id of GPT-6 Astra is not confirmed yet, so it must come from ASTRA_MODEL_ID
     "gpt6-astra": ("https://api.openai.com/v1", "", "OPENAI_API_KEY", True),
 }
@@ -54,10 +57,17 @@ def preset(name: str) -> LLMConfig:
         model = os.environ.get("ASTRA_MODEL_ID", "")
         if not model:
             raise RuntimeError("set ASTRA_MODEL_ID to the API id of GPT-6 Astra (see your OpenAI model list)")
+    if name == "astropods":
+        base_url = os.environ.get("ASTRO_GATEWAY_URL", "").rstrip("/") + "/v1"
+        model = os.environ.get("CF_MODEL") or os.environ.get("MODEL_DEFAULT", "")
+        if base_url == "/v1" or not model:
+            raise RuntimeError("astropods runs inside `ast project start` (needs ASTRO_GATEWAY_URL and a model)")
     key = os.environ.get(key_env, "") if key_env else "ollama"
     if not key:
         raise RuntimeError(f"{name} needs {key_env} in the environment (.env)")
-    return LLMConfig(base_url=base_url, model=model, api_key=key, seed=7 if send_seed else None)
+    fixed_sampling = model.startswith(("claude-opus-5", "claude-sonnet-5", "claude-haiku-5", "claude-fable"))
+    return LLMConfig(base_url=base_url, model=model, api_key=key, seed=7 if send_seed else None,
+                     temperature=None if fixed_sampling else 0.0)
 
 
 class LLM:
@@ -66,7 +76,9 @@ class LLM:
         self.client = OpenAI(base_url=self.config.base_url, api_key=self.config.api_key, timeout=self.config.timeout)
 
     def chat(self, messages: list[dict], tools: list[dict] | None = None, json_mode: bool = False):
-        kw = {"model": self.config.model, "messages": messages, "temperature": self.config.temperature}
+        kw = {"model": self.config.model, "messages": messages}
+        if self.config.temperature is not None:
+            kw["temperature"] = self.config.temperature
         if self.config.seed is not None:
             kw["seed"] = self.config.seed
         if tools:
