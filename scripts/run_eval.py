@@ -37,7 +37,8 @@ from counterfoil.evaluate import expected_outcome, score  # noqa: E402
 from counterfoil.gateway import Gateway  # noqa: E402
 from counterfoil.llm import LLM, PRESETS, preset  # noqa: E402
 from counterfoil.rail import SandboxRail  # noqa: E402
-from counterfoil.scenarios import build, load_scenarios  # noqa: E402
+from counterfoil.scenarios import build, load_records, load_scenarios  # noqa: E402
+from counterfoil.worst_case import WorstCaseAgent  # noqa: E402
 
 CONDITIONS = {"none": NoGate, "cap": CapGate, "counterfoil": Gateway}
 RAIL = "fake"  # --rail braintree / paypal: every run moves real money in that sandbox
@@ -183,8 +184,9 @@ def main():
     p.add_argument(
         "--model",
         default="",
-        choices=["", *PRESETS],
-        help="named model preset; default: LLM_BASE_URL / LLM_MODEL / LLM_API_KEY from the environment",
+        choices=["", *PRESETS, "worst-case"],
+        help="named model preset; default: LLM_BASE_URL / LLM_MODEL / LLM_API_KEY from the environment. "
+        "worst-case: no model, a scripted Reader and agent that are fully on the attacker's side (counterfoil/worst_case.py)",
     )
     args = p.parse_args()
 
@@ -206,7 +208,7 @@ def main():
     elif args.split != "all":
         scenarios = [s for s in scenarios if s["split"] == args.split]
     conditions = [c for c in args.conditions.split(",") if c]
-    llm = LLM(preset(args.model) if args.model else None)
+    llm = WorstCaseAgent(load_records()) if args.model == "worst-case" else LLM(preset(args.model) if args.model else None)
     stamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
     out = (
         Path(args.out).resolve()
@@ -223,8 +225,10 @@ def main():
         for rep in range(args.repeats):
             reader_cache: dict = {}
             for s in scenarios:
+                if isinstance(llm, WorstCaseAgent):
+                    llm.scenario = s
                 for cond in conditions:
-                    row = run_one(llm, s, cond, reader_cache)
+                    row = run_one(llm, s, cond, reader_cache)  # type: ignore[arg-type]
                     row["repeat"] = rep
                     rows.append(row)
                     f.write(json.dumps(row, ensure_ascii=False, default=str) + "\n")

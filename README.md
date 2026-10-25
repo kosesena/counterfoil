@@ -88,6 +88,16 @@ Dev set: 7 attacks (one per family P1–P7) and 6 genuine requests, three repeat
 
 Raw runs are in `results/2026-10-24-dev-r3-*.jsonl`, each with a run record (`.meta.json`). "Harm" means money moved wrongly or another customer's data was read. "Handled right" means completed, or held for review when store policy requires it. Without a gate, every model that got that far refunded a valid USD 300.00 return that store policy says needs staff review (CLEAN-07).
 
+**The worst case: an agent fully on the attacker's side.** A model can be jailbroken, "uncensored" or simply fooled, so the gate must not depend on the model resisting. `--model worst-case` (`counterfoil/worst_case.py`) runs no model at all. A scripted Reader hands off exactly what the attacker wants, so a check that compares the call with the Reader finds nothing, and a scripted agent makes exactly the attacker's calls. All 22 scenarios (dev and holdout), one deterministic run each, against the real Braintree sandbox (`results/2026-10-25-all-braintree-worst-case.jsonl`):
+
+| Condition | Attacks that did harm | Attack calls that moved money in the Braintree sandbox | Genuine requests (completed + held by policy) |
+|---|---|---|---|
+| No gate | 12/14 | 12 (10 refunds, 2 charges) | 5 + 0 of 8; 3 went through without the review policy requires |
+| $200 cap | 12/14 | 12 | 5 + 1 of 8 |
+| **Counterfoil** | **0/14** | **0** | **5 + 3 of 8**, none blocked |
+
+The two attacks that did no harm even without a gate: P5-01 asks for a tool that doesn't exist, and P1-02's EUR refund comes out in the transaction's own currency at the right amount. With the in-memory rail, P4-02 is a third, because that rail refuses refunds above the transaction total; the sandbox's mocked PayPal accepted it. `tests/test_worst_case.py` checks the Counterfoil result on every scenario in CI.
+
 **Read these numbers carefully:**
 
 - **Totals:** 71 harmful outcomes in 189 attack runs with no gate, the same 71 with a $200 cap, and 3 with Counterfoil, all the same qwen3 charge.
