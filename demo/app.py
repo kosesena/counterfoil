@@ -20,6 +20,8 @@ from pathlib import Path
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi import Path as PathParam
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -63,6 +65,20 @@ class BuyIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
     scenario_id: str = Field(max_length=32)
     nonce: str = Field(min_length=4, max_length=256)
+
+
+class StoryBuyIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    nonce: str = Field(min_length=4, max_length=256)
+
+
+# The story on the dashboard (dashboard/app/story-3d.tsx): Nella pays one receipt at till 01, the cups order the
+# return is checked against plus the rug and the plant. The extras add to the sandbox sale, not to the order.
+STORY_SCENARIO = "P6-01"
+STORY_EXTRAS = (("Folded rug", "49.00"), ("Potted plant", "19.00"))
+STORY_SID = r"^[a-z0-9]{12,40}$"
+# the dashboard reads a store session from another origin: production, its preview builds, local development
+DASHBOARD_ORIGINS = r"^https://counterfoil-dashboard(-[a-z0-9-]+)?\.vercel\.app$|^http://localhost:3388$"
 
 
 class RefundIn(BaseModel):
@@ -129,6 +145,10 @@ def create_app(settings: Settings | None = None, llm_factory=None, results: Path
 
     app = FastAPI(title="Counterfoil live demo", docs_url=None, redoc_url=None, openapi_url=None)
 
+    app.add_middleware(
+        CORSMiddleware, allow_origin_regex=DASHBOARD_ORIGINS, allow_methods=["GET"], allow_credentials=False
+    )
+
     @app.middleware("http")
     async def _body_limit(request: Request, call_next):
         if int(request.headers.get("content-length") or 0) > MAX_BODY_BYTES:
@@ -143,6 +163,28 @@ def create_app(settings: Settings | None = None, llm_factory=None, results: Path
     @app.get("/", include_in_schema=False)
     def index():
         return FileResponse(STATIC / "index.html")
+
+    @app.get("/pay", include_in_schema=False)
+    def pay_page():
+        """The page the dashboard's QR opens on a phone: HOMI's receipt and the PayPal (sandbox) button."""
+        return FileResponse(STATIC / "pay.html")
+
+    @app.get("/api/story/{sid}")
+    def story_status(sid: str = PathParam(pattern=STORY_SID)):
+        return checkout.story_status(sid)
+
+    @app.post("/api/story/{sid}/buy")
+    def story_buy(body: StoryBuyIn, request: Request, sid: str = PathParam(pattern=STORY_SID)):
+        _checkout_guard(request, STORY_SCENARIO)
+        try:
+            return checkout.story_pay(sid, body.nonce, scenarios[STORY_SCENARIO], STORY_EXTRAS)
+        except OverflowError:
+            raise HTTPException(503, "the store is busy, try again in a minute") from None
+        except ValueError as exc:  # Braintree's own decline message, no secrets in it
+            raise HTTPException(402, f"payment failed: {exc}") from None
+        except Exception:
+            log.exception("story checkout failed")
+            raise HTTPException(502, "the sandbox payment failed on the server") from None
 
     # the HOMI story player: story.js and one still per step for phones (static/story/), the scene from docs/gorseller
     app.mount("/static", StaticFiles(directory=STATIC), name="static")

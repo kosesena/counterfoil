@@ -12,7 +12,8 @@ import { buildStudioData, modelName, type CounterfoilData } from './studio-data'
 import { SOFT_WIDGETS } from './soft-charts';
 import { CASE_WIDGET } from './case-file';
 import { buildCaseHarness } from './case-agent';
-import { Store3D } from './store-3d';
+import { Story3D } from './story-3d';
+import { ModelBars3D } from './model-bars-3d';
 import { canvasPadding, counterfoilTheme } from './theme';
 
 if (process.env.NODE_ENV !== 'production') {
@@ -111,10 +112,10 @@ export default function Page() {
             </p>
           </div>
           <div className="station">
-            <Store3D />
+            <Story3D />
           </div>
           <div className="caption">
-            <span>HOMI self-service return station · Braintree sandbox, mocked PayPal</span>
+            <span>HOMI · attack P6-01 at the return station, recorded under Counterfoil · Braintree sandbox, mocked PayPal</span>
             <span>Fig. 1</span>
           </div>
           <div className="conditions">
@@ -168,6 +169,17 @@ export default function Page() {
           </AgStudioProvider>
         )}
       </main>
+
+      {/* The console's model table, again in 3D, under it. Desktop only: phones keep just the table. */}
+      {pageId === 'overview' && data && compact === false && (
+        <section className="bars3d-section">
+          <div className="bars3d-head">
+            <span className="eyebrow">Fig. 2 · every run, attack and clean, counted like the table above · console filters do not apply</span>
+            <h2>Wrong money paid, by model</h2>
+          </div>
+          <ModelBars3D data={data} />
+        </section>
+      )}
 
       {data && (
         <footer>

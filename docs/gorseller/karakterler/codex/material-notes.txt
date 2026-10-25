@@ -1,0 +1,30 @@
+THE RETURN CREW — Blender reference notes
+
+Five characters: Reader, Runner, Counterfoil, Nella, Store manager.
+Each turnaround is ordered FRONT / THREE-QUARTER / RIGHT-FACING SIDE / BACK.
+Separate face images show the eyes, brows and mouth in detail.
+These generated images are artistic modeling references, not calibrated orthographic blueprints. Resolve small view-to-view variations against the front view and the original approved concept. Keep each character's prop on the same anatomical side when modeling.
+
+APPROXIMATE sRGB BASE COLOR TARGETS (not sampled pixel colors)
+Reader: apricot body #E99A62; olive leaves #626744; cream satchel #D9CBB5.
+Runner: blue body #365DB8; ochre satchel #9B683E; brown strap #68452F.
+Counterfoil: sage felt #A5AD7B; cream receipt layers #E4D8BB; ledger cover #895638.
+Nella: terracotta cardigan #C96F55; cream clothes/tote #E9DDC8; chestnut hair approx. #75442D.
+Manager: navy apron/trousers #25395A; cream shirt #E9DDC8; dark chestnut hair approx. #503027.
+Shared: pale cream backdrop #F5F0E7; eye whites #F2E7D4; pupils/mouth #211B17.
+Rendered pixel colors vary with light, shadow and wool fibers.
+
+MATERIAL DIRECTION
+Matte needle-felt wool with short irregular fibers, soft edge fuzz and visible hand stitching. No shiny plastic skin. Raised off-white felt eye pieces, dark oval felt pupils, thin embroidered eyebrows and mouth. Hair and leaves are sculpted felt forms. Paper props and clothing remain tactile and softly rounded.
+
+SCALE / LIGHT
+Keep the four views within each sheet at the same character scale. Across characters, use Runner height as a practical modeling reference; Nella and Manager are approximately similar in height, Reader shorter and rounder, Counterfoil broader and flatter. These are suggested proportions, not measured physical dimensions. Use soft warm-neutral area lighting and a cream backdrop.
+
+IDENTITY NOTES
+Reader: two olive leaves, pear silhouette, document satchel, paper held in both hands.
+Runner: three blue sprouts, elongated bean torso, long legs, shoulder bag, $60 receipt.
+Counterfoil: two joined perforated receipt halves, scalloped edge, central dashed seam, ledger, calm raised hand.
+Nella: chestnut bob, salmon cardigan, cream outfit, shopping tote with cups and smartphone; subtly knowing expression.
+Manager: short dark hair, navy apron with rear ties, cream shirt, staff badge and tablet; calm expression.
+
+Only image references and this material note were produced. No site code, Blender model or git operation is part of this delivery.

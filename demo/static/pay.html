@@ -1,0 +1,72 @@
+<!doctype html>
+<!-- The page the dashboard's QR opens on a phone (dashboard/app/story-3d.tsx, step 2). One HOMI receipt, one PayPal
+     button. The sale is a real Braintree sandbox transaction (mocked PayPal account); the dashboard sees it through
+     /api/story/<sid> and the rest of the story refunds that same sale. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HOMI · pay at till 01</title>
+<style>
+  :root { --ink: #1f2d44; --muted: #667085; --paper: #fbf9f5; --line: #e3ddd3; --green: #24593f; --pp: #003087; --ppy: #ffc439; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 -apple-system, "Helvetica Neue", Arial, sans-serif; }
+  main { max-width: 420px; margin: 0 auto; padding: 28px 20px 40px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 22px; }
+  .brand i { width: 26px; height: 26px; border-radius: 6px; background: #c96f55; }
+  .sub { color: var(--muted); font-size: 14px; margin: 4px 0 22px; }
+  .receipt { background: #fff; border: 1px solid var(--line); padding: 16px 18px; font: 14px/1.6 ui-monospace, Menlo, monospace; }
+  .receipt div { display: flex; justify-content: space-between; }
+  .receipt .total { border-top: 1px dashed var(--line); margin-top: 8px; padding-top: 8px; font-weight: 700; font-size: 16px; }
+  button { width: 100%; margin-top: 22px; padding: 14px; border: 0; border-radius: 26px; background: var(--ppy); color: var(--pp); font: 700 17px -apple-system, Arial, sans-serif; cursor: pointer; }
+  button:disabled { opacity: .5; }
+  .note { font-size: 12px; color: var(--muted); margin-top: 10px; text-align: center; }
+  .done { margin-top: 22px; padding: 18px; border-radius: 12px; background: #eaf5ef; color: var(--green); }
+  .done b { display: block; font-size: 20px; }
+  .err { color: #9a3d28; margin-top: 14px; }
+  code { font-size: 13px; word-break: break-all; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<main>
+  <div class="brand"><i></i>homi</div>
+  <div class="sub">Till 01 · order ST-1057</div>
+  <div class="receipt">
+    <div><span>Cups x8 (ST-1057)</span><span>200.00</span></div>
+    <div><span>Folded rug</span><span>49.00</span></div>
+    <div><span>Potted plant</span><span>19.00</span></div>
+    <div class="total"><span>Total</span><span>USD 268.00</span></div>
+  </div>
+  <button id="pay">Pay with PayPal</button>
+  <div class="note">Braintree sandbox · test PayPal account · no real money</div>
+  <div id="done" class="done hidden"><b>Payment sent</b><span id="doneText"></span></div>
+  <div id="err" class="err"></div>
+</main>
+<script>
+const sid = new URLSearchParams(location.search).get("s") || "";
+const $ = (id) => document.getElementById(id);
+if (!/^[a-z0-9]{12,40}$/.test(sid)) {
+  $("pay").disabled = true;
+  $("err").textContent = "Open this page from the QR code at HOMI's till.";
+}
+$("pay").addEventListener("click", async () => {
+  $("pay").disabled = true; $("err").textContent = ""; $("pay").textContent = "Paying…";
+  try {
+    // the Braintree sandbox's test PayPal account: a real sandbox sale, no PayPal login needed
+    const res = await fetch(`/api/story/${sid}/buy`, { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nonce: "fake-paypal-one-time-nonce" }) });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.detail || `HTTP ${res.status}`);
+    $("pay").classList.add("hidden");
+    $("doneText").replaceChildren(`${body.currency} ${body.amount} to HOMI · Braintree transaction `,
+      Object.assign(document.createElement("code"), { textContent: body.transaction_id }),
+      document.createElement("br"), "Look back at the store: till 01 has it.");
+    $("done").classList.remove("hidden");
+  } catch (e) {
+    $("err").textContent = e.message; $("pay").disabled = false; $("pay").textContent = "Pay with PayPal";
+  }
+});
+</script>
+</body>
+</html>

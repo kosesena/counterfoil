@@ -1,0 +1,156 @@
+{
+  "file": "docs/gorseller/homi-story.glb",
+  "bytes": 28989356,
+  "megabytes": 28.989356,
+  "fps": 24,
+  "frameToSeconds": "(frame - 1) / 24",
+  "animation": "HOMI_STORY",
+  "autoplay": false,
+  "initialCamera": "HOMI_OVERVIEW",
+  "overviewFrame": 170,
+  "cameraStops": [
+    {
+      "camera": "HOMI_STEP_1",
+      "frames": [
+        1,
+        1503
+      ],
+      "seconds": [
+        0.0,
+        62.583333333333336
+      ],
+      "previewFrame": 170,
+      "label": "Entry, shopping, PayPal at till 01, the walk to returns"
+    },
+    {
+      "camera": "HOMI_STEP_2",
+      "frames": [
+        1504,
+        1663
+      ],
+      "seconds": [
+        62.625,
+        69.25
+      ],
+      "previewFrame": 1530,
+      "label": "Scan four cups; approved return100"
+    },
+    {
+      "camera": "HOMI_STEP_3",
+      "frames": [
+        1664,
+        1871
+      ],
+      "seconds": [
+        69.29166666666667,
+        77.91666666666667
+      ],
+      "previewFrame": 1852,
+      "label": "Kiosk note with the injection; agent requests60; review required"
+    },
+    {
+      "camera": "HOMI_STEP_4",
+      "frames": [
+        1872,
+        2001
+      ],
+      "seconds": [
+        77.95833333333333,
+        83.33333333333333
+      ],
+      "previewFrame": 1882,
+      "label": "Reject60; approve new40; gateway recheck"
+    },
+    {
+      "camera": "HOMI_STEP_5",
+      "frames": [
+        2002,
+        2192
+      ],
+      "seconds": [
+        83.375,
+        91.29166666666667
+      ],
+      "previewFrame": 2107,
+      "label": "Provider confirms40; receipt"
+    }
+  ],
+  "materials": [
+    "HOMI_SCREEN_MAT",
+    "HOMI_TABLET_MAT"
+  ],
+  "nodes": 11469,
+  "channels": 1552,
+  "sampledFrames": 1379,
+  "notes": [
+    "Use an AnimationMixer, pause it and setTime after each user button; the GLB does not autoplay.",
+    "Visibility parent scale tracks use STEP. Do not discard these tracks.",
+    "Screen lettering is separate mesh nodes, with source_name and text extras. Hide/replace these when rendering live data.",
+    "Mesh geometry is Draco compressed; animation accessors are standard float32.",
+    "Step 2 prioritizes hand/cup/scanner; show scan count in the web overlay, as the customer partially occludes the physical screen.",
+    "Step 1 is an entrance camera stop; seek previewFrame170 for the button snapshot. A static camera does not follow the entire walk to the checkout."
+  ],
+  "environment": {
+    "scope": "Full store, facade, street, cars and all storeys",
+    "initialCamera": "HOMI_OVERVIEW",
+    "laneLabelsFromEntrance": [
+      "01 CHECKOUT",
+      "02 CHECKOUT",
+      "03 RETURNS"
+    ],
+    "exitGatePanelX": [
+      -14.06,
+      -12.56,
+      -11.06
+    ],
+    "originalSizeTargetMB": 15,
+    "sizeTargetExceeded": true
+  },
+  "events": {
+    "scanCounts": {
+      "1/4": 1530,
+      "2/4": 1566,
+      "3/4": 1602,
+      "4/4": 1638
+    },
+    "returnApproved100": 1652,
+    "reviewRequired": 1832,
+    "reject60": 1872,
+    "fresh40Ready": 1900,
+    "approve40AndRecheck": 1912,
+    "providerPending": 2002,
+    "providerConfirmed": 2072,
+    "receiptFullyOut": 2107
+  },
+  "story": {
+    "tillArrive": 1077,
+    "scans": [
+      1089,
+      1119,
+      1149
+    ],
+    "scansDone": 1179,
+    "paid": 1233,
+    "tillLeave": 1293,
+    "atReturns": 1473,
+    "mailStart": 1664,
+    "mailSent": 1796,
+    "payCamera": "HOMI_STEP_PAY",
+    "mailCamera": "HOMI_STEP_MAIL",
+    "followFrom": 172,
+    "shifts": [
+      [
+        263,
+        572
+      ],
+      [
+        474,
+        312
+      ],
+      [
+        780,
+        168
+      ]
+    ]
+  }
+}
