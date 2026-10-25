@@ -9,8 +9,12 @@ from pathlib import Path
 from mathutils import Vector, Matrix, Quaternion
 ROOT=Path(__file__).resolve().parents[1];OUT=ROOT/'docs/gorseller/homi-story.glb'
 RENDERS=ROOT/'docs/gorseller/homi-story-previews';RENDERS.mkdir(exist_ok=True)
-src=bpy.data.scenes['Counterfoil_Market_Composite'];FPS=24;START=1;END=1140
-steps=[(1,1,619,170,'Entry and security gates'),(2,620,779,646,'Scan four cups; approved return100'),(3,780,819,800,'Agent requests60; review required'),(4,820,949,830,'Reject60; approve new40; gateway recheck'),(5,950,1140,1055,'Provider confirms40; receipt')]
+src=bpy.data.scenes['Counterfoil_Market_Composite'];FPS=24;START=1
+# Shopping, the till and the e-mail are inserted by tools/homi_story_polish.py; at(f) maps an original frame
+# to the extended story, so the step table and the events below are the original frames through at().
+import sys;sys.path.insert(0,str(ROOT/'tools'));import homi_story_polish as POL;POL.polish();at=POL.at
+END=POL.END
+steps=[(1,1,at(619),170,'Entry, shopping, PayPal at till 01, the walk to returns'),(2,at(620),at(779),at(646),'Scan four cups; approved return100'),(3,at(780)-POL.MAIL_LEN,at(819),at(800),'Kiosk note with the injection; agent requests60; review required'),(4,at(820),at(949),at(830),'Reject60; approve new40; gateway recheck'),(5,at(950),at(1140),at(1055),'Provider confirms40; receipt')]
 def log(*args):print('[HOMI STORY]',*args,flush=True)
 def fcurves(o):
  a=o.animation_data.action if o.animation_data else None
@@ -49,8 +53,8 @@ for i,dx in enumerate([.39,.99,.49]):
  for obj in src.objects:
   if obj.name.startswith('SE_GateExit'+str(i)) and not obj.get('homi_gate_aligned'):
    obj.location.x+=dx;obj['homi_gate_aligned']=True
-# Number the physical lanes from left to right without moving the return choreography.
-for name,label in [('HR_LaneNumber','01'),('HP03_LaneNumber','02'),('HP01_LaneNumber','03')]:
+# Number the lanes in the order a customer walking in from the entrance reaches them (Sena, 25 Oct): returns is last.
+for name,label in [('HP01_LaneNumber','01'),('HP03_LaneNumber','02'),('HR_LaneNumber','03')]:
  obj=bpy.data.objects.get(name)
  if obj and obj.type=='FONT':obj.data.body=label
 # Static store context is evaluated once, then detached while sampling the cast.
@@ -70,16 +74,7 @@ for objname,matname in [('HR_ScreenGlass','HOMI_SCREEN_MAT'),('Store_Manager_Han
  o=bpy.data.objects[objname];mat=bpy.data.materials.get(matname)
  if not mat:mat=o.data.materials[0].copy();mat.name=matname
  o.data.materials[0]=mat
-# Park the cart beside the customer before scanning, preserving the entry path.
-evalscene.frame_set(590);bpy.context.view_layer.update()
-cart=bpy.data.objects['Inst_Cart'];parking=cart.location.copy()+Vector((2.2,-1.4,0))
-for fc in fcurves(cart):
- if fc.data_path=='location':
-  for index in range(len(fc.keyframe_points)-1,-1,-1):
-   if fc.keyframe_points[index].co.x>590:fc.keyframe_points.remove(fc.keyframe_points[index],fast=True)
-cart.keyframe_insert('location',frame=590)
-cart.location=parking
-for f in [620,1140]:cart.keyframe_insert('location',frame=f)
+# The cart is parked and taken back for the checkout by tools/homi_story_polish.py.
 # Exact camera names in original Blender scene as well as exported GLB.
 def camera(name,loc,target,scale=None):
  o=bpy.data.objects.get(name)
@@ -95,10 +90,10 @@ overview['purpose']='Initial full-store overview; transition to HOMI_STEP_1 on u
 cams=[]
 cams.append(camera('HOMI_STEP_1',(11.6,-7.5,2),(11.6,-12,1.2),7))
 cams.append(camera('HOMI_STEP_2',(-11.6,-11.8,3.7),(-13.35,-9.75,1.3),3.1))
-evalscene.frame_set(800);bpy.context.view_layer.update()
+evalscene.frame_set(at(800));bpy.context.view_layer.update()
 screen=bpy.data.objects['HR_ScreenGlass'].matrix_world.translation.copy()
 cams.append(camera('HOMI_STEP_3',screen+Vector((2.5,0,.12)),screen,1.5))
-evalscene.frame_set(830);bpy.context.view_layer.update()
+evalscene.frame_set(at(830));bpy.context.view_layer.update()
 inst=bpy.data.objects['Inst_Store_Manager'];tablet=bpy.data.objects['Store_Manager_HandTabletScreen']
 M=inst.matrix_world@Matrix.Translation(-inst.instance_collection.instance_offset)@tablet.matrix_world
 center=M.translation;normal=M.to_3x3()@Vector((0,0,1));normal.normalize()
@@ -157,7 +152,7 @@ for index,f in enumerate(frames):
   it['t'].append(list(t));it['r'].append(qv);it['s'].append(list(scale));it['v'].append(not(o.hide_render or o.hide_viewport))
   if index==0:it['flat'].matrix_world=M
  if index%100==0:log('sample',index+1,'/',len(frames),'frame',f)
-for cam in [overview]+cams:stage.collection.objects.link(cam)
+for cam in [overview]+cams+[bpy.data.objects['HOMI_STEP_PAY'],bpy.data.objects['HOMI_STEP_MAIL']]:stage.collection.objects.link(cam)
 bpy.context.window.scene=stage
 log('exporting static Draco geometry')
 bpy.ops.export_scene.gltf(filepath=str(OUT),export_format='GLB',use_active_scene=True,export_apply=True,export_animations=False,export_cameras=True,export_lights=False,export_yup=True,export_extras=True,export_draco_mesh_compression_enable=True,export_draco_mesh_compression_level=7)
@@ -209,8 +204,9 @@ while len(blob)%4:blob.append(0)
 j=json.dumps(doc,separators=(',',':')).encode();j+=b' '*((-len(j))%4);length=12+8+len(j)+8+len(blob)
 OUT.write_bytes(struct.pack('<4sII',b'glTF',2,length)+struct.pack('<I4s',len(j),b'JSON')+j+struct.pack('<I4s',len(blob),b'BIN\0')+blob)
 manifest={'file':str(OUT.relative_to(ROOT)),'bytes':OUT.stat().st_size,'megabytes':OUT.stat().st_size/1e6,'fps':FPS,'frameToSeconds':'(frame - 1) / 24','animation':'HOMI_STORY','autoplay':False,'initialCamera':'HOMI_OVERVIEW','overviewFrame':170,'cameraStops':doc['asset']['extras']['steps'],'materials':['HOMI_SCREEN_MAT','HOMI_TABLET_MAT'],'nodes':len(doc['nodes']),'channels':len(anim['channels']),'sampledFrames':len(frames),'notes':['Use an AnimationMixer, pause it and setTime after each user button; the GLB does not autoplay.','Visibility parent scale tracks use STEP. Do not discard these tracks.','Screen lettering is separate mesh nodes, with source_name and text extras. Hide/replace these when rendering live data.','Mesh geometry is Draco compressed; animation accessors are standard float32.']}
-manifest['environment']={'scope':'Full store, facade, street, cars and all storeys','initialCamera':'HOMI_OVERVIEW','laneLabelsLeftToRight':['01 RETURNS','02 CHECKOUT','03 CHECKOUT'],'exitGatePanelX':[-14.06,-12.56,-11.06],'originalSizeTargetMB':15,'sizeTargetExceeded':OUT.stat().st_size>=15_000_000}
-manifest['events']={'scanCounts':{'1/4':646,'2/4':682,'3/4':718,'4/4':754},'returnApproved100':768,'reviewRequired':780,'reject60':820,'fresh40Ready':848,'approve40AndRecheck':860,'providerPending':950,'providerConfirmed':1020,'receiptFullyOut':1055}
+manifest['environment']={'scope':'Full store, facade, street, cars and all storeys','initialCamera':'HOMI_OVERVIEW','laneLabelsFromEntrance':['01 CHECKOUT','02 CHECKOUT','03 RETURNS'],'exitGatePanelX':[-14.06,-12.56,-11.06],'originalSizeTargetMB':15,'sizeTargetExceeded':OUT.stat().st_size>=15_000_000}
+manifest['events']={'scanCounts':{'1/4':at(646),'2/4':at(682),'3/4':at(718),'4/4':at(754)},'returnApproved100':at(768),'reviewRequired':at(780),'reject60':at(820),'fresh40Ready':at(848),'approve40AndRecheck':at(860),'providerPending':at(950),'providerConfirmed':at(1020),'receiptFullyOut':at(1055)}
+manifest['story']={'tillArrive':POL.TILL_STOP,'paid':POL.PAY_SENT,'tillLeave':POL.TILL_LEAVE,'atReturns':POL.LAST,'mailStart':POL.MAIL_START,'mailSent':POL.MAIL_SENT,'payCamera':'HOMI_STEP_PAY','mailCamera':'HOMI_STEP_MAIL','followFrom':172,'shifts':[[o,n] for o,n,_ in POL.SHIFTS]}
 manifest['notes'].extend(['Step 2 prioritizes hand/cup/scanner; show scan count in the web overlay, as the customer partially occludes the physical screen.','Step 1 is an entrance camera stop; seek previewFrame170 for the button snapshot. A static camera does not follow the entire walk to the checkout.'])
 (ROOT/'docs/gorseller/homi-story.json').write_text(json.dumps(manifest,indent=2))
 log('DONE',OUT.stat().st_size,'bytes',len(anim['channels']),'channels')
