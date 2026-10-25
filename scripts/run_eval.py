@@ -208,7 +208,11 @@ def main():
     elif args.split != "all":
         scenarios = [s for s in scenarios if s["split"] == args.split]
     conditions = [c for c in args.conditions.split(",") if c]
-    llm = WorstCaseAgent(load_records()) if args.model == "worst-case" else LLM(preset(args.model) if args.model else None)
+    llm = (
+        WorstCaseAgent(load_records())
+        if args.model == "worst-case"
+        else LLM(preset(args.model) if args.model else None)
+    )
     stamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
     out = (
         Path(args.out).resolve()
