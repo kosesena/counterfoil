@@ -91,8 +91,9 @@ export default function Page() {
           ))}
         </nav>
         <span className="sandbox">Sandbox</span>
-        <a className="live f-btn" href="https://counterfoil-demo.onrender.com" target="_blank" rel="noopener">
-          Try it live →
+        <a className="live f-patch" href="https://counterfoil-demo.onrender.com" target="_blank" rel="noopener">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="buttons/try-it-live-plum.webp" alt="Try it live" />
         </a>
       </header>
 

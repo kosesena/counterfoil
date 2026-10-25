@@ -54,8 +54,15 @@ export function Hero({ onStory }: { onStory: () => void }) {
         <h1>A little trust.<br />A firm boundary.</h1>
         <p>Let agents handle returns. Keep money inside the rules.</p>
         <div className="f-actions">
-          <button className="f-btn" onClick={onStory}><i aria-hidden="true">▶</i>Watch the story</button>
-          <a className="f-btn ghost" href={DEMO} target="_blank" rel="noopener">Try it live →</a>
+          {/* Codex's felt buttons (docs/gorseller/site-tasarim/buttons-v1/) */}
+          <button className="f-patch" onClick={onStory}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="buttons/watch-the-story.webp" alt="Watch the story" />
+          </button>
+          <a className="f-patch" href={DEMO} target="_blank" rel="noopener">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="buttons/try-it-live-cream.webp" alt="Try it live" />
+          </a>
         </div>
       </div>
       <div className="f-hero-art">
@@ -134,7 +141,10 @@ export function ClosingBand() {
         <h2>See where the boundary holds.</h2>
         <p>Try the interactive demo with real return flows in the Braintree sandbox.</p>
       </div>
-      <a className="f-btn light" href={DEMO} target="_blank" rel="noopener">Try it live →</a>
+      <a className="f-patch" href={DEMO} target="_blank" rel="noopener">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="buttons/try-it-live-cream.webp" alt="Try it live" />
+      </a>
     </section>
   );
 }

@@ -45,9 +45,9 @@ const kpi = (text: string, value: { id: string; aggregation?: 'sum' }, caption: 
   type: 'value' as const,
   dataMapping: { value: [value] },
   format: {
-    title: { enabled: true, text, typography: typography(13, 'normal'), ...(tone && { color: `var(--cf-${tone}-deep)` }) },
-    caption: { enabled: true, text: caption, typography: typography(12), ...(tone && { color: `var(--cf-${tone}-deep)` }) },
-    style: { typography: typography(36, 'bold'), ...(tone && { color: `var(--cf-${tone}-deep)` }) },
+    title: { enabled: true, text, typography: typography(16, 'bold', 'var(--cf-display)'), ...(tone && { color: `var(--cf-${tone}-deep)` }) },
+    caption: { enabled: true, text: caption, typography: typography(13), ...(tone && { color: `var(--cf-${tone}-deep)` }) },
+    style: { typography: typography(46, 'bold', 'var(--cf-display)'), ...(tone && { color: `var(--cf-${tone}-deep)` }) },
     ...(tone && { widget: { backgroundColor: `var(--cf-${tone}-tint)`, borderEnabled: false } }),
   },
 });
@@ -57,8 +57,8 @@ const tally = (type: string, text: string, measures: string[], caption: string, 
   type: type as 'value',
   dataMapping: { valueKey: measures.map((id) => ({ id })) } as never,
   format: {
-    title: { enabled: true, text, typography: typography(13, 'normal') },
-    caption: { enabled: true, text: caption, typography: typography(12) },
+    title: { enabled: true, text, typography: typography(16, 'bold', 'var(--cf-display)') },
+    caption: { enabled: true, text: caption, typography: typography(13) },
     widget: { backgroundColor: `var(--cf-${tone}-tint)`, borderEnabled: false },
   },
 });
@@ -70,9 +70,10 @@ const filter = (id: string, text: string, minWidth?: number) => ({
     ...title(text),
     widget: { backgroundColor: 'transparent', borderEnabled: false },
     style: {
-      dimensions: { height: 32, ...(minWidth && { minWidth }) },
-      defaultItem: { typography: typography(13), borderRadius: 999, borderColor: 'var(--cf-border)', backgroundColor: 'transparent' },
-      activeItem: { color: 'var(--cf-on-accent)', backgroundColor: 'var(--cf-accent)', borderColor: 'var(--cf-accent)' },
+      // felt: rounded patches with a stitched edge (globals.css), plum when chosen
+      dimensions: { height: 40, ...(minWidth && { minWidth }) },
+      defaultItem: { typography: typography(15, 'bold', 'var(--cf-display)'), borderRadius: 14, borderColor: 'var(--cf-stitch)', backgroundColor: 'var(--cf-surface)' },
+      activeItem: { color: '#ffffff', backgroundColor: 'var(--cf-plum)', borderColor: 'var(--cf-plum-deep)' },
     },
   },
 });
