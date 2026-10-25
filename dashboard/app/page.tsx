@@ -87,7 +87,7 @@ export default function Page() {
         <nav>
           {Object.entries(PAGE_TITLES).map(([id, text]) => (
             <button key={id} className={id === pageId ? 'active' : ''} aria-current={id === pageId ? 'page' : undefined} onClick={() => openPage(id)}>
-              {/* Codex's felt letters (docs/gorseller/site-tasarim/tabs-text-v2/), navy and plum for the current page */}
+              {/* Codex's felt letters (docs/gorseller/site-tasarim/tabs-text-v2, v3): navy, plum for the current page */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={`buttons/nav-${id}${id === pageId ? '-on' : ''}.webp`} alt={text} />
             </button>
