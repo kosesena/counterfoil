@@ -1,0 +1,9 @@
+Built-in image_gen. Separate transparent felt PNGs. Use fixed layout boxes for swaps, preserve aspect ratios; generated states may have minor shape variation. No dashboard code changed.
+
+05-next.png
+Edit reference felt button label to exactly "Next". Preserve its wool material, colors, rounded rectangle and embroidered stitches. Center text on one line. Keep compact button size. Raised rounded bold wool letters. Front on. True transparent alpha exterior; no backdrop or gradient. One standalone button only, no icons or additional wording.
+
+06-replay.png
+Edit reference felt button label to exactly "Replay". Preserve its wool material, colors, rounded rectangle and embroidered stitches. Center text on one line. Keep compact button size. Raised rounded bold wool letters. Front on. True transparent alpha exterior; no backdrop or gradient. One standalone button only, no icons or additional wording.
+
+Next and Replay match Start; labels change with story step.
