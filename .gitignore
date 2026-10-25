@@ -14,3 +14,6 @@ htmlcov/
 .ruff_cache/
 .hypothesis/
 mutants/
+
+# Codex packs its references as zips too; the PNGs next to them are the same images
+docs/gorseller/karakterler/**/*.zip
