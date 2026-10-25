@@ -284,7 +284,16 @@ export function Story3D() {
     const next = Math.max(0, Math.min(LAST, n));
     setStep(next);
     view.current?.show(next, play);
+    window.dispatchEvent(new CustomEvent('homi:story-step', { detail: next }));
   };
+  // the step strip and 'Open checkout' (./felt.tsx) jump to a step from outside the player
+  const goRef = useRef(go);
+  goRef.current = go;
+  useEffect(() => {
+    const onGo = (e: Event) => goRef.current((e as CustomEvent<number>).detail, true);
+    window.addEventListener('homi:story-go', onGo);
+    return () => window.removeEventListener('homi:story-go', onGo);
+  }, []);
   const s = STEPS[step];
 
   return (
@@ -315,5 +324,38 @@ export function Story3D() {
         </div>
       </div>
     </div>
+  );
+}
+
+// The seven moments under the player (Codex's design): the current step is filled; a click plays that step.
+const MOMENTS = [
+  ['Shop', 'Rug, plant, 8 cups'],
+  ['Pay', 'PayPal QR at till 01'],
+  ['Return', '4 cups to the kiosk'],
+  ['Note', 'The injected reason'],
+  ['Request', 'Agent asks for $60'],
+  ['Review', "The manager's tablet"],
+  ['Resolve', '$40 refunded'],
+] as const;
+
+export function StoryStrip() {
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    const on = (e: Event) => setStep((e as CustomEvent<number>).detail);
+    window.addEventListener('homi:story-step', on);
+    return () => window.removeEventListener('homi:story-step', on);
+  }, []);
+  return (
+    <ol className="f-strip">
+      {MOMENTS.map(([name, text], i) => (
+        <li key={name} className={i + 1 === step ? 'on' : i + 1 < step ? 'done' : ''}>
+          <button onClick={() => window.dispatchEvent(new CustomEvent('homi:story-go', { detail: i + 1 }))}>
+            <i>{String(i + 1).padStart(2, '0')}</i>
+            <b>{name}</b>
+            <span>{text}</span>
+          </button>
+        </li>
+      ))}
+    </ol>
   );
 }
