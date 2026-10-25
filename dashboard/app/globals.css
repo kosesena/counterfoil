@@ -243,7 +243,19 @@ footer { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wr
 .story3d-phone { position: absolute; right: 24px; top: 50%; transform: translateY(-50%); width: 180px; height: 360px; padding: 9px; background: #1d1f22; border-radius: 30px; box-shadow: 0 12px 40px rgba(31,45,68,.25); }
 .story3d-phone-screen { height: 100%; border-radius: 22px; background: #fbfaf6; padding: 26px 16px; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; font-size: 12px; color: #4a5568; }
 .story3d-brand { font-weight: 700; font-size: 20px; color: #003087; letter-spacing: -.3px; }
-.story3d-scan { width: 120px; height: 120px; margin: 18px 0 6px; border: 3px solid #003087; border-radius: 10px; background: repeating-linear-gradient(0deg, transparent 0 58px, rgba(0,48,135,.6) 58px 60px, transparent 60px 120px); }
+/* the viewfinder: the till's QR code (an illustrative pattern) and a beam that sweeps it */
+.story3d-scan { position: relative; width: 124px; height: 124px; margin: 18px 0 6px; padding: 12px; border-radius: 12px; background: #163f33; overflow: hidden; }
+.story3d-scan::before, .story3d-scan::after { content: ''; position: absolute; width: 22px; height: 22px; border: 3px solid #fff; }
+.story3d-scan::before { left: 6px; top: 6px; border-right: 0; border-bottom: 0; border-radius: 6px 0 0 0; }
+.story3d-scan::after { right: 6px; bottom: 6px; border-left: 0; border-top: 0; border-radius: 0 0 6px 0; }
+.story3d-qr { display: block; width: 100%; height: 100%; border-radius: 4px; background:
+  conic-gradient(from 90deg at 3px 3px, #1d1f22 90deg, #fbfaf6 0) 0 0 / 12px 12px,
+  #fbfaf6; box-shadow: inset 0 0 0 6px #fbfaf6; opacity: .92;
+  -webkit-mask: radial-gradient(circle at 18% 18%, #000 14px, transparent 15px), radial-gradient(circle at 82% 18%, #000 14px, transparent 15px), radial-gradient(circle at 18% 82%, #000 14px, transparent 15px), linear-gradient(#000 0 0);
+  -webkit-mask-composite: source-over; }
+.story3d-beam { position: absolute; left: 8px; right: 8px; top: 12px; height: 2px; background: #8fd3b5; box-shadow: 0 0 10px 2px rgba(143,211,181,.7); animation: story3d-sweep 1.4s ease-in-out infinite alternate; }
+@keyframes story3d-sweep { from { top: 12px; } to { top: 110px; } }
+@media (prefers-reduced-motion: reduce) { .story3d-beam { animation: none; top: 60px; } }
 .story3d-note { align-self: stretch; text-align: left; padding: 10px 12px; border-radius: 12px; background: #edf1f7; color: #1f2d44; line-height: 1.4; }
 .story3d-note b { color: #003087; }
 .story3d-paid { margin-top: 26px; font-size: 18px; font-weight: 600; color: var(--cf-green-deep); }

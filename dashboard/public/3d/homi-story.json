@@ -1,7 +1,7 @@
 {
   "file": "docs/gorseller/homi-story.glb",
-  "bytes": 27813752,
-  "megabytes": 27.813752,
+  "bytes": 28989356,
+  "megabytes": 28.989356,
   "fps": 24,
   "frameToSeconds": "(frame - 1) / 24",
   "animation": "HOMI_STORY",
@@ -13,11 +13,11 @@
       "camera": "HOMI_STEP_1",
       "frames": [
         1,
-        1455
+        1503
       ],
       "seconds": [
         0.0,
-        60.583333333333336
+        62.583333333333336
       ],
       "previewFrame": 170,
       "label": "Entry, shopping, PayPal at till 01, the walk to returns"
@@ -25,53 +25,53 @@
     {
       "camera": "HOMI_STEP_2",
       "frames": [
-        1456,
-        1615
+        1504,
+        1663
       ],
       "seconds": [
-        60.625,
-        67.25
+        62.625,
+        69.25
       ],
-      "previewFrame": 1482,
+      "previewFrame": 1530,
       "label": "Scan four cups; approved return100"
     },
     {
       "camera": "HOMI_STEP_3",
       "frames": [
-        1616,
-        1823
+        1664,
+        1871
       ],
       "seconds": [
-        67.29166666666667,
-        75.91666666666667
+        69.29166666666667,
+        77.91666666666667
       ],
-      "previewFrame": 1804,
+      "previewFrame": 1852,
       "label": "Kiosk note with the injection; agent requests60; review required"
     },
     {
       "camera": "HOMI_STEP_4",
       "frames": [
-        1824,
-        1953
+        1872,
+        2001
       ],
       "seconds": [
-        75.95833333333333,
-        81.33333333333333
+        77.95833333333333,
+        83.33333333333333
       ],
-      "previewFrame": 1834,
+      "previewFrame": 1882,
       "label": "Reject60; approve new40; gateway recheck"
     },
     {
       "camera": "HOMI_STEP_5",
       "frames": [
-        1954,
-        2144
+        2002,
+        2192
       ],
       "seconds": [
-        81.375,
-        89.29166666666667
+        83.375,
+        91.29166666666667
       ],
-      "previewFrame": 2059,
+      "previewFrame": 2107,
       "label": "Provider confirms40; receipt"
     }
   ],
@@ -79,9 +79,9 @@
     "HOMI_SCREEN_MAT",
     "HOMI_TABLET_MAT"
   ],
-  "nodes": 10801,
-  "channels": 896,
-  "sampledFrames": 1352,
+  "nodes": 11469,
+  "channels": 1552,
+  "sampledFrames": 1379,
   "notes": [
     "Use an AnimationMixer, pause it and setTime after each user button; the GLB does not autoplay.",
     "Visibility parent scale tracks use STEP. Do not discard these tracks.",
@@ -108,27 +108,33 @@
   },
   "events": {
     "scanCounts": {
-      "1/4": 1482,
-      "2/4": 1518,
-      "3/4": 1554,
-      "4/4": 1590
+      "1/4": 1530,
+      "2/4": 1566,
+      "3/4": 1602,
+      "4/4": 1638
     },
-    "returnApproved100": 1604,
-    "reviewRequired": 1784,
-    "reject60": 1824,
-    "fresh40Ready": 1852,
-    "approve40AndRecheck": 1864,
-    "providerPending": 1954,
-    "providerConfirmed": 2024,
-    "receiptFullyOut": 2059
+    "returnApproved100": 1652,
+    "reviewRequired": 1832,
+    "reject60": 1872,
+    "fresh40Ready": 1900,
+    "approve40AndRecheck": 1912,
+    "providerPending": 2002,
+    "providerConfirmed": 2072,
+    "receiptFullyOut": 2107
   },
   "story": {
     "tillArrive": 1077,
-    "paid": 1161,
-    "tillLeave": 1245,
-    "atReturns": 1425,
-    "mailStart": 1616,
-    "mailSent": 1748,
+    "scans": [
+      1089,
+      1119,
+      1149
+    ],
+    "scansDone": 1179,
+    "paid": 1233,
+    "tillLeave": 1293,
+    "atReturns": 1473,
+    "mailStart": 1664,
+    "mailSent": 1796,
     "payCamera": "HOMI_STEP_PAY",
     "mailCamera": "HOMI_STEP_MAIL",
     "followFrom": 172,
@@ -139,7 +145,7 @@
       ],
       [
         474,
-        264
+        312
       ],
       [
         780,

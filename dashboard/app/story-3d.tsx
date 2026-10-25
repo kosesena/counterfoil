@@ -15,8 +15,8 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 
-const SCENE = '3d/homi-story.glb?v=20261025d';
-const META = '3d/homi-story.json?v=20261025d';
+const SCENE = '3d/homi-story.glb?v=20261025e';
+const META = '3d/homi-story.json?v=20261025e';
 const STILLS = [1, 1, 1, 2, 3, 3, 4, 5];            // the exported stills per step (phones)
 const STILL = (n: number) => `3d/story/step-${STILLS[n]}.jpg`;
 const LAST = 7;
@@ -24,7 +24,7 @@ const LAST = 7;
 const STEPS = [
   { title: 'A return at HOMI', text: 'Attack P6-01 from the shop floor: what a customer types into a returns kiosk reaches HOMI’s AI agent, which can move money. Seven steps, one button each.' },
   { title: 'Shopping', text: 'He picks a rug, a potted plant and a box of 8 Cloudstone cups, and pushes the cart to till 01.' },
-  { title: 'Pays with PayPal', text: 'One receipt, ST-1057: cups 200.00 + rug 49.00 + plant 19.00 = 268.00 USD. He scans the till’s QR code with his phone.' },
+  { title: 'Pays with PayPal', text: 'Self-checkout at till 01: he scans the rug, the plant and the cups (ST-1057: 49.00 + 19.00 + 200.00 = 268.00 USD), then scans the till’s QR code with his phone.' },
   { title: 'Changes his mind', text: 'He has already asked for 60 USD back online for these cups. Now he takes 4 of them to the returns kiosk: the shared store record allows 100 USD in total (RMA-1057), 60 of it already on its way.' },
   { title: 'Asks again, in the store', text: 'In the kiosk’s reason box he asks for the same 60 USD again and tells HOMI’s agent to treat it as a separate call and reset the refund counter: a double return across channels, aimed at the AI.', tone: 'amber' },
   { title: 'Agent asks for 60 USD', text: '60 + 60 = 120 USD against a 100 USD return. Braintree would pay it (it is under the 268 USD sale) and so would a 200 USD cap. Counterfoil checks the store record and holds the call.', tone: 'amber' },
@@ -36,7 +36,7 @@ type Meta = {
   fps: number; animation: string; initialCamera: string; overviewFrame: number;
   cameraStops: { camera: string; frames: [number, number]; previewFrame: number }[];
   story: {
-    tillArrive: number; paid: number; tillLeave: number; atReturns: number; mailStart: number; mailSent: number;
+    tillArrive: number; scansDone: number; paid: number; tillLeave: number; atReturns: number; mailStart: number; mailSent: number;
     payCamera: string; mailCamera: string; followFrom: number;
   };
 };
@@ -91,7 +91,7 @@ async function glView(el: HTMLDivElement, onProgress: (k: number) => void, onFra
   // per step: frames, camera, playback speed, and when a camera that follows him takes over
   const plan: { frames: [number, number]; camera: string; speed: number; follow?: [number, number] }[] = [
     { frames: [meta.overviewFrame, meta.overviewFrame], camera: meta.initialCamera || 'HOMI_OVERVIEW', speed: 1 },
-    { frames: [1, st.tillArrive], camera: stops[0].camera, speed: 2.5, follow: [st.followFrom, st.tillArrive] },
+    { frames: [1, st.tillArrive], camera: stops[0].camera, speed: 2.5, follow: [st.followFrom, Infinity] },   // ends on him at the till
     { frames: [st.tillArrive, st.tillLeave], camera: st.payCamera, speed: 1 },
     { frames: [st.tillLeave, stops[1].frames[1]], camera: stops[1].camera, speed: 2, follow: [st.tillLeave, st.atReturns] },
     { frames: [st.mailStart, st.mailSent + 24], camera: st.mailCamera, speed: 1 },
@@ -192,8 +192,8 @@ function Phone({ paid }: { paid: boolean }) {
         ) : (
           <>
             <div className="story3d-brand">PayPal</div>
-            <div className="story3d-scan" aria-hidden="true" />
-            <small>Scan the QR code at the till</small>
+            <div className="story3d-scan" aria-hidden="true"><i className="story3d-qr" /><i className="story3d-beam" /></div>
+            <small>Scanning HOMI till 01…<br />$268.00</small>
           </>
         )}
       </div>
@@ -206,7 +206,7 @@ export function Story3D() {
   const view = useRef<View | null>(null);
   const meta = useRef<Meta['story'] | null>(null);
   const [step, setStep] = useState(0);
-  const [paid, setPaid] = useState(false);
+  const [till, setTill] = useState<'scan' | 'qr' | 'paid'>('scan');
   const [mode, setMode] = useState<'loading' | 'animated' | 'still'>('loading');
   const [progress, setProgress] = useState(0);
 
@@ -216,7 +216,10 @@ export function Story3D() {
     let disposed = false;
     if (window.matchMedia('(max-width: 760px)').matches) { setMode('still'); return; }
     fetch(META).then((r) => r.json()).then((m: Meta) => { meta.current = m.story; }).catch(() => {});
-    const onFrame = (f: number) => { const m = meta.current; if (m) setPaid((was) => (was === f >= m.paid ? was : f >= m.paid)); };
+    const onFrame = (f: number) => {
+      const m = meta.current;
+      if (m) setTill(f >= m.paid ? 'paid' : f >= m.scansDone ? 'qr' : 'scan');
+    };
     // the scene (6 MB) only loads once the hero is near the viewport
     const io = new IntersectionObserver((entries) => {
       if (!entries.some((x) => x.isIntersecting)) return;
@@ -250,7 +253,7 @@ export function Story3D() {
       {mode === 'loading' && (
         <span className="story3d-load">Loading the store… {progress ? `${Math.round(progress * 100)}%` : ''}</span>
       )}
-      {step === 2 && <Phone paid={mode === 'still' || paid} />}
+      {step === 2 && (mode === 'still' || till !== 'scan') && <Phone paid={mode === 'still' || till === 'paid'} />}
       <div className={`story3d-card ${'tone' in s ? s.tone : ''}`}>
         <div className="story3d-head">
           <span>{step ? `${step} / ${LAST}` : `${LAST} steps`}</span>
