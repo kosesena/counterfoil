@@ -1,0 +1,14 @@
+RETURN CREW — current character state assets
+
+38 character PNGs plus 1 card sheet (39 total).
+
+nella-states-v1/ — 6 poses; Nella is the scammer/injection author.
+reader-states-v1/ — 6 poses.
+runner-states-v1/ — 6 poses.
+counterfoil-approved/ — 8 approved references, including final review eyes.
+manager-states-v2/ — 6 corrected poses; eyes/brows preserved, small U is the single mouth, no extra smile below.
+paypal-states-v1/ — 6 poses, rear backpack printer.
+nella-felt-payment-card.png — demo card front/back/perspective sheet.
+
+Read each folder usage.txt and prompts.txt where present. Manager approval is separate from blocked invalid $60 request; never overrides it. PayPal success requires backend confirmation. Generated QR is a placeholder.
+ZIP copies and consolidated duplicate directories are local delivery artifacts; use the canonical folders above in Git.

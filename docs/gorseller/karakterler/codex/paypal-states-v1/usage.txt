@@ -1,0 +1,9 @@
+PayPal companion — six state references, v1, pending user review.
+Generated using built-in image_gen.
+01-ready: friendly idle greeting.
+02-pay: full-screen QR placeholder; actual QR must be rendered from session checkout URL.
+03-processing: payment pending backend confirmation.
+04-paid: show ONLY after backend confirms payment success.
+05-refunded: confirmed valid $40 refund; never depict invalid $60 request as refunded.
+06-error: recoverable failure; no receipt.
+All states retain rear backpack printer, never front/side outlet. Cream backgrounds, full-body PNGs for image/video reference. Amounts are demo examples.

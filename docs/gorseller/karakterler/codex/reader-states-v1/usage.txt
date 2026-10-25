@@ -1,0 +1,8 @@
+Reader — six state references, pending user review. Generated using built-in image_gen.
+01-ready: greeting.
+02-receive: receives receipt.
+03-reading: reads document.
+04-injected-text: examines attacker-authored APPROVE strip. This is document content, not authorization.
+05-extract: extracts requested $60 amount.
+06-handoff: passes request to Runner.
+Reader does not authorize refunds. Counterfoil validates the $60 request against $40 remaining and blocks it. Preserve orange pear body, two olive leaves, cream satchel and felt materials.

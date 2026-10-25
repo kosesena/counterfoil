@@ -1,0 +1,9 @@
+Nella — scammer / prompt-injection author. Six poses, pending user review.
+Built-in image_gen; approved petrol teal portrait reference.
+01-ready: apparently innocent greeting.
+02-pay: original purchase.
+03-receipt: inspecting original $100 receipt.
+04-tampering: inserts forged APPROVE instruction and $60 request.
+05-submit-fake: presents malicious receipt. APPROVE is attacker-authored content, NOT an authorization.
+06-caught: Counterfoil blocks invalid $60 request against $40 remaining. No refund occurred.
+Earlier generated cooperative $40 request and happy refund poses are discarded concepts, not part of this package.

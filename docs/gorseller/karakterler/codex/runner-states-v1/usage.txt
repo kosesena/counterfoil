@@ -1,0 +1,8 @@
+Runner — six state references, pending user review. Generated using built-in image_gen.
+01-ready: idle greeting.
+02-receive: receives $60 request from Reader.
+03-carry: carries request.
+04-submit: presents request to Counterfoil.
+05-wait: waits for validation.
+06-blocked: stops after Counterfoil rejects $60 against $40 remaining; no execution or refund.
+Preserve cobalt blue body, exactly three sprouts, long legs and brown courier satchel. Cream backgrounds; full-body image/video reference PNGs.

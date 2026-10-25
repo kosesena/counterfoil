@@ -1,0 +1,5 @@
+Manager — six corrected state references v2, pending user review. Built-in image_gen.
+FACE: preserve eyes and brows. Small black U is the ONLY mouth. Never add another smile beneath it or interpret it as a separate nose. User clarified with original reference on 25 October 2026.
+01-ready; 02-review-request; 03-checking; 04-thinking; 05-approve; 06-decline.
+Separate manager-review branch. Approval is a review decision, NOT completed payment/refund and NEVER an override of invalid $60 blocked against $40 remaining.
+Earlier generated double-mouth Manager variants are superseded and excluded.
