@@ -1,0 +1,12 @@
+Counterfoil — approved character and video reference poses
+
+00-character: identity reference (plum body, rust beret, cream moustache).
+01-ready: attentive idle.
+02-checking: checks store record, $40 remaining.
+03-mismatch: compares $60 request against $40 remaining.
+04-block: blocks invalid $60 request.
+05-review: approved waiting pose; round glossy bead eyes matched to 04-block. This is a separate manager-review branch, not an override of a blocked request.
+06-allow: allows a NEW valid $40 request.
+07-complete: completion greeting.
+
+Full-body PNG references on cream background for image-to-video. Preserve identity and felt materials. The waiting pose here supersedes all earlier 05-review variants. Amounts are scenario examples.
