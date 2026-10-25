@@ -1,8 +1,8 @@
 'use client';
 
-// HOMI's returns control: an editorial opening (headline, the store's return station, the result per
-// condition) over a dark console, which is one AG Studio instance on the exported evaluation data. The page is static: it fetches
-// public/counterfoil-data.json in the browser, so it can be hosted anywhere with no credentials.
+// HOMI's returns control in felt (Codex's design, 25 Oct): the hero with Counterfoil, the result per condition, the return
+// crew, the 3D story, then the evidence: one AG Studio instance on the exported evaluation data, and the 3D model chart.
+// The page is static: it fetches public/counterfoil-data.json in the browser, so it can be hosted anywhere with no credentials.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { enableStudioDevValidations, type AgStudioApi } from 'ag-studio';
@@ -12,7 +12,8 @@ import { buildStudioData, modelName, type CounterfoilData } from './studio-data'
 import { SOFT_WIDGETS } from './soft-charts';
 import { CASE_WIDGET } from './case-file';
 import { buildCaseHarness } from './case-agent';
-import { Story3D } from './story-3d';
+import { Story3D, StoryStrip } from './story-3d';
+import { ClosingBand, Crew, FollowingFoil, Hero, ResultBand, StoryAside } from './felt';
 import { ModelBars3D } from './model-bars-3d';
 import { canvasPadding, counterfoilTheme } from './theme';
 
@@ -81,60 +82,48 @@ export default function Page() {
   return (
     <>
       <header className="top">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="logo" src="homi-logo.png" alt="HOMI" />
-        <span className="product">Returns control</span>
+        <span className="wordmark">HOMI</span>
         <nav>
           {Object.entries(PAGE_TITLES).map(([id, text]) => (
             <button key={id} className={id === pageId ? 'active' : ''} onClick={() => openPage(id)}>
               {text}
             </button>
           ))}
-          <a className="live" href="https://counterfoil-demo.onrender.com" target="_blank" rel="noopener">
-            Try it live →
-          </a>
         </nav>
+        <span className="sandbox">Sandbox</span>
+        <a className="live f-btn" href="https://counterfoil-demo.onrender.com" target="_blank" rel="noopener">
+          Try it live →
+        </a>
       </header>
 
       {pageId === 'overview' && data && (
-        <section className="hero">
-          <div className="lead">
-            <div>
-              <span className="eyebrow">Evaluation · {data.runs.length} runs · {models.length} models</span>
-              <h1>
-                Hidden instructions fool the agent. <em>Counterfoil</em> keeps the money right.
-              </h1>
-            </div>
-            <p>
-              Each attack e-mail tries to make HOMI&apos;s AI agent refund or charge the wrong amount. Without a gate,{' '}
-              {compare[0].harm} of {compare[0].total} attack runs paid wrong money through Braintree. With Counterfoil,{' '}
-              {compare[2].harm === 0 ? 'none did' : `${compare[2].harm} did`}.
-            </p>
-          </div>
-          <div className="station">
-            <Story3D />
-          </div>
-          <div className="caption">
-            <span>HOMI · attack P6-01 at the return station, recorded under Counterfoil · Braintree sandbox, mocked PayPal</span>
-            <span>Fig. 1</span>
-          </div>
-          <div className="conditions">
-            {compare.map((c) => (
-              <div key={c.label} className={`cond ${c.harm ? 'bad' : 'good'}`}>
-                <b>{c.label}</b>
-                <small>{c.note}</small>
-                <strong>
-                  {c.harm}
-                  <span> / {c.total}</span>
-                </strong>
+        <>
+          <Hero onStory={() => document.getElementById('story')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} />
+          <ResultBand compare={compare} runs={data.runs.length} models={models.length} />
+          <Crew />
+          <section className="f-story felt" id="story">
+            <h2>One receipt. Seven moments.</h2>
+            <p className="f-sub">Follow attack P6-01 from checkout to resolution, one button at a time.</p>
+            <div className="f-story-grid">
+              <div className="station">
+                <Story3D />
               </div>
-            ))}
-          </div>
-        </section>
+              <StoryAside />
+            </div>
+            <StoryStrip />
+            <p className="f-note">The blocked $60 and the new, valid $40 are separate requests · Braintree sandbox, mocked PayPal</p>
+          </section>
+          <section className="f-evidence-head">
+            <h2>The evidence, without the guesswork.</h2>
+            <p className="f-sub">Every run of the evaluation: filter by model, scenario or outcome and see what each agent tried and what reached Braintree.</p>
+          </section>
+        </>
       )}
 
       {pageId === 'review' && (
-        <section className="intro">
+        <section className="intro felt">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="intro-foil" src="crew/counterfoil-block.webp" alt="" />
           <p>
             Every refund or charge Counterfoil did not let straight through. <b>APPROVAL</b> waits for the merchant; <b>BLOCK</b> never
             reaches Braintree. Step through the cases on the right, or narrow them with the buttons: the case agent reads the store
@@ -174,19 +163,25 @@ export default function Page() {
       {pageId === 'overview' && data && compact === false && (
         <section className="bars3d-section">
           <div className="bars3d-head">
-            <span className="eyebrow">Fig. 2 · every run, attack and clean, counted like the table above · console filters do not apply</span>
-            <h2>Wrong money paid, by model</h2>
+            <div>
+              <h2>Wrong money paid, by model.</h2>
+              <p className="f-sub">Every run, attack and clean, counted like the table above · drag to turn, hover a bar</p>
+            </div>
+            <FollowingFoil src="crew/counterfoil-complete.webp" alt="" />
           </div>
           <ModelBars3D data={data} />
         </section>
       )}
 
+      {pageId === 'overview' && data && <ClosingBand />}
+
       {data && (
         <footer>
+          <span className="wordmark small">HOMI</span>
+          <span>Fictional store · Braintree sandbox · No real funds</span>
           <span>
             {data.runs.length} runs · {models.join(', ')} · exported {data.asOf.slice(0, 16).replace('T', ' ')} UTC
           </span>
-          <span>HOMI is a fictional store. Payments run in the Braintree sandbox with mocked PayPal.</span>
         </footer>
       )}
     </>
