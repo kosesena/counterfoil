@@ -72,7 +72,9 @@ def test_scenarios_lists_all_with_replay_availability():
     assert len(data) == 22
     by_id = {s["id"]: s for s in data}
     assert "2026-10-23-dev-qwen2.5-8k" in by_id["P1-01"]["replay"]
-    assert by_id["P1-02"]["replay"] == []  # holdout: never run in the saved files
+    # replay lists exactly the saved files that ran the scenario: the dev runs have no holdout scenario
+    assert "2026-10-23-dev-qwen2.5-8k" not in by_id["P1-02"]["replay"]
+    assert all("-dev-" not in src for src in by_id["P1-02"]["replay"])
 
 
 @pytest.mark.parametrize("condition", ["none", "cap", "counterfoil"])
