@@ -317,9 +317,14 @@ export function Story3D() {
         <h3>{s.title}</h3>
         <p>{s.text}</p>
         <div className="story3d-nav">
-          <button className="ghost" onClick={() => go(step - 1, false)} disabled={step === 0}>Back</button>
-          <button onClick={() => go(step === LAST ? 0 : step + 1, step !== LAST)}>
-            {step === 0 ? 'Start' : step === LAST ? 'Replay' : 'Next'}
+          {/* Codex's felt buttons (docs/gorseller/site-tasarim/story-buttons-v1/) */}
+          <button className="f-patch" onClick={() => go(step - 1, false)} disabled={step === 0}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={step === 0 ? 'buttons/story-back-off.webp' : 'buttons/story-back.webp'} alt="Back" />
+          </button>
+          <button className="f-patch" onClick={() => go(step === LAST ? 0 : step + 1, step !== LAST)}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={`buttons/story-${step === 0 ? 'start' : step === LAST ? 'replay' : 'next'}.webp`} alt={step === 0 ? 'Start' : step === LAST ? 'Replay' : 'Next'} />
           </button>
         </div>
       </div>

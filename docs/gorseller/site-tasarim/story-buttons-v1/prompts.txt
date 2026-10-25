@@ -1,0 +1,15 @@
+Built-in image_gen. Transparent PNGs. Back normal and disabled; Start; Open checkout. Preserve aspect ratio; normalize visible button size in fixed layout boxes. Disabled state must also disable the actual HTML button. No site code edited.
+
+01-back.png
+Create ONE isolated premium needle-felt website button. Exact centered text "Back". Warm ivory cream felt body, plum #782469 raised felt text and plum running-stitch border. Soft rounded bold typography made entirely of wool, softly padded rounded rectangle, fine visible wool fibers, shallow thickness, restrained shadow, horizontal front-on orthographic. Compact approximately 1.8:1 button. Tight frame with small transparent safe margins. True transparent alpha outside button, no background, no checkerboard, no extra words, icons or objects. Cohesive handmade HOMI UI family. Crisp readable spelling.
+
+02-back-disabled.png
+Create ONE isolated premium needle-felt website button. Exact centered text "Back". Warm ivory cream felt body, muted pale mauve #BA9CAF raised felt text and pale mauve running-stitch border. Disabled subdued appearance. Soft rounded bold typography made entirely of wool, softly padded rounded rectangle, fine visible wool fibers, shallow thickness, restrained shadow, horizontal front-on orthographic. Compact approximately 1.8:1 button. Tight frame with small transparent safe margins. True transparent alpha outside button, no background, no checkerboard, no extra words, icons or objects. Cohesive handmade HOMI UI family. Crisp readable spelling.
+
+03-start.png
+Create ONE isolated premium needle-felt website button. Exact centered text "Start". Rich plum #782469 felt body, warm ivory raised felt text, pale mauve running-stitch border. Soft rounded bold typography made entirely of wool, softly padded rounded rectangle, fine visible wool fibers, shallow thickness, restrained shadow, horizontal front-on orthographic. Compact approximately 1.8:1 button. Tight frame with small transparent safe margins. True transparent alpha outside button, no background, no checkerboard, no extra words, icons or objects. Cohesive handmade HOMI UI family. Crisp readable spelling.
+
+04-open-checkout.png
+Create ONE isolated premium needle-felt website button. Exact centered text "Open checkout →". Rich plum #782469 felt body, warm ivory raised felt text and right arrow, pale mauve running-stitch border. Soft rounded bold typography made entirely of wool, softly padded rounded rectangle, fine visible wool fibers, shallow thickness, restrained shadow, horizontal front-on orthographic. Wide approximately 3.8:1 button. Tight frame with small transparent safe margins. True transparent alpha outside button, no background, no checkerboard, no extra words, icons or objects. Cohesive handmade HOMI UI family. Crisp readable spelling.
+
+Final Open checkout: edit transparent 03-try-it-live-plum.png, replace text with Open checkout and right arrow; preserve plum felt, cream letters, stitches, and transparent exterior. Prior backdrop variants discarded.

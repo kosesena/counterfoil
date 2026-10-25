@@ -244,8 +244,10 @@ export function ModelBars3D({ data }: { data: CounterfoilData }) {
       <div className="bars3d-bar">
         <div className="bars3d-toggle" role="group" aria-label="Metric">
           {(Object.keys(METRICS) as Metric[]).map((m) => (
-            <button key={m} className={m === metric ? 'on' : ''} aria-pressed={m === metric} onClick={() => setMetric(m)}>
-              {METRICS[m]}
+            <button key={m} className={`f-patch${m === metric ? ' on' : ''}`} aria-pressed={m === metric} onClick={() => setMetric(m)}>
+              {/* Codex's felt buttons (docs/gorseller/site-tasarim/chart-buttons-v1/), plum when chosen */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`buttons/metric-${m}${m === metric ? '-on' : ''}.webp`} alt={METRICS[m]} />
             </button>
           ))}
         </div>

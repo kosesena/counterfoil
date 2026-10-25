@@ -129,7 +129,10 @@ export function StoryAside() {
     <aside className="f-aside felt">
       <h3>A real sandbox checkout, opened from this session.</h3>
       <p>Step 2 shows a QR code for your visit. Scan it and HOMI&apos;s receipt is paid with PayPal in the Braintree sandbox; the story then refunds that same sale.</p>
-      <button className="f-btn" onClick={open}>Open checkout →</button>
+      <button className="f-patch" onClick={open}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="buttons/open-checkout.webp" alt="Open checkout" />
+      </button>
     </aside>
   );
 }

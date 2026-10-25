@@ -1,0 +1,9 @@
+Built-in image_gen. Separate transparent felt PNGs. Use fixed layout boxes for swaps, preserve aspect ratios; generated states may have minor shape variation. No dashboard code changed.
+
+01-wrong-money-paid-normal.png
+Edit reference felt button label to exactly "Wrong money paid". Preserve its wool material, colors, rounded rectangle and embroidered stitches. Center text on one line. Widen button to fit text comfortably. Raised rounded bold wool letters. Front on. True transparent alpha exterior; no backdrop or gradient. One standalone button only, no icons or additional wording.
+
+02-agent-misled-normal.png
+Edit reference felt button label to exactly "Agent misled". Preserve its wool material, colors, rounded rectangle and embroidered stitches. Center text on one line. Widen button to fit text comfortably. Raised rounded bold wool letters. Front on. True transparent alpha exterior; no backdrop or gradient. One standalone button only, no icons or additional wording.
+
+Color-only edit: selected state of this exact felt button. Change cream body to rich plum #782469, navy lettering to ivory #FFF4DF, stitches to pale mauve. Preserve exact wording, shapes, spacing, framing and texture. True transparent alpha exterior, no background glow, no added icons.
