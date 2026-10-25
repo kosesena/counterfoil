@@ -26,13 +26,21 @@ Sponsor şeridindeki Postman, Zapier, Elastic, Kernel, Astropods için ayrı öd
 |---|---|---|---|---|
 | **Patrizia Giampà** (adı yok; Zapier + Claude + PayPal sandbox, "no-code"; teslim 9 Kas'ta) | Ajanın neye ödeyebileceğine karar veren kapı; ekranda "Emergency fund cap $500", "Trusted contact" alanları | "AI önerebilir, parayı yalnızca sabit kurallar hareket ettirir; her geri alınamaz adım insan onayı ister" | gönderide yok | **En yakın ilke.** Ama tüketici/aile tarafı görünüyor ve koruma büyük ölçüde tutar tavanı. |
 | **ClipPay** (Ivan Petrov; PayPal + Gemini + Next.js + Cloudflare, tek kişi, 3 gün) | Hasarlı ürün fotoğrafından kısmi iade; ürün iade edilmiyor | "AI asla parayı belirlemez; yalnızca hasarı tarif eder, tutarı satıcı kurallarıyla test edilmiş kod belirler; AI kandırılıp fazla ödetilemez" | gönderide yok | Satıcı tarafı iade, aynı slogan. Ama AI'ın verdiği **hasar derecesi tutarın girdisi**: abartılmış/manipüle fotoğraf tutarı yükseltebilir. |
-| **ScamShield** (Ajeet Gupta; teslim edildi, ~11 Eki) | Alıcıya gelen mesaj/link/faturayı ödemeden önce puanlar; güvenli görünürse PayPal checkout'u açar. Ajan yok, satıcı yok | "Check before you pay"; AI + kurallar, sandbox, para hareket etmiyor | **40 etiketli test isteği** (ekranda) | Düşük: insan alıcıyı insan dolandırıcıya karşı korur. Karar AI + kural puanında. Ama "test ettik" iddiası artık tek başına ayırt edici değil. |
+| **ScamShield** (Ajeet Gupta; teslim edildi, ~11 Eki; Gemini + PayPal Orders API, Webhooks, Agent Toolkit, JS SDK; Render) | Alıcıya gelen mesaj/link/faturayı ödemeden önce puanlar; güvenli görünürse PayPal checkout'u açar. Ajan yok, satıcı yok. Ayrıca Chrome eklentisi prototipi ve "Security Inspector" (Decision Log, Tamper Test, Webhook Stream, Attack Matrix) | "Check before you pay"; AI + kurallar, sandbox, para hareket etmiyor | **40 etiketli test isteği** (ekranda) | Düşük: insan alıcıyı insan dolandırıcıya karşı korur. Karar AI + kural puanında. Ama "test ettik" iddiası artık tek başına ayırt edici değil. |
 | Jochen Schultz (rakip değil, şüpheci yorum) | — | "AI ajanına ödeme yetkisi = maymuna makineli tüfek; bunu mümkün kılan şey varsa AI'ın rolü kalmamıştır" | — | Videonun açılış kancası olarak kullanılabilir (aşağıda). |
 
 ## Ortaya çıkan tablo
 - **"AI parayı belirlemez" bu hackathon'da yaygın bir slogan.** İki ayrı proje neredeyse aynı cümleyi kuruyor. Tek başına ayırt edici değil.
 - Fark kanıtta ve tasarım ayrıntısında.
 - **Ölçüm de tek başına yetmiyor:** ScamShield 40 etiketli istekle test ettiğini söylüyor. Ayırt eden, ölçümün biçimi: ayrılmış holdout, 9+ model ve tekrar, girişim/zarar ayrımı, tavanla karşılaştırma, gerçek sandbox.
+
+## Çıta örneği: ScamShield'ın teslimi
+Teslim şartlarını eksiksiz karşılayan bir giriş; jüri bunu görmüş olacak:
+- 2:56 demo videosu (https://youtu.be/2HSRVaYXA7I), Render'da canlı demo (https://scam-shield-paypal.onrender.com/pay), açık repo (https://github.com/gajit9147-dev/scam-shield-paypal).
+- "Honest limits" paragrafı ("sandbox only, no real money; a cleared result is guidance, not proof").
+- Saldırı tablosu ürünün içinde ("Attack Matrix"), karar günlüğü görünür.
+- PayPal'ı geniş kullanıyor (Orders, Webhooks, Agent Toolkit, JS SDK). Counterfoil yalnızca Braintree + mocked PayPal kullanıyor ve Agent Toolkit kullanmadığını README'de söylüyor. Devpost metninde tek cümleyle: Braintree bir PayPal servisi ve PayPal'ın onayıyla seçildi (ADR 0007); kapı rail'den bağımsız (in-memory ve Braintree rail'de aynı kapı).
+- Gönderide PayPal Devpost, Jo Franchetti, Marco Podien, Eddie Jaoude etiketli; muhtemelen PayPal geliştirici ilişkileri / jüri (doğrulanmadı).
 
 ## Counterfoil'un farkları (bu iki rakibe karşı)
 1. **Tutarın kaynağı modelin çıktısı değil, mağaza kaydı.** Model ne söylerse söylesin tutar RMA/sipariş kaydından gelir; modelin önerdiği tutar o kayda karşı kontrol edilir. (ClipPay'de AI'ın derecesi tutarı belirliyor; Patrizia'da tavan.)
