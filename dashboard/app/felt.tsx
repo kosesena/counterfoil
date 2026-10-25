@@ -148,3 +148,22 @@ export function ClosingBand() {
     </section>
   );
 }
+
+// AG Studio draws the Condition filter as plain text buttons with no per-item hook. This tags each one with its
+// condition so globals.css can swap in Codex's felt patches (buttons/cond-*.webp); the text stays for screen readers.
+const CONDITIONS: Record<string, string> = { Counterfoil: 'counterfoil', '$200 cap': 'cap', 'No gate': 'none' };
+
+export function useFeltConditions() {
+  useEffect(() => {
+    const tag = () => {
+      for (const b of document.querySelectorAll<HTMLButtonElement>('.ag-studio-button-filter-widget-item:not([data-cond])')) {
+        const id = CONDITIONS[b.textContent?.trim() ?? ''];
+        if (id) b.dataset.cond = id;
+      }
+    };
+    tag();
+    const seen = new MutationObserver(tag);
+    seen.observe(document.body, { childList: true, subtree: true });
+    return () => seen.disconnect();
+  }, []);
+}

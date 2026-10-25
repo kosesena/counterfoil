@@ -424,6 +424,14 @@ main .ag-studio-layout-widget-container:not(:has(.ag-studio-value-widget)):not(:
 main .ag-studio-layout-widget-title { font-family: var(--cf-display) !important; font-weight: 800 !important; font-size: 21px !important; color: var(--cf-ink) !important; }
 main .ag-studio-button-filter-widget-item { box-shadow: 0 2px 0 #e2d2b6; transition: transform .12s; }
 main .ag-studio-button-filter-widget-item:hover { transform: translateY(-1px); }
+/* Condition filter: Codex's felt patches (docs/gorseller/site-tasarim/condition-states-v1/), plum when chosen */
+main .ag-studio-button-filter-widget-item[data-cond] { color: transparent !important; background: center / contain no-repeat !important; border: 0 !important; box-shadow: none; min-width: 112px; }
+main .ag-studio-button-filter-widget-item[data-cond='counterfoil'] { background-image: url(/buttons/cond-counterfoil.webp) !important; }
+main .ag-studio-button-filter-widget-item[data-cond='cap'] { background-image: url(/buttons/cond-cap.webp) !important; }
+main .ag-studio-button-filter-widget-item[data-cond='none'] { background-image: url(/buttons/cond-none.webp) !important; }
+main .ag-studio-button-filter-widget-item-active[data-cond='counterfoil'] { background-image: url(/buttons/cond-counterfoil-on.webp) !important; }
+main .ag-studio-button-filter-widget-item-active[data-cond='cap'] { background-image: url(/buttons/cond-cap-on.webp) !important; }
+main .ag-studio-button-filter-widget-item-active[data-cond='none'] { background-image: url(/buttons/cond-none-on.webp) !important; }
 main .soft-total { font-family: var(--cf-display); font-weight: 800; }
 main .soft-tally strong { font-family: var(--cf-display); font-weight: 800; }
 main .ag-root-wrapper { border-radius: 12px; }
