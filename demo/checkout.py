@@ -35,6 +35,7 @@ class Checkout:
         self._purchases: dict[str, dict] = {}
         self._runs: dict[str, dict] = {}  # run id -> the gate, its rail and the response, while calls are held
         self._held: dict[str, str] = {}  # approval id -> run id
+        self._stories: dict[str, dict] = {}  # story session id (from the dashboard's QR) -> {created, purchase id}
         self._lock = threading.Lock()
 
     @property
@@ -46,11 +47,14 @@ class Checkout:
     def client_token(self) -> str:
         return self.gw.client_token.generate()
 
-    def buy(self, nonce: str, scenario: dict) -> dict:
-        """Charge the scenario's order total with the nonce the PayPal button returned."""
+    def buy(self, nonce: str, scenario: dict, extras: tuple[tuple[str, str], ...] = ()) -> dict:
+        """Charge the scenario's order total with the nonce the PayPal button returned. `extras` are other lines on
+        the same receipt (the story's rug and plant): they add to the sale, never to the order the refund is checked
+        against."""
         order = _target_order(scenario)
+        total = Decimal(str(order["total"])) + sum((Decimal(p) for _, p in extras), Decimal(0))
         sale = {
-            "amount": str(order["total"]),
+            "amount": str(total),
             "payment_method_nonce": nonce,
             "order_id": f"homi-demo-{uuid.uuid4().hex[:8]}-{order['order_no']}",
             "options": {"submit_for_settlement": True},
@@ -73,12 +77,39 @@ class Checkout:
             "status": t.status,
             "instrument": t.payment_instrument_type,
             "payer_email": getattr(t.paypal_details, "payer_email", None) if t.paypal_details else None,
+            "lines": [{"item": "order " + order["order_no"], "amount": str(order["total"])}]
+            + [{"item": i, "amount": p} for i, p in extras],
             "created": time.time(),
         }
         with self._lock:
             self._expire()
             self._purchases[purchase["id"]] = purchase
         return purchase
+
+    def story_pay(self, sid: str, nonce: str, scenario: dict, extras: tuple[tuple[str, str], ...]) -> dict:
+        """The phone that scanned the dashboard's QR pays here; the dashboard then sees the purchase by `sid`."""
+        with self._lock:
+            self._expire()
+            known = self._stories.get(sid)
+            if known and known.get("purchase"):
+                return self._purchases[known["purchase"]]  # paid once; a second tap shows the same sale
+            if not known and len(self._stories) >= MAX_PURCHASES:
+                raise OverflowError("too many open store sessions")
+            self._stories[sid] = {"created": time.time(), "purchase": None}
+        purchase = self.buy(nonce, scenario, extras)
+        with self._lock:
+            self._stories[sid]["purchase"] = purchase["id"]
+        return purchase
+
+    def story_status(self, sid: str) -> dict:
+        with self._lock:
+            self._expire()
+            story = self._stories.get(sid)
+            p = self._purchases.get(story["purchase"]) if story and story.get("purchase") else None
+        if p is None:
+            return {"status": "waiting"}
+        keep = ("id", "transaction_id", "amount", "currency", "status", "instrument", "lines")
+        return {"status": "paid", "purchase": {k: p[k] for k in keep if k in p}}
 
     def refund_run(self, purchase_id: str, scenario: dict, condition: str, saved_row: dict) -> dict:
         """Re-execute the recorded agent calls through the gate, onto the judge's real sandbox transaction."""
@@ -175,6 +206,8 @@ class Checkout:
             del self._runs[k]
         while len(self._runs) > MAX_RUNS:
             self._runs.pop(next(iter(self._runs)))
+        for k in [k for k, st in self._stories.items() if now - st["created"] > TTL_S]:
+            del self._stories[k]
         for a in [a for a, r in self._held.items() if r not in self._runs]:
             del self._held[a]
 

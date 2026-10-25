@@ -14,12 +14,15 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import QRCode from 'qrcode';
 
 const SCENE = '3d/homi-story.glb?v=20261025e';
 const META = '3d/homi-story.json?v=20261025e';
 const STILLS = [1, 1, 1, 2, 3, 3, 4, 5];            // the exported stills per step (phones)
 const STILL = (n: number) => `3d/story/step-${STILLS[n]}.jpg`;
 const LAST = 7;
+// The live demo (demo/app.py): its /pay page takes the till's receipt on a phone; /api/story/<sid> tells us it is paid.
+const DEMO = process.env.NEXT_PUBLIC_DEMO_URL || 'https://counterfoil-demo.onrender.com';
 
 const STEPS = [
   { title: 'A return at HOMI', text: 'Attack P6-01 from the shop floor: what a customer types into a returns kiosk reaches HOMI’s AI agent, which can move money. Seven steps, one button each.' },
@@ -178,7 +181,7 @@ async function glView(el: HTMLDivElement, onProgress: (k: number) => void, onFra
 }
 
 // The phone close-up while he pays: the scene's phone is too small to read, so the player draws its screen.
-function Phone({ paid }: { paid: boolean }) {
+function Phone({ paid, sale }: { paid: boolean; sale: Sale | null }) {
   return (
     <div className="story3d-phone" aria-live="polite">
       <div className="story3d-phone-screen">
@@ -187,7 +190,7 @@ function Phone({ paid }: { paid: boolean }) {
             <div className="story3d-note"><b>PayPal</b> · now<br />You sent $268.00 to HOMI</div>
             <div className="story3d-paid">Payment sent</div>
             <div className="story3d-amount">$268.00</div>
-            <small>HOMI · ST-1057 · cups, rug, plant</small>
+            <small>{sale ? <>Braintree sandbox<br /><code>{sale.transaction_id}</code></> : 'HOMI · ST-1057 · cups, rug, plant'}</small>
           </>
         ) : (
           <>
@@ -201,12 +204,52 @@ function Phone({ paid }: { paid: boolean }) {
   );
 }
 
+type Sale = { transaction_id: string; amount: string; currency: string; instrument?: string };
+
+// Till 01 for real: a QR that opens the demo's pay page for this visit; a real Braintree sandbox sale comes back.
+function TillQR({ onPaid, done }: { onPaid: (s: Sale) => void; done: Sale | null }) {
+  const [sid] = useState(() => (crypto.randomUUID?.() ?? Math.random().toString(36).slice(2) + Date.now().toString(36)).replace(/-/g, ''));
+  const [img, setImg] = useState('');
+  const [sale, setSale] = useState<Sale | null>(done);
+  const url = `${DEMO}/pay?s=${sid}`;
+  useEffect(() => { QRCode.toDataURL(url, { margin: 1, width: 240, color: { dark: '#1f2d44', light: '#ffffff' } }).then(setImg); }, [url]);
+  useEffect(() => {
+    if (sale) return;
+    let stop = false;
+    const poll = async () => {
+      try {
+        const r = await fetch(`${DEMO}/api/story/${sid}`);
+        const body = await r.json();
+        if (!stop && body.status === 'paid') { setSale(body.purchase); onPaid(body.purchase); return; }
+      } catch { /* the demo may be waking up; keep asking */ }
+      if (!stop) timer = window.setTimeout(poll, 3000);
+    };
+    let timer = window.setTimeout(poll, 1500);
+    return () => { stop = true; window.clearTimeout(timer); };
+  }, [sid, sale, onPaid]);
+  return (
+    <div className="story3d-till">
+      <b>Till 01 · pay it for real</b>
+      {sale ? (
+        <p className="story3d-till-paid">Paid {sale.currency} {sale.amount} in the Braintree sandbox<br /><code>{sale.transaction_id}</code></p>
+      ) : (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {img && <img src={img} alt="QR code: open HOMI's payment page on your phone" />}
+          <p>Scan with your phone, or <a href={url} target="_blank" rel="noopener">open the payment page</a>. Braintree sandbox, test PayPal account.</p>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function Story3D() {
   const stage = useRef<HTMLDivElement>(null);
   const view = useRef<View | null>(null);
   const meta = useRef<Meta['story'] | null>(null);
   const [step, setStep] = useState(0);
   const [till, setTill] = useState<'scan' | 'qr' | 'paid'>('scan');
+  const [sale, setSale] = useState<Sale | null>(null);
   const [mode, setMode] = useState<'loading' | 'animated' | 'still'>('loading');
   const [progress, setProgress] = useState(0);
 
@@ -253,7 +296,8 @@ export function Story3D() {
       {mode === 'loading' && (
         <span className="story3d-load">Loading the store… {progress ? `${Math.round(progress * 100)}%` : ''}</span>
       )}
-      {step === 2 && (mode === 'still' || till !== 'scan') && <Phone paid={mode === 'still' || till === 'paid'} />}
+      {step === 2 && (mode === 'still' || till !== 'scan') && <Phone paid={mode === 'still' || till === 'paid' || !!sale} sale={sale} />}
+      {step === 2 && <TillQR onPaid={setSale} done={sale} />}
       <div className={`story3d-card ${'tone' in s ? s.tone : ''}`}>
         <div className="story3d-head">
           <span>{step ? `${step} / ${LAST}` : `${LAST} steps`}</span>

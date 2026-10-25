@@ -261,3 +261,13 @@ footer { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wr
 .story3d-paid { margin-top: 26px; font-size: 18px; font-weight: 600; color: var(--cf-green-deep); }
 .story3d-amount { font-family: var(--cf-serif); font-size: 34px; color: var(--cf-ink); }
 @media (max-width: 760px) { .story3d-phone { position: static; transform: none; margin: 12px auto; } }
+
+/* till 01 for real: the QR that opens the demo's pay page on a phone */
+.story3d-till { position: absolute; left: 372px; top: 16px; width: 200px; padding: 12px 14px; background: rgba(255,255,255,.96); border: 1px solid var(--cf-border); font-size: 12px; line-height: 1.45; color: #4a5568; }
+.story3d-till b { display: block; font-size: 12px; color: var(--cf-ink); margin-bottom: 8px; }
+.story3d-till img { display: block; width: 120px; height: 120px; margin: 0 auto 8px; }
+.story3d-till p { margin: 0; }
+.story3d-till a { color: var(--cf-navy); }
+.story3d-till code { font-size: 11px; word-break: break-all; }
+.story3d-till-paid { color: var(--cf-green-deep); font-weight: 500; }
+@media (max-width: 760px) { .story3d-till { position: static; width: auto; margin: 12px; } }

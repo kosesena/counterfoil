@@ -514,3 +514,37 @@ def test_story_reads_the_recorded_p6_block():
     assert finding["code"] == "CUMULATIVE_REFUND_EXCEEDS_RMA"
     # story.js parses this sentence into 60 + 60 = 120 > 100, 40 left
     assert finding["detail"] == "60.00 requested; 0.00 refunded and 60.00 reserved of 100.00 approved; 40.00 left"
+
+
+# -- the dashboard's store story: QR on the till, payment on the phone ---------------------------------------------
+def test_story_session_waits_then_shows_the_phone_payment(braintree):
+    c = client(dataclasses.replace(Settings(), braintree=True))
+    sid = "a1b2c3d4e5f6a7b8"
+    assert c.get(f"/api/story/{sid}").json() == {"status": "waiting"}
+    paid = c.post(f"/api/story/{sid}/buy", json={"nonce": "fake-paypal-one-time-nonce"})
+    assert paid.status_code == 200
+    # one receipt: the cups order the return is checked against, plus the rug and the plant
+    assert paid.json()["amount"] == "268.00"
+    assert [line["amount"] for line in paid.json()["lines"]] == ["200.00", "49.00", "19.00"]
+    seen = c.get(f"/api/story/{sid}").json()
+    assert seen["status"] == "paid" and seen["purchase"]["transaction_id"] == paid.json()["transaction_id"]
+    # a second tap on the phone does not charge again
+    again = c.post(f"/api/story/{sid}/buy", json={"nonce": "fake-paypal-one-time-nonce"})
+    assert again.json()["transaction_id"] == paid.json()["transaction_id"]
+    assert len([t for t in braintree.txns.values() if t.kind == "sale"]) == 1
+    # the refund run works on the story's sale like on any purchase
+    r = c.post(
+        "/api/checkout/refund", json={"purchase_id": paid.json()["id"], "scenario_id": "P6-01", "source": SAVED.stem}
+    )
+    assert r.status_code == 200
+
+
+def test_story_session_ids_and_origins_are_fenced(braintree):
+    c = client(dataclasses.replace(Settings(), braintree=True))
+    assert c.get("/api/story/short").status_code == 422
+    assert c.post("/api/story/BAD-ID-WITH-CAPS/buy", json={"nonce": "fake-nonce"}).status_code == 422
+    ok = c.get("/api/story/a1b2c3d4e5f6a7b8", headers={"Origin": "https://counterfoil-dashboard.vercel.app"})
+    assert ok.headers.get("access-control-allow-origin") == "https://counterfoil-dashboard.vercel.app"
+    other = c.get("/api/story/a1b2c3d4e5f6a7b8", headers={"Origin": "https://evil.example"})
+    assert "access-control-allow-origin" not in other.headers
+    assert c.get("/pay").status_code == 200
