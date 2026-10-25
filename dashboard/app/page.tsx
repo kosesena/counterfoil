@@ -13,7 +13,7 @@ import { SOFT_WIDGETS } from './soft-charts';
 import { CASE_WIDGET } from './case-file';
 import { buildCaseHarness } from './case-agent';
 import { Story3D, StoryStrip } from './story-3d';
-import { ClosingBand, Crew, FollowingFoil, Hero, ResultBand, StoryAside } from './felt';
+import { ClosingBand, Crew, FollowingFoil, Hero, ResultBand, StoryAside, useFeltConditions } from './felt';
 import { ModelBars3D } from './model-bars-3d';
 import { canvasPadding, counterfoilTheme } from './theme';
 
@@ -50,6 +50,7 @@ export default function Page() {
   const [error, setError] = useState('');
   const [compact, setCompact] = useState<boolean | null>(null);
   const [pageId, setPageId] = useState('overview');
+  useFeltConditions();
   const apiRef = useRef<AgStudioApi | null>(null);
 
   useEffect(() => {
