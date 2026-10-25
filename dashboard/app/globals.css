@@ -50,9 +50,8 @@ body { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org
 
 /* header: brand left, page tabs and the demo link right, one ink rule under it */
 .top { display: flex; align-items: center; gap: 28px; height: 76px; padding: 0 calc(var(--cf-gutter) + 8px); border-bottom: 2px dashed var(--cf-stitch); }
-.wordmark { font-family: var(--cf-display); font-weight: 800; font-size: 38px; letter-spacing: 1px; color: var(--cf-ink); line-height: 1; text-shadow: 0 2px 0 rgba(28,43,90,.15); }
-.wordmark.small { font-size: 22px; }
 .top .wordmark-felt { height: 40px; width: auto; display: block; }
+footer .wordmark-felt { height: 24px; width: auto; display: block; }
 .top .sandbox-felt { margin-left: auto; height: 34px; width: auto; display: block; }
 .top .sandbox { margin-left: auto; font-family: var(--cf-display); font-weight: 700; font-size: 15px; color: var(--cf-plum); padding: 6px 16px; border-radius: 12px; background: var(--cf-surface); outline: 2px dashed var(--cf-stitch); outline-offset: -5px; }
 .top .logo { height: 24px; width: auto; display: block; }
@@ -383,7 +382,6 @@ footer { align-items: center; padding: 16px calc(var(--cf-gutter) + 24px) 24px; 
 }
 @media (max-width: 760px) {
   .top { height: 60px; gap: 14px; }
-  .wordmark { font-size: 28px; }
   .top .wordmark-felt { height: 30px; }
   .top nav, .top .sandbox-felt { display: none; }
   .top .f-btn { margin-left: auto; font-size: 14px; padding: 8px 14px; }

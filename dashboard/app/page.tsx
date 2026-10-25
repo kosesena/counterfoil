@@ -182,7 +182,8 @@ export default function Page() {
 
       {data && (
         <footer>
-          <span className="wordmark small">HOMI</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="wordmark-felt small" src="buttons/homi-wordmark.webp" alt="HOMI" />
           <span>Fictional store · Braintree sandbox · No real funds</span>
           <span>
             {data.runs.length} runs · {models.join(', ')} · exported {data.asOf.slice(0, 16).replace('T', ' ')} UTC
