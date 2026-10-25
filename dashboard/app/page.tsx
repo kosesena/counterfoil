@@ -82,7 +82,8 @@ export default function Page() {
   return (
     <>
       <header className="top">
-        <span className="wordmark">HOMI</span>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="wordmark-felt" src="buttons/homi-wordmark.webp" alt="HOMI" />
         <nav>
           {Object.entries(PAGE_TITLES).map(([id, text]) => (
             <button key={id} className={id === pageId ? 'active' : ''} aria-current={id === pageId ? 'page' : undefined} onClick={() => openPage(id)}>
@@ -92,7 +93,8 @@ export default function Page() {
             </button>
           ))}
         </nav>
-        <span className="sandbox">Sandbox</span>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="sandbox-felt" src="buttons/sandbox.webp" alt="Sandbox" />
         <a className="live f-patch" href="https://counterfoil-demo.onrender.com" target="_blank" rel="noopener">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="buttons/try-it-live-plum.webp" alt="Try it live" />
