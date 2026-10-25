@@ -85,8 +85,10 @@ export default function Page() {
         <span className="wordmark">HOMI</span>
         <nav>
           {Object.entries(PAGE_TITLES).map(([id, text]) => (
-            <button key={id} className={id === pageId ? 'active' : ''} onClick={() => openPage(id)}>
-              {text}
+            <button key={id} className={id === pageId ? 'active' : ''} aria-current={id === pageId ? 'page' : undefined} onClick={() => openPage(id)}>
+              {/* Codex's felt nav patches (buttons/nav-*.webp) */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`buttons/nav-${id}.webp`} alt={text} />
             </button>
           ))}
         </nav>

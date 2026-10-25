@@ -55,10 +55,12 @@ body { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org
 .top .sandbox { margin-left: auto; font-family: var(--cf-display); font-weight: 700; font-size: 15px; color: var(--cf-plum); padding: 6px 16px; border-radius: 12px; background: var(--cf-surface); outline: 2px dashed var(--cf-stitch); outline-offset: -5px; }
 .top .logo { height: 24px; width: auto; display: block; }
 .top .product { font-size: 14px; color: var(--cf-muted); }
-.top nav { display: flex; gap: 26px; }
-.top nav button { font-family: var(--cf-display); font-weight: 600; font-size: 17px; padding: 4px 0; border: 0; border-bottom: 3px solid transparent; background: none; color: var(--cf-ink); cursor: pointer; }
-.top nav button:hover { color: var(--cf-ink); }
-.top nav button.active { color: var(--cf-plum); border-bottom-color: var(--cf-plum); border-radius: 2px; }
+.top nav { display: flex; gap: 10px; align-items: center; }
+.top nav button { padding: 0; border: 0; background: none; cursor: pointer; line-height: 0; opacity: .62; filter: saturate(.7); transition: opacity .15s, filter .15s, transform .15s; }
+.top nav button img { height: 44px; width: auto; display: block; }
+.top nav button:hover { opacity: .9; transform: translateY(-1px); }
+.top nav button.active { opacity: 1; filter: drop-shadow(0 4px 4px rgba(79,22,69,.22)); transform: translateY(-2px) rotate(-1deg); }
+.top nav button:focus-visible { outline: 2px solid var(--cf-plum); outline-offset: 3px; border-radius: 14px; }
 .top .live { white-space: nowrap; }
 
 /* hero: serif headline and the summary, the station full width, three numbers between two rules */
@@ -107,7 +109,8 @@ footer { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wr
   :root { --cf-gutter: 12px; }
   .top { height: 56px; gap: 12px; }
   .top .product { display: none; }
-  .top nav { gap: 16px; }
+  .top nav { gap: 6px; }
+  .top nav button img { height: 34px; }
   .lead { padding: 28px 0 24px; }
   .lead h1 { font-size: 34px; letter-spacing: -.5px; }
   .lead p { font-size: 14px; }
