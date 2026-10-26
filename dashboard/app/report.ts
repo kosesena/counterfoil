@@ -46,8 +46,8 @@ const kpi = (text: string, value: { id: string; aggregation?: 'sum' }, caption: 
   dataMapping: { value: [value] },
   format: {
     title: { enabled: true, text, typography: typography(16, 'bold', 'var(--cf-display)'), ...(tone && { color: `var(--cf-${tone}-deep)` }) },
-    caption: { enabled: true, text: caption, typography: typography(13), ...(tone && { color: `var(--cf-${tone}-deep)` }) },
-    style: { typography: typography(46, 'bold', 'var(--cf-display)'), ...(tone && { color: `var(--cf-${tone}-deep)` }) },
+    caption: { enabled: true, text: caption, typography: typography(14), ...(tone && { color: `var(--cf-${tone}-deep)` }) },
+    style: { typography: typography(40, 'bold', 'var(--cf-display)'), ...(tone && { color: `var(--cf-${tone}-deep)` }) },
     ...(tone && { widget: { backgroundColor: `var(--cf-${tone}-tint)`, borderEnabled: false } }),
   },
 });
@@ -122,16 +122,17 @@ function overview(compact: boolean): AgPageState {
       ? rows([
           [['condition'], [24], 7],
           [['model'], [24], 11],
-          [['kpi-misled'], [24], 7],
-          [['kpi-harm'], [24], 7],
-          [['kpi-legit'], [24], 7],
+          [['kpi-misled'], [24], 8],
+          [['kpi-harm'], [24], 8],
+          [['kpi-legit'], [24], 8],
           [['harm-by-condition'], [24], 24],
           [['decisions'], [24], 20],
           [['model-pivot'], [24], 24],
         ])
       : rows([
-          [['condition', 'model'], [8, 16], 7],
-          [['kpi-misled', 'kpi-harm', 'kpi-legit'], [8, 8, 8], 7],
+          [['condition'], [24], 6],
+          [['model'], [24], 6],
+          [['kpi-misled', 'kpi-harm', 'kpi-legit'], [8, 8, 8], 9],
           [['harm-by-condition', 'decisions'], [15, 9], 21],
           [['model-pivot'], [24], 22],
         ]),

@@ -417,6 +417,13 @@ main .ag-studio-layout-widget-container:not(:has(.ag-studio-value-widget)):not(:
 main .ag-studio-layout-widget-title { font-family: var(--cf-display) !important; font-weight: 800 !important; font-size: 21px !important; color: var(--cf-ink) !important; }
 main .ag-studio-button-filter-widget-item { box-shadow: 0 2px 0 #e2d2b6; transition: transform .12s; }
 main .ag-studio-button-filter-widget-item:hover { transform: translateY(-1px); }
+/* filters: each button as wide as its label, left-aligned and wrapping, so no model name is cut */
+main .ag-studio-filter-widget-content { display: flex !important; flex-wrap: wrap; gap: 8px !important; }
+main .ag-studio-button-filter-widget-item { flex: 0 0 auto !important; padding: 0 16px; }
+/* AG Studio's edit-toolbar ring on hover: this is a read-only report */
+main .ag-studio-layout-widget-toolbar-active { box-shadow: none !important; }
+/* KPI numbers: Baloo's tall line box overflowed the tile into the caption */
+main .ag-studio-value-widget-content { line-height: 1.05 !important; }
 /* Condition filter: Codex's felt patches (docs/gorseller/site-tasarim/condition-states-v1/), plum when chosen */
 main .ag-studio-button-filter-widget-item[data-cond] { color: transparent !important; background: center / contain no-repeat !important; border: 0 !important; box-shadow: none; min-width: 112px; }
 main .ag-studio-button-filter-widget-item[data-cond='counterfoil'] { background-image: url(/buttons/cond-counterfoil.webp) !important; }
