@@ -338,6 +338,8 @@ class FakeBraintree:
         self.txns: dict[str, SimpleNamespace] = {}
         self.client_token = SimpleNamespace(generate=lambda: "fake-client-token")
         self.transaction = SimpleNamespace(sale=self._sale, refund=self._refund, find=self._find)
+        self.transaction_line_item = SimpleNamespace(find_all=self._line_items)
+        self.lines: dict[str, list[dict]] = {}
         self.customer = SimpleNamespace(create=self._customer)
 
     def _txn(self, amount, kind="sale"):
@@ -355,7 +357,12 @@ class FakeBraintree:
         return SimpleNamespace(is_success=True, transaction=t)
 
     def _sale(self, params):
-        return self._txn(params["amount"])
+        r = self._txn(params["amount"])
+        self.lines[r.transaction.id] = params.get("line_items", [])
+        return r
+
+    def _line_items(self, txn_id):
+        return [SimpleNamespace(**ln) for ln in self.lines[txn_id]]
 
     def _refund(self, txn_id, amount):
         r = self._txn(amount, "refund")

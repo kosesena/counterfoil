@@ -8,6 +8,7 @@ Two research passes over developer.paypal.com (PayPal REST, Braintree docs, Agen
 |---|---|
 | `transaction.sale` (mocked PayPal nonce, vaulted method), `refund`, `void`, `find` | `counterfoil/rail.py` (`BraintreeRail`) |
 | `order_id` on every sale | `rail.py` |
+| `line_items` on every sandbox sale, read back with `transaction_line_item.find_all`; the gate blocks a return record that exceeds them (`RAIL_ITEMS_MISMATCH`). Sandbox-checked 26 Oct on a mocked-PayPal sale: lines come back with quantity as a string (`'2'`), the refund transaction has none | `rail.py`, `gateway.py` (`_rail_items`), `spikes/braintree_line_items_spike.py` |
 | Rail-side refund total per transaction: sum of `find(rid).amount` over `refund_ids`, skipping failed/rejected/declined/voided | `BraintreeRail.refunded_total` |
 | `PayPal-Request-Id` on every PayPal REST money call; real `REFUND_AMOUNT_EXCEEDED` error shape | `counterfoil/paypal.py` |
 | Gate in front of Agent Toolkit `create_refund` (Toolkit parameters) | `counterfoil/toolkit.py` |
