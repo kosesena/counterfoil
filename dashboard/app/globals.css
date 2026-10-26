@@ -489,7 +489,7 @@ main .ag-root-wrapper { border-radius: 12px; }
 .ev-row:first-of-type { border-top: 0; }
 .ev-row b { font-family: var(--cf-display); font-weight: 700; font-size: 16px; color: var(--cf-ink); }
 .ev-bars { display: grid; gap: 6px; }
-.ev-bar { display: grid; grid-template-columns: minmax(0, 1fr) 56px; gap: 10px; align-items: center; }
+.ev-bar { display: grid; grid-template-columns: minmax(0, 1fr) 92px; gap: 10px; align-items: center; }
 /* felt strips: fixed rounded caps, a short middle piece repeated ('round'), so a 3/21 bar keeps the same felt and
    stitches as a 21/21 one and every fill ends in a rounded cap (dashboard/public/bars/*.webp: 30 + 88 + 30 px at 44 px) */
 .ev-lane { position: relative; display: block; height: 22px; }
@@ -500,6 +500,7 @@ main .ag-root-wrapper { border-radius: 12px; }
 .ev-fill.cap { border-image-source: url(/bars/cap.webp); }
 .ev-fill.cf { border-image-source: url(/bars/cf.webp); }
 .ev-bar em { font-style: normal; font-size: 13px; font-variant-numeric: tabular-nums; color: var(--cf-ink); text-align: right; }
+.ev-bar em small { display: inline-block; min-width: 38px; margin-left: 6px; font-size: 12px; color: var(--cf-muted); }
 .ev-empty { margin: 8px 0; font-size: 14px; color: var(--cf-muted); }
 .ev-sandbox { margin: 0; padding: 18px 28px; display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: baseline; font-size: 15px; color: var(--cf-ink); }
 .ev-sandbox b { font-family: var(--cf-display); font-size: 18px; }

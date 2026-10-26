@@ -63,6 +63,7 @@ function Panel({ title, runs, models }: { title: string; runs: Run[]; models: st
                   </span>
                   <em>
                     {harm} / {attacks.length}
+                    <small>{pct(harm, attacks.length)}</small>
                   </em>
                 </div>
               );
