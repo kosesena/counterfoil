@@ -14,6 +14,7 @@ import { CASE_WIDGET } from './case-file';
 import { buildCaseHarness } from './case-agent';
 import { Story3D, StoryStrip } from './story-3d';
 import { ClosingBand, Crew, Hero, ResultBand, StoryAside, useFeltConditions } from './felt';
+import { CrewJourney, ProductIntro } from './crew-journey';
 import { EvidenceBoard } from './evidence';
 import { RailChecksBoard } from './rail-checks';
 import { canvasPadding, counterfoilTheme } from './theme';
@@ -86,31 +87,25 @@ export default function Page() {
 
   return (
     <>
-      <header className="top">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="wordmark-felt" src="buttons/homi-wordmark.webp" alt="HOMI" />
-        <nav>
+      <header className="top crew-header">
+        <button className="crew-wordmark" onClick={() => openPage('overview')} aria-label="HOMI home">HOMI</button>
+        <nav aria-label="Main navigation">
           {Object.entries(PAGE_TITLES).map(([id, text]) => (
-            <button key={id} className={id === pageId ? 'active' : ''} aria-current={id === pageId ? 'page' : undefined} onClick={() => openPage(id)}>
-              {/* Codex's felt letters (docs/gorseller/site-tasarim/tabs-text-v2, v3): navy, plum for the current page */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`buttons/nav-${id}${id === pageId ? '-on' : ''}.webp`} alt={text} />
-            </button>
+            <button key={id} className={id === pageId ? 'active' : ''} aria-current={id === pageId ? 'page' : undefined} onClick={() => openPage(id)}>{text}</button>
           ))}
         </nav>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="sandbox-felt" src="buttons/sandbox.webp" alt="Sandbox" />
-        <a className="live f-patch" href="https://counterfoil-demo.onrender.com" target="_blank" rel="noopener">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="buttons/try-it-live-plum.webp" alt="Try it live" />
-        </a>
+        <span className="crew-sandbox">Sandbox</span>
       </header>
 
       {pageId === 'overview' && data && (
         <>
-          <Hero onStory={() => document.getElementById('story')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} />
-          <ResultBand compare={compare} runs={data.runs.length} models={models.length} />
-          <Crew />
+          <ProductIntro />
+          <CrewJourney />
+          <div id="crew-results" className="crew-results">
+            <span className="crew-results-kicker">THE RESULTS</span>
+            <h2>The boundary, measured.</h2>
+            <ResultBand compare={compare} runs={data.runs.length} models={models.length} />
+          </div>
           <section className="f-story felt" id="story">
             <h2>One receipt. Seven moments.</h2>
             <p className="f-sub">Follow attack P6-01 from checkout to resolution, one button at a time.</p>

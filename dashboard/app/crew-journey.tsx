@@ -1,0 +1,131 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import styles from './crew-journey.module.css';
+import { CounterfoilGaze } from './counterfoil-gaze';
+
+const CREW = [
+  { name: 'Reader', type: 'AI agent', role: 'Reads the request', image: 'reader', description: 'Finds the order, returned items and requested amount in the customer’s note. The note is input, not an instruction to move money.' },
+  { name: 'Runner', type: 'AI agent', role: 'Prepares the action', image: 'runner', description: 'Turns the request into a proposed refund, charge or void. Every money call must pass through Counterfoil before it can reach the payment rail.' },
+  { name: 'Counterfoil', type: 'Transaction gate', role: 'Checks the rules', image: 'counterfoil-codex', description: 'Checks the proposed call against order ownership, return records and catalog prices. It can pass, block or hold a call for human review.' },
+  { name: 'Store manager', type: 'Human decision', role: 'Reviews held calls', image: 'manager-ready', description: 'Sees the reason a call was held and approves or rejects it. In this example, the manager rejects the extra $60; the valid $40 refund is a separate request.' },
+  { name: 'PayPal / Braintree', type: 'Payment rail', role: 'Executes allowed calls', image: 'paypal-ready', description: 'The original checkout uses PayPal through Braintree. The allowed refund is sent to Braintree. This demo uses the Braintree sandbox with mocked PayPal accounts.' },
+];
+const CHAPTERS = [
+  { label: 'The crew', title: 'Five roles. One clear boundary.', text: 'Meet the team. Reader understands the request, Runner prepares the action, Counterfoil checks the rules, a person reviews held calls, and Braintree executes allowed payments.', actor: -1, ticket: 'Meet the team', amount: 'Scroll to begin', tone: 'neutral' },
+  { label: 'Reader', title: 'Start with the customer’s note.', text: 'Reader identifies the order, the items and the amount being asked for. The store’s own records remain the source of truth.', actor: 0, ticket: 'Customer note', amount: 'Request received', tone: 'neutral' },
+  { label: 'Runner', title: 'The agent asks for $60.', text: 'Runner proposes a refund. But the return record says only $40 is still owed. A tool call alone is not permission to pay.', actor: 1, ticket: 'Proposed refund', amount: '$60 requested', tone: 'neutral' },
+  { label: 'Counterfoil', title: 'Counterfoil holds the $60 call.', text: 'The requested amount does not match the return record. The call is held for review before it reaches Braintree.', actor: 2, ticket: 'Held for review', amount: '$40 still owed', tone: 'held' },
+  { label: 'Manager', title: 'A person makes the decision.', text: 'The store manager rejects the extra $60. The runner can submit a new, valid $40 request, which Counterfoil checks again.', actor: 3, ticket: '$60 request rejected', amount: 'New request: $40', tone: 'held' },
+  { label: 'PayPal', title: 'Only the valid $40 goes through.', text: 'After the new request passes Counterfoil, Braintree executes the refund. The original $60 request was never sent to the rail.', actor: 4, ticket: 'New $40 request passed', amount: '$40 refunded', tone: 'passed' },
+  { label: 'Together', title: 'They work together. The rules stay in control.', text: 'Agents do the work. Counterfoil checks every money call. People review exceptions. Only allowed calls reach the payment rail.', actor: -1, ticket: 'One team. One boundary.', amount: '$40 refunded', tone: 'passed' },
+];
+
+export function CrewJourney() {
+  const root = useRef<HTMLElement>(null);
+  const [chapter, setChapter] = useState(0);
+  const [inspected, setInspected] = useState<number | null>(null);
+  const [hovered, setHovered] = useState<number | null>(null);
+  const [pinned, setPinned] = useState(false);
+  const [calm, setCalm] = useState(false);
+  useEffect(() => {
+    const el=root.current;
+    if (!el) return;
+    const compact=matchMedia('(max-height: 580px)');
+    const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+    let raf=0;
+    const readScroll=() => {
+      raf=0;
+      if (compact.matches || reduced.matches) return;
+      const range=el.offsetHeight-(innerHeight-76);
+      const progress=Math.max(0,Math.min(1,(76-el.getBoundingClientRect().top)/Math.max(1,range)));
+      const next=Math.min(CHAPTERS.length-1,Math.floor(progress*CHAPTERS.length));
+      setChapter(prev => prev===next ? prev : next);
+    };
+    const schedule=()=>{if (!raf) raf=requestAnimationFrame(readScroll);};
+    const preferences=()=>{setPinned(!compact.matches&&!reduced.matches);setCalm(reduced.matches);schedule();};
+    preferences();
+    window.addEventListener('scroll',schedule,{passive:true});window.addEventListener('resize',preferences);
+    compact.addEventListener('change',preferences);reduced.addEventListener('change',preferences);
+    return ()=>{cancelAnimationFrame(raf);window.removeEventListener('scroll',schedule);window.removeEventListener('resize',preferences);compact.removeEventListener('change',preferences);reduced.removeEventListener('change',preferences);};
+  },[]);
+  const go=(index:number)=>{
+    setInspected(null);setHovered(null);setChapter(index);
+    if (pinned && root.current) {
+      const el=root.current,range=el.offsetHeight-(innerHeight-76);
+      window.scrollTo({top:scrollY+el.getBoundingClientRect().top-76+range*(index===0?0:(index+.35)/CHAPTERS.length),behavior:calm?'auto':'smooth'});
+    }
+  };
+  useEffect(()=>{setHovered(null);setInspected(null);},[chapter]);
+  const step=CHAPTERS[chapter];
+  const ensemble=step.actor===-1;
+  const selected=hovered??inspected;
+  const detail=selected===null||selected===5?null:CREW[selected];
+  return <section ref={root} className={`${styles.journey} ${ensemble?styles.ensemble:''}`} id="crew" aria-label="Meet the return crew" data-chapter={chapter}>
+    <div className={styles.stage}>
+      <div className={styles.heading}>
+        <div><span className={styles.eyebrow}>HOMI / THE RETURN CREW</span><h2>{ensemble?(chapter===0?'Meet the crew.':'Better together.'):CREW[step.actor].name}<br/><em>{ensemble?'One firm boundary.':CREW[step.actor].role+'.'}</em></h2></div>
+        <div className={styles.intro}><p>One crew. One firm boundary.</p><span>Scroll to meet each character.</span>
+          <a href="https://counterfoil-demo.onrender.com" target="_blank" rel="noopener" className={styles.demo}>Try the sandbox <span aria-hidden="true">↗</span></a>
+        </div>
+      </div>
+      <div className={styles.lineup}>
+        {CREW.map((member,i)=>{
+          const active=ensemble||step.actor===i;
+          const img=i===3&&step.actor===3?'manager-review':i===4&&chapter>=5?'paypal-refunded':member.image;
+          return <button key={member.name} type="button" className={`${styles.member} ${active?styles.active:''}`} aria-hidden={!active} tabIndex={active?0:-1} aria-label={`${member.name}: ${member.role}`} aria-expanded={selected===i} aria-controls="crew-detail"
+            onPointerEnter={e=>{if(e.pointerType==='mouse')setHovered(i);}} onPointerLeave={e=>{setHovered(null);e.currentTarget.style.removeProperty('--look');}}
+            onPointerMove={e=>{if(e.pointerType!=='mouse'||calm)return;const r=e.currentTarget.getBoundingClientRect();e.currentTarget.style.setProperty('--look',`${((e.clientX-r.left)/r.width-.5)*8}deg`);}}
+            onFocus={()=>setHovered(i)} onBlur={()=>setHovered(null)} onClick={()=>{setHovered(null);setInspected(inspected===i?null:i);}} onKeyDown={e=>{if(e.key==='Escape'){setInspected(null);setHovered(null);}}}>
+            <span className={styles.portrait}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              {i===2?<CounterfoilGaze/>:<img src={`crew/${img}.webp`} alt="" width={440} height={600} draggable={false} className={i>=3?styles.paper:undefined}/>}
+            </span>
+            <span className={styles.kind}>{member.type}</span><strong>{member.name}</strong><span className={styles.role}>{member.role}</span>
+            <span className={styles.marker} aria-hidden="true"/>
+          </button>;
+        })}
+        {step.actor===1 && <div className={styles.intruder}>
+          <button type="button" aria-label="Meet Nella, the attacker" onClick={()=>setInspected(inspected===5?null:5)} aria-expanded={inspected===5}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="crew/nella.png" alt="Nella slipping a false instruction into a return note" width="200" height="260"/>
+            <strong>Nella</strong><span>THE ATTACKER ↗</span>
+          </button>
+          <p className={inspected===5?styles.revealed:undefined}>Hides instructions in the customer’s note to trick the agents into requesting an extra refund.</p>
+        </div>}
+      </div>
+      <div className={styles.detail} id="crew-detail" role="region" aria-label="Character and story details">
+        <div className={styles.explanation}><span className={styles.step}>{detail?'MEET '+detail.name.toUpperCase():String(chapter+1).padStart(2,'0')+' / '+String(CHAPTERS.length).padStart(2,'0')}</span>
+          <h2>{detail?detail.role:step.title}</h2><p>{detail?detail.description:step.text}</p>
+        </div>
+        <div className={styles.ticket} data-tone={step.tone} aria-label={`${step.ticket}. ${step.amount}`}><span>{step.ticket}</span><b>{step.amount}</b><small>Illustrated example · no live payment</small></div>
+      </div>
+      <div className={styles.bottom}>
+        <nav className={styles.chapters} aria-label="Return story steps">{CHAPTERS.map((s,i)=><button key={s.label} type="button" onClick={()=>go(i)} aria-current={chapter===i?'step':undefined}><span>{String(i+1).padStart(2,'0')}</span>{s.label}</button>)}</nav>
+        <div className={styles.brand}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="brand/paypal-braintree.png" alt="PayPal powered by Braintree" width={160} height={50}/><small>Sandbox · mocked PayPal · no real funds</small>
+        </div>
+      </div>
+      <a className={styles.skip} href="#crew-results">{pinned?'Scroll to follow the return ↓':'Continue to the results ↓'}</a>
+    </div>
+  </section>;
+}
+
+
+export function ProductIntro() {
+  return <section className={styles.productIntro} aria-labelledby="product-title">
+    <div className={styles.productCopy}>
+      <span className={styles.eyebrow}>COUNTERFOIL / RETURNS CONTROL</span>
+      <h1 id="product-title">A little trust.<br/><em>A firm boundary.</em></h1>
+      <p>Let AI agents handle returns.<br/>Keep every payment within your rules.</p>
+      <div className={styles.productActions}>
+        <a href="https://counterfoil-demo.onrender.com" target="_blank" rel="noopener">Try it live <span aria-hidden="true">↗</span></a>
+        <a href="#crew">See how it works <span aria-hidden="true">↓</span></a>
+      </div>
+      <span className={styles.productNote}>Braintree sandbox · No real funds</span>
+    </div>
+    <div className={styles.productMascot}><CounterfoilGaze/><div className={styles.mascotIdentity}><strong>Meet Counterfoil.</strong><span>Your returns gatekeeper.</span><p>Checks every money call before it reaches the payment rail.</p></div></div>
+    <a className={styles.productScroll} href="#crew">Meet the team behind each return <span aria-hidden="true">↓</span></a>
+  </section>;
+}

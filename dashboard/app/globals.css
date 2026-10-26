@@ -533,3 +533,26 @@ main.studio-off { height: 0 !important; min-height: 0; padding: 0; margin: 0; ov
 .rc-tag.hold { background: var(--cf-amber-tint); color: var(--cf-amber-deep); }
 @media (max-width: 1000px) { .rc-flow, .rc-cols { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 760px) { .rc { padding: 0 18px 30px; } .rc-sweep, .rc-col { padding: 18px; } }
+/* Quiet masthead for the character-led return journey. */
+.top.crew-header { position: sticky; top: 0; z-index: 40; background: #f3eae5; color: #392432; border-bottom: 1px solid #e3d7d8; height: 76px; padding: 0 clamp(20px,5vw,90px); gap: 32px; }
+.crew-header .crew-wordmark { border: 0; background: none; color: inherit; font: 650 26px var(--cf-font); letter-spacing: .04em; padding: 0; cursor: pointer; }
+.crew-header nav { margin: auto; gap: 30px; }
+.crew-header nav button { font: 12px var(--cf-font); color: #796773; line-height: 1.4; padding: 8px 0; }
+.crew-header nav button.active { color: #392432; }
+.crew-header nav button.active::after { border-bottom: 1px solid #803c61; border-radius: 0; }
+.crew-sandbox { border: 1px solid #b99ca9; padding: 7px 16px; border-radius: 999px; font-size: 10px; }
+.crew-results { padding: 60px 0 25px; scroll-margin-top: 90px; }
+.crew-results-kicker { display: block; text-align: center; font-size: 10px; letter-spacing: .2em; color: #796773; }
+.crew-results > h2 { text-align: center; font: 400 38px var(--cf-serif); color: #392432; margin: 12px 0 32px; }
+.crew-results .f-band { background: none; box-shadow: none; border-radius: 0; border-top: 1px solid #d9c7cd; border-bottom: 1px solid #d9c7cd; }
+.crew-results .f-band::after { display: none; }
+.crew-results .f-band span, .crew-results .f-band strong { font-family: var(--cf-font); font-weight: 500; }
+.crew-results .f-band strong { font-size: 40px; }
+@media (max-width: 760px) {
+  .top.crew-header { gap: 14px; padding: 0 18px; }
+  .crew-header .crew-wordmark { font-size: 22px; }
+  .crew-header nav { display: flex; gap: 14px; }
+  .crew-header nav button { font-size: 10px; }
+  .crew-sandbox { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
