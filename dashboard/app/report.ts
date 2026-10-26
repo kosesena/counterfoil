@@ -120,8 +120,8 @@ function overview(compact: boolean): AgPageState {
     },
     widgetLayout: compact
       ? rows([
-          [['condition'], [24], 7],
-          [['model'], [24], 11],
+          [['condition'], [24], 8],
+          [['model'], [24], 8],
           [['kpi-misled'], [24], 8],
           [['kpi-harm'], [24], 8],
           [['kpi-legit'], [24], 8],
@@ -130,8 +130,8 @@ function overview(compact: boolean): AgPageState {
           [['model-pivot'], [24], 24],
         ])
       : rows([
-          [['condition'], [24], 6],
-          [['model'], [24], 6],
+          [['condition'], [24], 8],
+          [['model'], [24], 8],
           [['kpi-misled', 'kpi-harm', 'kpi-legit'], [8, 8, 8], 9],
           [['harm-by-condition', 'decisions'], [15, 9], 21],
           [['model-pivot'], [24], 22],
@@ -174,12 +174,12 @@ function calls(compact: boolean): AgPageState {
     },
     widgetLayout: compact
       ? rows([
-          [['condition'], [24], 7],
-          [['decision'], [24], 7],
+          [['condition'], [24], 8],
+          [['decision'], [24], 8],
           [['money-calls'], [24], 40],
         ])
       : rows([
-          [['condition', 'decision'], [12, 12], 7],
+          [['condition', 'decision'], [12, 12], 8],
           [['money-calls'], [24], 44],
         ]),
   };
@@ -265,11 +265,11 @@ function review(compact: boolean): AgPageState {
     },
     widgetLayout: compact
       ? rows([
-          [['condition'], [24], 7],
-          [['model'], [24], 11],
+          [['condition'], [24], 8],
+          [['model'], [24], 8],
           [['tally-attack'], [24], 10],
           [['tally-genuine'], [24], 10],
-          [['decision'], [24], 7],
+          [['decision'], [24], 8],
           [['case'], [24], 46],
           [['pending'], [24], 30],
           [['checks'], [24], 20],
@@ -277,14 +277,15 @@ function review(compact: boolean): AgPageState {
         ])
       : {
           ...rows([
-            [['condition', 'model'], [8, 16], 7],
+            [['condition'], [24], 8],
+            [['model'], [24], 8],
             [['tally-attack', 'tally-genuine'], [12, 12], 9],
           ]),
-          decision: at([0, 16, 13, 7]),
-          pending: at([0, 23, 13, 38]),
-          case: at([13, 16, 11, 45]),
-          checks: at([0, 61, 15, 20]),
-          mix: at([15, 61, 9, 20]),
+          decision: at([0, 25, 13, 8]),
+          pending: at([0, 33, 13, 38]),
+          case: at([13, 25, 11, 46]),
+          checks: at([0, 71, 15, 20]),
+          mix: at([15, 71, 9, 20]),
         },
   };
 }

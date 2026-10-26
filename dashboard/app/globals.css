@@ -418,14 +418,19 @@ main .ag-studio-layout-widget-title { font-family: var(--cf-display) !important;
 main .ag-studio-button-filter-widget-item { box-shadow: 0 2px 0 #e2d2b6; transition: transform .12s; }
 main .ag-studio-button-filter-widget-item:hover { transform: translateY(-1px); }
 /* filters: each button as wide as its label, left-aligned and wrapping, so no model name is cut */
-main .ag-studio-filter-widget-content { display: flex !important; flex-wrap: wrap; gap: 8px !important; }
-main .ag-studio-button-filter-widget-item { flex: 0 0 auto !important; padding: 0 16px; }
+main .ag-studio-filter-widget-content { display: flex !important; flex-wrap: wrap; align-items: center; gap: 8px !important; overflow: visible !important; }
+main .ag-studio-button-filter-widget-item { flex: 0 0 auto !important; padding: 0 16px; height: 40px !important; }
 /* AG Studio's edit-toolbar ring on hover: this is a read-only report */
 main .ag-studio-layout-widget-toolbar-active { box-shadow: none !important; }
 /* KPI numbers: Baloo's tall line box overflowed the tile into the caption */
 main .ag-studio-value-widget-content { line-height: 1.05 !important; }
+@media (max-width: 760px) {
+  /* phones: one row per filter that scrolls sideways instead of wrapping out of its tile */
+  main .ag-studio-filter-widget-content { flex-wrap: nowrap; overflow-x: auto !important; scrollbar-width: none; }
+  main .ag-studio-button-filter-widget-item[data-cond] { width: 104px; height: 36px !important; }
+}
 /* Condition filter: Codex's felt patches (docs/gorseller/site-tasarim/condition-states-v1/), plum when chosen */
-main .ag-studio-button-filter-widget-item[data-cond] { color: transparent !important; background: center / contain no-repeat !important; border: 0 !important; box-shadow: none; min-width: 112px; }
+main .ag-studio-button-filter-widget-item[data-cond] { color: transparent !important; background: center / contain no-repeat !important; border: 0 !important; box-shadow: none; padding: 0 !important; width: 156px; height: 48px !important; }
 main .ag-studio-button-filter-widget-item[data-cond='counterfoil'] { background-image: url(/buttons/cond-counterfoil.webp) !important; }
 main .ag-studio-button-filter-widget-item[data-cond='cap'] { background-image: url(/buttons/cond-cap.webp) !important; }
 main .ag-studio-button-filter-widget-item[data-cond='none'] { background-image: url(/buttons/cond-none.webp) !important; }
