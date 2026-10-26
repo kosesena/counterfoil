@@ -126,6 +126,18 @@ export default function Page() {
             <h2>The evidence, without the guesswork.</h2>
           </section>
           <EvidenceBoard data={data} />
+          <section className="f-evidence-head f-studio-head">
+            <h2>Every held call, one by one.</h2>
+            <p className="f-sub">
+              Built on AG Studio. <b>Held for review</b> lists each call the gate held or blocked, with the store record, the
+              Reader&apos;s hand-off and the agent&apos;s request side by side, and a case agent on Studio&apos;s agent framework that
+              explains why. <b>Agent calls</b> lists every refund and charge the agent attempted, with the Braintree result.
+            </p>
+            <p className="f-studio-links">
+              <button onClick={() => { openPage('review'); window.scrollTo({ top: 0 }); }}>Open Held for review →</button>
+              <button onClick={() => { openPage('calls'); window.scrollTo({ top: 0 }); }}>Open Agent calls →</button>
+            </p>
+          </section>
         </>
       )}
 
