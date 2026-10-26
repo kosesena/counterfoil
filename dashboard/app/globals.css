@@ -470,6 +470,9 @@ main .ag-root-wrapper { border-radius: 12px; }
 .ev-pills button.on { background: var(--cf-plum); color: #fff; box-shadow: 0 3px 0 var(--cf-plum-deep); outline-color: rgba(255, 255, 255, .45); }
 .ev-pills button.later:not(.on) { color: var(--cf-muted); background: transparent; box-shadow: none; }
 .ev-pills button:focus-visible { outline: 3px solid var(--cf-plum); outline-offset: 2px; }
+.ev-pills button.ev-gate-patch { padding: 0; background: transparent; box-shadow: none; outline: none; line-height: 0; }
+.ev-pills button.ev-gate-patch img { display: block; width: 180px; max-width: 100%; height: 48px; object-fit: contain; }
+.ev-pills button.ev-gate-patch:focus-visible { outline: 3px solid var(--cf-plum); outline-offset: 3px; }
 .ev-foot { margin: 0; font-size: 13px; color: var(--cf-muted); text-align: right; }
 .ev-skipped { text-align: left; padding: 0 8px; }
 .ev-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }

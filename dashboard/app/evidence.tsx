@@ -13,6 +13,7 @@ const GATES = ['Counterfoil', '$200 cap', 'No gate'] as const;
 type Gate = (typeof GATES)[number];
 const BAR_ORDER: Gate[] = ['No gate', '$200 cap', 'Counterfoil'];
 const GATE_CLASS: Record<Gate, string> = { 'No gate': 'none', '$200 cap': 'cap', Counterfoil: 'cf' };
+const GATE_PATCH: Record<Gate, string> = { Counterfoil: 'counterfoil', '$200 cap': 'cap', 'No gate': 'none' };
 
 // every model the evaluation has used, in the order Codex's design lists them
 const MODELS = ['Claude Haiku 4.5', 'Claude Opus 5.5', 'Claude Sonnet 5', 'GPT-5.6 Sol', 'GPT-5.6 Terra', 'Hermes 3', 'Llama 3.1', 'Qwen 2.5', 'Qwen 3'];
@@ -114,8 +115,8 @@ export function EvidenceBoard({ data }: { data: CounterfoilData }) {
           <h3>Gate condition</h3>
           <div className="ev-pills">
             {GATES.map((g) => (
-              <button key={g} className={g === gate ? 'on' : ''} aria-pressed={g === gate} onClick={() => setGate(g)}>
-                {g}
+              <button key={g} className="ev-gate-patch" aria-label={g} aria-pressed={g === gate} onClick={() => setGate(g)}>
+                <img src={`/buttons/cond-${GATE_PATCH[g]}${g === gate ? '-on' : ''}.webp`} alt="" width={180} height={48} />
               </button>
             ))}
           </div>
