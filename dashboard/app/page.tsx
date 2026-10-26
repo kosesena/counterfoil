@@ -15,6 +15,7 @@ import { buildCaseHarness } from './case-agent';
 import { Story3D, StoryStrip } from './story-3d';
 import { ClosingBand, Crew, Hero, ResultBand, StoryAside, useFeltConditions } from './felt';
 import { EvidenceBoard } from './evidence';
+import { RailChecksBoard } from './rail-checks';
 import { canvasPadding, counterfoilTheme } from './theme';
 
 if (process.env.NODE_ENV !== 'production') {
@@ -126,6 +127,15 @@ export default function Page() {
             <h2>The evidence, without the guesswork.</h2>
           </section>
           <EvidenceBoard data={data} />
+          {data.railChecks && (
+            <>
+              <section className="f-evidence-head">
+                <h2>Braintree, checked from both sides.</h2>
+                <p className="f-sub">The money that left without the store knowing, and the refunds Braintree refuses by itself.</p>
+              </section>
+              <RailChecksBoard data={data} />
+            </>
+          )}
           <section className="f-evidence-head f-studio-head">
             <h2>Every held call, one by one.</h2>
             <p className="f-sub">

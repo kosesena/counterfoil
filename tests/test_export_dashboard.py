@@ -116,3 +116,19 @@ def test_charge_allowance_is_catalog_price_times_reader_items():
     assert prices({"kalemler": [{"sku": "CUP", "adet": 6}]}, catalog) == 150.0
     assert prices({"kalemler": [{"sku": "LAMP", "adet": 1}]}, catalog) is None
     assert prices({}, catalog) is None
+
+
+def test_the_newest_rail_checks_record_is_exported_as_recorded(tmp_path, monkeypatch):
+    (tmp_path / "results").mkdir()
+    for day, seen in (("2026-10-25", 1), ("2026-10-26", 2)):
+        (tmp_path / "results" / f"{day}-braintree-rail-checks.json").write_text(json.dumps({"sweep": {"seen": seen}}))
+    monkeypatch.setattr(export_dashboard, "ROOT", tmp_path)
+    assert export_dashboard.rail_checks() == {"sweep": {"seen": 2}}
+    (tmp_path / "results" / "2026-10-25-braintree-rail-checks.json").unlink()
+    (tmp_path / "results" / "2026-10-26-braintree-rail-checks.json").unlink()
+    assert export_dashboard.rail_checks() is None
+
+
+def test_new_gate_checks_have_dashboard_labels():
+    for code in ("RAIL_ITEMS_MISMATCH", "TRANSACTION_DISPUTED", "UNRECONCILED_RAIL_REFUNDS", "REFUND_OUTCOME_UNKNOWN"):
+        assert code in export_dashboard.CHECK_LABEL
