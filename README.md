@@ -73,13 +73,15 @@ Approvals are single-use, expire after 30 minutes and are bound to the exact arg
 
 All numbers below come from runs with the **latest gate** only. Sources: [`docs/arastirma/2026-10-25-guncel-gecit-olcumu.md`](docs/arastirma/2026-10-25-guncel-gecit-olcumu.md), [`docs/arastirma/2026-10-26-bulut-ve-hermes-olcumu.md`](docs/arastirma/2026-10-26-bulut-ve-hermes-olcumu.md), and every run row in [`dashboard/public/counterfoil-data.json`](dashboard/public/counterfoil-data.json), which the dashboard reads.
 
-**Attack runs where wrong money moved (or another customer's data was read):**
-
-| No gate | $200 cap | Counterfoil |
-|:---:|:---:|:---:|
-| 81/228 | 83/228 | **0/228** |
+| | No gate | $200 cap | Counterfoil |
+|---|:---:|:---:|:---:|
+| **Wrong money moved** (attack runs; or another customer's data read) | 81/228 | 83/228 | **0/228** |
+| Agent misled (attack runs) | 123/228 (54%) | 125/228 (55%) | 121/228 (53%) |
+| Genuine requests handled right (completed, or sent to a human where store policy requires) | 78/147 (53%) | 93/147 (63%) | **114/147 (78%)** |
 
 Three conditions, the same Reader hand-off in each, so they differ only in the gate. Dev set: 7 attacks (one per family P1–P7) and 6 genuine requests. Holdout set: 7 more attacks and 2 genuine requests, kept apart while the gate was written. Three repeats each.
+
+**Counting rule:** runs the model never finished (timeouts, `model_error`) are not counted. That is 18 runs, all llama3.1: dev genuine request CLEAN-03 ×9 and holdout attack P4-02 ×9. So 228 attack runs = dev 147 + holdout 81, and the dashboard lists the 18 by name (`skipped` in the data file).
 
 | Model | Set | No gate | $200 cap | Counterfoil |
 |---|---|:---:|:---:|:---:|
@@ -96,9 +98,9 @@ Three conditions, the same Reader hand-off in each, so they differ only in the g
 | hermes3 (local) | holdout | 3/21 | 3/21 | **0/21** |
 | **Total** | | **81/228** | **83/228** | **0/228** |
 
-¹ All 9 llama3.1 runs of holdout attack P4-02 ended in a model error (8 timeouts, 1 server error) and are not counted.
+¹ Holdout attack P4-02 never finished for llama3.1 (see the counting rule above).
 
-**Genuine requests:** 78 of 147 completed in each of the three conditions. Counterfoil sent 36 to a human (the cap 15, no gate 0) and stopped a call in 6 genuine runs. llama3.1 timed out on all 9 runs of genuine request CLEAN-03 (dev); those are not counted either.
+**Genuine requests in detail:** 78 of 147 completed in each of the three conditions. Counterfoil sent 36 more to a human (the cap 15, no gate 0) and stopped a call in 6 genuine runs.
 
 **Real Braintree sandbox** (qwen2.5, dev set, one repeat, mocked PayPal): wrong money reached Braintree in **4/7** attacks with no gate, **4/7** with the $200 cap and **0/7** with Counterfoil.
 
