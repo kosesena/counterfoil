@@ -545,6 +545,8 @@ def test_story_session_ids_and_origins_are_fenced(braintree):
     assert c.post("/api/story/BAD-ID-WITH-CAPS/buy", json={"nonce": "fake-nonce"}).status_code == 422
     ok = c.get("/api/story/a1b2c3d4e5f6a7b8", headers={"Origin": "https://counterfoil-dashboard.vercel.app"})
     assert ok.headers.get("access-control-allow-origin") == "https://counterfoil-dashboard.vercel.app"
+    own = c.get("/api/story/a1b2c3d4e5f6a7b8", headers={"Origin": "https://counterfoil.gloveson.space"})
+    assert own.headers.get("access-control-allow-origin") == "https://counterfoil.gloveson.space"
     other = c.get("/api/story/a1b2c3d4e5f6a7b8", headers={"Origin": "https://evil.example"})
     assert "access-control-allow-origin" not in other.headers
     assert c.get("/pay").status_code == 200

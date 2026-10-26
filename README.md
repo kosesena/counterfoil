@@ -10,11 +10,11 @@
 
 ## Try it
 
-- **Live demo:** <https://counterfoil-demo.onrender.com> (Render, free tier: the first load can take about a minute).
+- **Live demo:** <https://counterfoil-demo.gloveson.space> (Render, free tier: the first load can take about a minute).
   - Pick a scenario e-mail and watch the same run under no gate, a $200 cap and Counterfoil, side by side: what the Reader extracted, every tool call, the gate's decision and whether money reached the rail. Saved runs replay at no cost.
   - **The HOMI store, step by step:** a 3D return station tells scenario P6-01 in five button-driven steps: four cups scanned, the agent asks for USD 60, the gate stops it (60 + 60 = 120 > 100 approved), and the manager approves the USD 40 still left. Phones get stills.
   - **Pay with PayPal, then let the agent refund it:** the demo buys the scenario's order in the Braintree sandbox (a mocked PayPal account, or a test card). The agent's recorded refund calls then go through the gate onto *your* transaction. A held call waits on a manager card showing the call, why it was held and the store record it was checked against. Only **Approve** sends it to Braintree, as a real sandbox refund; the story then replays *your* run.
-- **Results dashboard (AG Studio):** <https://counterfoil-dashboard.vercel.app>
+- **Results dashboard (AG Studio):** <https://counterfoil.gloveson.space>
 - Source for both: [`demo/`](demo/README.md) and [`dashboard/`](dashboard/README.md).
 
 ## The problem
