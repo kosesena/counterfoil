@@ -341,6 +341,7 @@ class FakeBraintree:
         self.transaction_line_item = SimpleNamespace(find_all=self._line_items)
         self.lines: dict[str, list[dict]] = {}
         self.customer = SimpleNamespace(create=self._customer)
+        self.testing = SimpleNamespace(settle_transaction=self._settle)
 
     def _txn(self, amount, kind="sale"):
         t = SimpleNamespace(
@@ -360,7 +361,15 @@ class FakeBraintree:
     def _sale(self, params):
         r = self._txn(params["amount"])
         self.lines[r.transaction.id] = params.get("line_items", [])
+        if params.get("credit_card", {}).get("number") == "4023898493988028":  # the dispute test card
+            r.transaction.disputes = [
+                SimpleNamespace(id="dp1", status="open", kind="chargeback", amount_disputed=params["amount"])
+            ]
         return r
+
+    def _settle(self, txn_id):
+        self.txns[txn_id].status = "settled"
+        return SimpleNamespace(is_success=True, transaction=self.txns[txn_id])
 
     def _line_items(self, txn_id):
         return [SimpleNamespace(**ln) for ln in self.lines[txn_id]]
@@ -568,3 +577,22 @@ def test_story_session_ids_and_origins_are_fenced(braintree):
     other = c.get("/api/story/a1b2c3d4e5f6a7b8", headers={"Origin": "https://evil.example"})
     assert "access-control-allow-origin" not in other.headers
     assert c.get("/pay").status_code == 200
+
+
+def test_rail_rules_show_braintree_paying_on_top_of_a_chargeback_and_the_gate_blocking(braintree):
+    c = client(dataclasses.replace(Settings(), braintree=True))
+    r = c.post("/api/checkout/rail-rules", json={})
+    assert r.status_code == 200
+    out = r.json()
+    assert set(out) == {"card", "paypal", "dispute"}
+    labels = [s["label"] for s in out["card"]]
+    assert labels[1] == "refund 10.00 before settlement" and labels[2] == "testing.settle_transaction"
+    dispute = {s["label"].split(":")[0]: s for s in out["dispute"]}
+    assert dispute["disputes on the sale"]["disputes"][0]["status"] == "open"
+    gate = dispute["Counterfoil"]
+    assert gate["gate"] == "BLOCK" and [f["code"] for f in gate["findings"]] == ["TRANSACTION_DISPUTED"]
+    assert dispute["Braintree alone"]["ok"]  # the fake, like the sandbox, refunds anyway
+
+
+def test_rail_rules_are_off_without_braintree_keys():
+    assert client().post("/api/checkout/rail-rules", json={}).status_code == 503

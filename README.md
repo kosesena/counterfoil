@@ -95,6 +95,8 @@ Approvals are single-use, expire after 30 minutes and are bound to the exact arg
 | Return record for more items, or more money, than the sale's line items | pays it | blocks it |
 | Refund on a transaction with an open chargeback | pays it ([our test](spikes/braintree_dispute_spike.py)) | blocks it |
 
+Section 4 of the live demo ("What Braintree refuses on its own") runs this table on fresh sandbox sales: a test card settled with `testing.settle_transaction` refuses `91506`, `91521` and `91512`, mocked PayPal accepts the same calls, and on the dispute test card Braintree pays a refund on top of the chargeback while Counterfoil blocks it.
+
 Each scenario records whether the rail's own rules would have stopped it (`rail_would_block`, in [`docs/senaryolar/scenarios.json`](docs/senaryolar/scenarios.json)). For 13 of the 14 attacks they would not. The exception, holdout P4-02, refunds an unsettled transaction, and is reported as "the payment service would block it", not as a Counterfoil catch.
 
 **A retried refund pays once.** Every refund and void the gate sends carries a Braintree `api_request_key` derived from the money movement itself (transaction, order, RMA, amount, and what the RMA had already refunded), not from the session. Two gate processes racing on the same refund, or a gate that lost its ledger, send the same key, and Braintree answers with the first refund. We checked in the sandbox that it does: the same key returned the same refund id and moved no money, and the same key with another amount failed with `915232` ([spike](spikes/braintree_request_key_spike.py)). A second, genuine partial refund of the same amount gets a new key.
