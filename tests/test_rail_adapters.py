@@ -36,6 +36,7 @@ class FakeSDK:
         self.next_id = 0
         self.sale_result = None
         self.customer_result = None
+        self.lines: dict[str, list[dict]] = {}
         sdk = self
 
         class Transaction:
@@ -54,7 +55,9 @@ class FakeSDK:
                 sdk.calls.append(("sale", params))
                 if sdk.sale_result is not None:
                     return sdk.sale_result
-                return ok(sdk.txns[sdk._new(params["amount"], "submitted_for_settlement")])
+                tid = sdk._new(params["amount"], "submitted_for_settlement")
+                sdk.lines[tid] = params.get("line_items", [])
+                return ok(sdk.txns[tid])
 
             def find(self, tid):
                 if tid not in sdk.txns:
@@ -69,7 +72,16 @@ class FakeSDK:
                 return NS(is_success=True, customer=NS(payment_methods=[NS(token="real-vault-1")]))
 
         self.module = types.ModuleType("braintree")
-        self.module.BraintreeGateway = lambda config: NS(transaction=Transaction(), customer=Customer(), config=config)
+
+        class TransactionLineItem:
+            def find_all(self, tid):
+                if tid not in sdk.txns:
+                    raise NotFoundError(tid)
+                return [NS(**ln) for ln in sdk.lines.get(tid, [])]  # the SDK returns objects, not dicts
+
+        self.module.BraintreeGateway = lambda config: NS(
+            transaction=Transaction(), customer=Customer(), transaction_line_item=TransactionLineItem(), config=config
+        )
         self.module.Configuration = lambda **kw: kw
         self.module.Environment = NS(Sandbox="sandbox-env")
         self.module.exceptions = NS(NotFoundError=NotFoundError)
@@ -153,7 +165,43 @@ def test_find(sdk):
     assert rail.find("missing") is None
 
 
+def test_line_items_are_read_back_as_decimals(sdk):
+    rail = BraintreeRail()
+    sale = rail.charge("tok", Decimal("3.00"), "o")
+    assert rail.line_items(sale.id) == []  # a sale without lines
+    sdk.lines[sale.id] = [
+        {
+            "product_code": "CUP",
+            "name": "Cloudstone cup",
+            "quantity": "2.0000",
+            "unit_amount": "1.50",
+            "total_amount": "3.00",
+        }
+    ]
+    assert rail.line_items(sale.id) == [
+        {
+            "product_code": "CUP",
+            "name": "Cloudstone cup",
+            "quantity": Decimal(2),
+            "unit_amount": Decimal("1.50"),
+            "total_amount": Decimal("3.00"),
+        }
+    ]
+    assert rail.line_items("missing") is None
+
+
 # -- SandboxRail ---------------------------------------------------------------------------------------
+def test_sandbox_sales_carry_the_order_lines(sdk):
+    rail = SandboxRail(Store(load_records()), "run-1")
+    lines = rail.line_items("fixture-txn-001")  # ST-1042: tray, bowl, vase at 30.00 each
+    sale = [c[1] for c in sdk.calls if c[0] == "sale"][0]
+    assert [ln["product_code"] for ln in sale["line_items"]] == ["TRAY", "BOWL", "VASE"]
+    assert all(ln["kind"] == "debit" and len(ln["name"]) <= 35 for ln in sale["line_items"])
+    assert sum(Decimal(ln["total_amount"]) for ln in sale["line_items"]) == Decimal(sale["amount"])
+    assert [(ln["product_code"], ln["quantity"]) for ln in lines] == [("TRAY", 1), ("BOWL", 1), ("VASE", 1)]
+    assert rail.line_items("nope") is None
+
+
 def test_sandbox_rail_creates_real_counterparts_once_and_replays_history(sdk):
     store = Store(load_records())
     rail = SandboxRail(store, "run-1")

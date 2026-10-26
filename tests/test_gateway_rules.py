@@ -569,3 +569,91 @@ def test_decide_and_summary():
 
 def test_the_clock_is_timezone_aware():
     assert utcnow().tzinfo is not None
+
+
+# -- the rail's line items as a second source for the return record --------------------------------------
+def _tampered(order_no, rma_id, items, approved, order_items=None):
+    """The store's records were edited after the sale; the rail still holds what was really sold."""
+    honest = Store(load_records())
+    rec = load_records()
+    order = next(o for o in rec["orders"] if o["order_no"] == order_no)
+    if order_items is not None:
+        order["items"] = order_items
+    rma = next(r for r in order["returns"] if r["rma_id"] == rma_id)
+    rma.update(items=items, approved_refund_amount=approved)
+    store = Store(rec)
+    rail = FakeRail.from_store(honest)
+    return Gateway(store, rail, clock=Clock()), rail
+
+
+def _refund(gw, order_no, rma_id, amount, customer):
+    args = {"order_no": order_no, "rma_id": rma_id, "amount": amount, "currency": "USD"}
+    return gw.handle(session(customer, "refund", args), "refund", args)
+
+
+def test_honest_records_agree_with_the_rail_and_the_rail_is_asked():
+    gw, rail, _ = gate()
+    out = _refund(gw, "ST-1042", "RMA-1042", "30.00", "CUS-01")
+    assert out.executed and "RAIL_ITEMS_MISMATCH" not in codes(out)
+    assert ("line_items", "fixture-txn-001") in rail.calls
+
+
+def test_more_returned_than_the_rail_sold_blocks():
+    # ST-1043: the rail sold 2 bags; the edited records say 3 were bought and returned
+    gw, rail = _tampered(
+        "ST-1043", "RMA-1043", [{"sku": "BAG", "qty": 3}], "120.00", [{"sku": "BAG", "qty": 3, "unit_price": "40.00"}]
+    )
+    out = _refund(gw, "ST-1043", "RMA-1043", "120.00", "CUS-02")
+    assert codes(out)["RAIL_ITEMS_MISMATCH"] == BLOCK and not rail.money_calls()
+    assert "3 × BAG returned, rail sold 2" in out.summary()
+
+
+def test_an_item_the_rail_never_sold_blocks():
+    gw, rail = _tampered("ST-1042", "RMA-1042", [{"sku": "LAMP", "qty": 1}], "30.00")
+    out = _refund(gw, "ST-1042", "RMA-1042", "30.00", "CUS-01")
+    assert codes(out)["RAIL_ITEMS_MISMATCH"] == BLOCK and not rail.money_calls()
+
+
+def test_an_rma_worth_more_than_the_rail_charged_blocks_even_when_every_store_check_passes():
+    # RMA-1042 edited to approve 60.00 for the one 30.00 tray: amount = RMA, under the auto limit, Reader agrees
+    gw, rail = _tampered("ST-1042", "RMA-1042", [{"sku": "TRAY", "qty": 1}], "60.00")
+    out = _refund(gw, "ST-1042", "RMA-1042", "60.00", "CUS-01")
+    assert {c for c, sev in codes(out).items() if sev != PASS} == {"RAIL_ITEMS_MISMATCH"}
+    assert out.decision == BLOCK and not rail.money_calls()
+    assert "approves 60.00, rail charged 30.00" in out.summary()
+
+
+def test_returns_on_the_order_are_counted_together():
+    # ST-1050: the rail sold 3 bags; RMA-1050 (already refunded) took one back, so 3 more cannot be open
+    rec = load_records()
+    order = next(o for o in rec["orders"] if o["order_no"] == "ST-1050")
+    order["returns"].append(
+        {
+            "rma_id": "RMA-1050B",
+            "items": [{"sku": "BAG", "qty": 3}],
+            "approved_refund_amount": "80.00",
+            "status": "open",
+        }
+    )
+    gw, rail, _ = gate(rec)
+    out = _refund(gw, "ST-1050", "RMA-1050B", "80.00", order["customer_id"])
+    assert codes(out)["RAIL_ITEMS_MISMATCH"] == BLOCK
+    assert "4 × BAG returned, rail sold 3" in out.summary()
+
+
+def test_a_sale_without_line_items_on_the_rail_is_not_checked():
+    gw, rail = _tampered("ST-1042", "RMA-1042", [{"sku": "TRAY", "qty": 1}], "60.00")
+    rail.txns["fixture-txn-001"].line_items = None
+    out = _refund(gw, "ST-1042", "RMA-1042", "60.00", "CUS-01")
+    assert "RAIL_ITEMS_MISMATCH" not in codes(out)
+
+
+def test_a_rail_without_line_items_support_is_not_checked():
+    store = Store(load_records())
+
+    class OldRail(FakeRail):
+        line_items = None
+
+    rail = OldRail.from_store(store)
+    gw = Gateway(store, rail, clock=Clock())
+    assert _refund(gw, "ST-1042", "RMA-1042", "30.00", "CUS-01").executed
