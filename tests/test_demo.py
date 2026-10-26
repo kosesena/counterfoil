@@ -338,6 +338,8 @@ class FakeBraintree:
         self.txns: dict[str, SimpleNamespace] = {}
         self.client_token = SimpleNamespace(generate=lambda: "fake-client-token")
         self.transaction = SimpleNamespace(sale=self._sale, refund=self._refund, find=self._find)
+        self.transaction_line_item = SimpleNamespace(find_all=self._line_items)
+        self.lines: dict[str, list[dict]] = {}
         self.customer = SimpleNamespace(create=self._customer)
         self.testing = SimpleNamespace(settle_transaction=self._settle)
 
@@ -358,6 +360,7 @@ class FakeBraintree:
 
     def _sale(self, params):
         r = self._txn(params["amount"])
+        self.lines[r.transaction.id] = params.get("line_items", [])
         if params.get("credit_card", {}).get("number") == "4023898493988028":  # the dispute test card
             r.transaction.disputes = [
                 SimpleNamespace(id="dp1", status="open", kind="chargeback", amount_disputed=params["amount"])
@@ -368,7 +371,12 @@ class FakeBraintree:
         self.txns[txn_id].status = "settled"
         return SimpleNamespace(is_success=True, transaction=self.txns[txn_id])
 
+    def _line_items(self, txn_id):
+        return [SimpleNamespace(**ln) for ln in self.lines[txn_id]]
+
     def _refund(self, txn_id, amount):
+        if isinstance(amount, dict):  # {"amount": ..., "api_request_key": ...}
+            amount = amount["amount"]
         r = self._txn(amount, "refund")
         self.txns[txn_id].refund_ids.append(r.transaction.id)
         return r

@@ -25,7 +25,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 
 from counterfoil.gateway import Context, Gateway
-from counterfoil.rail import BraintreeRail, SandboxRail
+from counterfoil.rail import BraintreeRail, SandboxRail, sale_line_items
 from counterfoil.scenarios import build, load_records
 from counterfoil.store import Store
 from scripts.run_eval import CONDITIONS
@@ -67,6 +67,18 @@ class Checkout:
             "amount": str(total),
             "payment_method_nonce": nonce,
             "order_id": f"homi-demo-{uuid.uuid4().hex[:8]}-{order['order_no']}",
+            "line_items": sale_line_items(build(scenario)[0], order)
+            + [
+                {
+                    "kind": "debit",
+                    "name": name[:35],
+                    "product_code": name.upper().replace(" ", "-")[:12],
+                    "quantity": "1",
+                    "unit_amount": price,
+                    "total_amount": price,
+                }
+                for name, price in extras
+            ],
             "options": {"submit_for_settlement": True},
         }
         if os.environ.get(
