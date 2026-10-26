@@ -303,6 +303,8 @@ h2 { font-family: var(--cf-display); font-weight: 800; color: var(--cf-ink); }
 .f-hero-art { position: relative; display: flex; align-items: flex-end; justify-content: center; min-height: 440px; }
 .foil { width: min(380px, 70%); transform-origin: 50% 92%; transform: translateX(var(--step, 0)) rotate(var(--tilt, 0)) perspective(900px) rotateY(var(--turn, 0)) rotateX(var(--nod, 0)); transition: transform .45s cubic-bezier(.2,.8,.2,1); }
 .foil.near { transform: translateX(var(--step, 0)) rotate(var(--tilt, 0)) perspective(900px) rotateY(var(--turn, 0)) rotateX(var(--nod, 0)) scale(1.04); }
+.foil3d { width: min(420px, 66%); aspect-ratio: 616 / 816; margin-right: 150px; }   /* clear of the receipt */
+.foil3d canvas { display: block; width: 100% !important; height: 100% !important; }
 .foil img { display: block; width: 100%; height: auto; user-select: none; filter: drop-shadow(0 18px 18px rgba(70,48,20,.18)); }
 .f-receipt { position: absolute; right: 2%; top: 14%; width: 170px; padding: 22px 16px 26px; text-align: center; background: #fbf4e6; border-radius: 6px; box-shadow: 0 10px 24px rgba(70,48,20,.12); transform: rotate(2deg); clip-path: polygon(0 0, 100% 0, 100% 96%, 92% 100%, 84% 96%, 76% 100%, 68% 96%, 60% 100%, 52% 96%, 44% 100%, 36% 96%, 28% 100%, 20% 96%, 12% 100%, 4% 96%, 0 100%); }
 .f-receipt b { display: block; font-family: var(--cf-display); font-weight: 800; font-size: 44px; line-height: 1; color: var(--cf-ink); }
