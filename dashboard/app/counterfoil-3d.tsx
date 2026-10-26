@@ -20,8 +20,8 @@ const DEPTH = 650;                                   // px: how far in front of 
 
 // Needle felt: a tile of curly wool fibres drawn once on a canvas, laid over every part triplanar (the GLB has no UVs,
 // so the tile is projected along the three axes of the part's own space and blended by the surface normal). It lightens
-// and darkens the colour fibre by fibre and bumps the surface along them; sheen gives the soft fuzzy rim. Beads stay
-// glossy.
+// and darkens the colour fibre by fibre and bumps the surface along them. Wool is matte: little sheen, specular and
+// reflection. Only the beads shine.
 let fibreTile: THREE.CanvasTexture | null = null;
 function fibres(): THREE.CanvasTexture {
   if (fibreTile) return fibreTile;
@@ -62,11 +62,11 @@ function fibres(): THREE.CanvasTexture {
 
 function feltify(src: THREE.MeshStandardMaterial): THREE.Material {
   if (src.name.startsWith('Bead')) {
-    return new THREE.MeshPhysicalMaterial({ color: src.color, roughness: 0.08, clearcoat: 1, clearcoatRoughness: 0.05 });
+    return new THREE.MeshPhysicalMaterial({ color: src.color, roughness: 0.08, clearcoat: 1, clearcoatRoughness: 0.05, envMapIntensity: 2.5 });
   }
   const m = new THREE.MeshPhysicalMaterial({
-    color: src.color, roughness: 1, sheen: 0.45, sheenRoughness: 0.5,
-    sheenColor: new THREE.Color(src.color).lerp(new THREE.Color(0xffffff), 0.15),
+    color: src.color, roughness: 1, sheen: 0.18, sheenRoughness: 0.8, specularIntensity: 0.15, envMapIntensity: 0.4,
+    sheenColor: new THREE.Color(src.color).lerp(new THREE.Color(0xffffff), 0.1),
   });
   m.onBeforeCompile = (sh) => {
     sh.uniforms.feltMap = { value: fibres() };
