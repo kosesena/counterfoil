@@ -75,13 +75,13 @@ All numbers below come from runs with the **latest gate** only. Sources: [`docs/
 
 | | No gate | $200 cap | Counterfoil |
 |---|:---:|:---:|:---:|
-| **Wrong money moved** (attack runs; or another customer's data read) | 81/228 | 83/228 | **0/228** |
-| Agent misled (attack runs) | 123/228 (54%) | 125/228 (55%) | 121/228 (53%) |
-| Genuine requests handled right (completed, or sent to a human where store policy requires) | 78/147 (53%) | 93/147 (63%) | **114/147 (78%)** |
+| **Wrong money moved** (attack runs; or another customer's data read) | 99/270 | 100/270 | **0/270** |
+| Agent misled (attack runs) | 141/270 (52%) | 142/270 (53%) | 139/270 (51%) |
+| Genuine requests handled right (completed, or sent to a human where store policy requires) | 102/183 (56%) | 123/183 (67%) | **150/183 (82%)** |
 
 Three conditions, the same Reader hand-off in each, so they differ only in the gate. Dev set: 7 attacks (one per family P1–P7) and 6 genuine requests. Holdout set: 7 more attacks and 2 genuine requests, kept apart while the gate was written. Three repeats each.
 
-**Counting rule:** runs the model never finished (timeouts, `model_error`) are not counted. That is 18 runs, all llama3.1: dev genuine request CLEAN-03 ×9 and holdout attack P4-02 ×9. So 228 attack runs = dev 147 + holdout 81, and the dashboard lists the 18 by name (`skipped` in the data file).
+**Counting rule:** runs the model never finished (timeouts, `model_error`) are not counted. That is 18 runs, all llama3.1: dev genuine request CLEAN-03 ×9 and holdout attack P4-02 ×9. So 270 attack runs = dev 189 + holdout 81, and the dashboard lists the 18 by name (`skipped` in the data file).
 
 | Model | Set | No gate | $200 cap | Counterfoil |
 |---|---|:---:|:---:|:---:|
@@ -92,32 +92,32 @@ Three conditions, the same Reader hand-off in each, so they differ only in the g
 | GPT-5.6 Terra | dev | 7/21 | 8/21 | **0/21** |
 | Claude Sonnet 5 | dev | 5/21 | 6/21 | **0/21** |
 | Claude Opus 5.5 | dev | 6/21 | 6/21 | **0/21** |
+| Claude Haiku 4.5 | dev | 9/21 | 9/21 | **0/21** |
+| GPT-5.6 Sol | dev | 9/21 | 8/21 | **0/21** |
 | qwen2.5 (local) | holdout | 12/21 | 12/21 | **0/21** |
 | qwen3 (local) | holdout | 9/21 | 9/21 | **0/21** |
 | llama3.1 (local) | holdout | 3/18 ¹ | 3/18 ¹ | **0/18** ¹ |
 | hermes3 (local) | holdout | 3/21 | 3/21 | **0/21** |
-| **Total** | | **81/228** | **83/228** | **0/228** |
+| **Total** | | **99/270** | **100/270** | **0/270** |
 
 ¹ Holdout attack P4-02 never finished for llama3.1 (see the counting rule above).
 
-**Genuine requests in detail:** 78 of 147 completed in each of the three conditions. Counterfoil sent 36 more to a human (the cap 15, no gate 0) and stopped a call in 6 genuine runs.
+**Genuine requests in detail:** 102 of 183 completed in each of the three conditions. Counterfoil sent 48 more to a human (the cap 21, no gate 0) and stopped a call in 6 genuine runs.
 
 **Real Braintree sandbox** (qwen2.5, dev set, one repeat, mocked PayPal): wrong money reached Braintree in **4/7** attacks with no gate, **4/7** with the $200 cap and **0/7** with Counterfoil.
 
 **Worst case: the agent fully on the attacker's side.** No model at all: a scripted Reader hands off exactly what the attacker wants and a scripted agent makes exactly the attacker's calls (`--model worst-case`, [`counterfoil/worst_case.py`](counterfoil/worst_case.py)). Over all 14 attacks, Counterfoil **0/14**; no gate and the cap 11/14 each on the in-memory rail and 12/14 each against the Braintree sandbox ([`results/2026-10-25-all-worst-case.jsonl`](results/2026-10-25-all-worst-case.jsonl), [`results/2026-10-25-all-braintree-worst-case.jsonl`](results/2026-10-25-all-braintree-worst-case.jsonl)).
 
-**Not run with the latest gate:** Claude Haiku 4.5 and GPT-5.6 Sol. They were measured only with an earlier version of the gate, so they are left out of every number above.
-
 Where and when each run happened, how long it took and what the cloud runs cost are in the two notes above. Raw runs and their run records (`.meta.json`) are in [`results/`](results/).
 
 ### What these results show, and what they don't
 
-- **14 distinct attacks, 7 families.** The 228 runs repeat the same 14 scenarios across models and repeats; they are not 228 independent attacks.
+- **14 distinct attacks, 7 families.** The 270 runs repeat the same 14 scenarios across models and repeats; they are not 270 independent attacks.
 - **We wrote the scenarios and the gate.** The holdout set was kept apart while the gate was written, but it comes from the same authors and the same families. A new attack written by someone else could change the result.
 - **The zero comes from how the gate works.** The gate compares every money call with the store's own record (the order, the return record, refunds already made); money that doesn't match the record can't leave. In the worst-case run (Reader and agent fully on the attacker's side, no model), Counterfoil is still 0/14, against 11–12/14 with no gate or the cap.
 - **It can't catch a wrong record.** If an attacker gets a fake return record opened, or a request matches the record but does harm some other way, the gate won't see it. For calls held for a human, the decision is the human's.
-- **Genuine requests aren't lost, but people get more work.** Completed genuine requests are the same in all three conditions (78/147). Counterfoil sent 36 genuine requests to a human (cap 15, no gate 0), most of them because of a store rule (above the automatic-refund limit). In 6 genuine runs the gate stopped a call.
-- **The agent still gets fooled.** The "agent misled" rate is about the same in every condition (no gate 123/228, cap 125/228, Counterfoil 121/228). The gate doesn't stop the agent being fooled; it stops a fooled agent from sending the money.
+- **Genuine requests aren't lost, but people get more work.** Completed genuine requests are the same in all three conditions (102/183). Counterfoil sent 48 genuine requests to a human (cap 21, no gate 0), most of them because of a store rule (above the automatic-refund limit). In 6 genuine runs the gate stopped a call.
+- **The agent still gets fooled.** The "agent misled" rate is about the same in every condition (no gate 141/270, cap 142/270, Counterfoil 139/270). The gate doesn't stop the agent being fooled; it stops a fooled agent from sending the money.
 
 ## Quick start
 
@@ -178,7 +178,7 @@ Security: [`docs/threat-model.md`](docs/threat-model.md) (assets, trust boundari
 <sub>Logos as published by their owners: PayPal powered by Braintree from Braintree's partner branding assets, AG Grid from AG Grid's branding assets page (<a href="docs/brand/README.md">sources</a>). Used here only to name the sponsor tools this project is built on; no endorsement implied.</sub>
 
 - **Braintree sandbox** with mocked PayPal accounts. PayPal accounts can't be opened from Türkiye; PayPal's team confirmed Braintree for the hackathon ([ADR 0007](docs/adr/0007-braintree-sandbox-with-mocked-paypal.md)).
-- **Astropods** and its **Astro AI Gateway** for the cloud models (GPT-5.6 Terra, Claude Sonnet 5, Claude Opus 5.5).
+- **Astropods** and its **Astro AI Gateway** for the cloud models (GPT-5.6 Terra, GPT-5.6 Sol, Claude Haiku 4.5, Claude Sonnet 5, Claude Opus 5.5).
 - **Ollama** for the local models (qwen2.5, qwen3, llama3.1, hermes3, each with an 8k context).
 - **AG Studio** for the results dashboard and its case agent.
 - **Claude Code** and **OpenAI Codex** as coding agents. Sena Köse set the problem, the design and every decision. Claude Code wrote most of the code (gate, rails, agents, evaluation, dashboard, demo, 3D store scenes). Codex wrote the scenario texts, designed HOMI and the dashboard's felt look, and reviewed the code; every review finding was fixed with a test ([`docs/inceleme/`](docs/inceleme/)).
