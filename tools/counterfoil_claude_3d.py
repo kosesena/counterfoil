@@ -21,8 +21,19 @@ def srgb(h):
     return tuple(v / 12.92 if v <= 0.04045 else ((v + 0.055) / 1.055) ** 2.4 for v in c)
 
 
+FIBRE_TILE = OUT / 'felt-fibre-tile.png'          # tools/felt_fibre_tile.py: the same curly fibres the page draws
+
+
+def fibre_image():
+    img = bpy.data.images.get('felt-fibre-tile.png') or bpy.data.images.load(str(FIBRE_TILE))
+    img.colorspace_settings.name = 'Non-Color'
+    img.pack()                                     # the .blend carries its own felt
+    return img
+
+
 def felt(name, hexcol, fuzz=1.0):
-    """Felt: fully matte, a touch of sheen, fine fibre bump."""
+    """Felt like on the page (dashboard/app/counterfoil-3d.tsx): the curly fibre tile laid over the part box-projected
+    in its own space at two scales; each fibre lightens or darkens the wool and bumps it a little. Fully matte."""
     m = bpy.data.materials.get(name) or bpy.data.materials.new(name)
     m.use_nodes = True
     nt = m.node_tree
@@ -30,19 +41,37 @@ def felt(name, hexcol, fuzz=1.0):
         nt.nodes.remove(n)
     out = nt.nodes.new('ShaderNodeOutputMaterial')
     b = nt.nodes.new('ShaderNodeBsdfPrincipled')
-    b.inputs['Base Color'].default_value = (*srgb(hexcol), 1)
     b.inputs['Roughness'].default_value = 1.0
-    b.inputs['Specular IOR Level'].default_value = 0.05     # wool is matte: almost no highlight, little sheen
+    b.inputs['Specular IOR Level'].default_value = 0.05
     b.inputs['Sheen Weight'].default_value = 0.15 * fuzz
-    b.inputs['Sheen Roughness'].default_value = 0.35
-    b.inputs['Sheen Tint'].default_value = (1, 1, 1, 1)
-    noise_n = nt.nodes.new('ShaderNodeTexNoise')
-    noise_n.inputs['Scale'].default_value = 260
-    noise_n.inputs['Detail'].default_value = 8
+    b.inputs['Sheen Roughness'].default_value = 0.6
+    coord = nt.nodes.new('ShaderNodeTexCoord')
+    taps = []
+    for scale, offset, weight in ((2.3, 0.0, 0.7), (2.3 * 0.55, 0.13 * 2.3, 0.3)):
+        mp = nt.nodes.new('ShaderNodeMapping')
+        mp.inputs['Scale'].default_value = (scale, scale, scale)
+        mp.inputs['Location'].default_value = (offset, offset, offset)
+        nt.links.new(coord.outputs['Object'], mp.inputs['Vector'])
+        tex = nt.nodes.new('ShaderNodeTexImage')
+        tex.image = fibre_image()
+        tex.projection, tex.projection_blend = 'BOX', 0.35
+        nt.links.new(mp.outputs['Vector'], tex.inputs['Vector'])
+        w = nt.nodes.new('ShaderNodeMath'); w.operation = 'MULTIPLY'; w.inputs[1].default_value = weight
+        nt.links.new(tex.outputs['Color'], w.inputs[0])
+        taps.append(w)
+    h = nt.nodes.new('ShaderNodeMath'); h.operation = 'ADD'
+    nt.links.new(taps[0].outputs[0], h.inputs[0]); nt.links.new(taps[1].outputs[0], h.inputs[1])
+    # colour: base * (1 + (h - 0.5)), as on the page
+    k = nt.nodes.new('ShaderNodeMath'); k.operation = 'ADD'; k.inputs[1].default_value = 0.5
+    nt.links.new(h.outputs[0], k.inputs[0])
+    col = nt.nodes.new('ShaderNodeVectorMath'); col.operation = 'SCALE'
+    col.inputs[0].default_value = srgb(hexcol)
+    nt.links.new(k.outputs[0], col.inputs['Scale'])
+    nt.links.new(col.outputs['Vector'], b.inputs['Base Color'])
     bump = nt.nodes.new('ShaderNodeBump')
-    bump.inputs['Strength'].default_value = 0.7 * fuzz
-    bump.inputs['Distance'].default_value = 0.002
-    nt.links.new(noise_n.outputs['Fac'], bump.inputs['Height'])
+    bump.inputs['Strength'].default_value = 0.45 * fuzz
+    bump.inputs['Distance'].default_value = 0.003
+    nt.links.new(h.outputs[0], bump.inputs['Height'])
     nt.links.new(bump.outputs['Normal'], b.inputs['Normal'])
     nt.links.new(b.outputs['BSDF'], out.inputs['Surface'])
     m.diffuse_color = (*srgb(hexcol), 1)
@@ -238,7 +267,11 @@ def counterfoil(col):
 
 
 def stage(col):
-    floor_m = felt('Felt_Floor', '#F3EADF', 0.3)
+    floor_m = bpy.data.materials.new('Stage_Floor')     # plain, so only Counterfoil wears felt
+    floor_m.use_nodes = True
+    fb = next(n for n in floor_m.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
+    fb.inputs['Base Color'].default_value = (*srgb('#F3EADF'), 1)
+    fb.inputs['Roughness'].default_value = 1.0
     bpy.ops.mesh.primitive_plane_add(size=30)
     fl = bpy.context.object
     fl.name = 'Stage_Floor'

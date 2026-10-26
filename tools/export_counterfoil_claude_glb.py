@@ -26,6 +26,18 @@ for o in bpy.data.objects:
         if m.type == 'PARTICLE_SYSTEM':
             o.modifiers.remove(m)
 
+# the page draws its own felt (dashboard/app/counterfoil-3d.tsx): ship flat colours, no fibre tile
+for m in bpy.data.materials:
+    if not m.use_nodes or m.name.startswith('Bead'):
+        continue
+    nt = m.node_tree
+    for n in list(nt.nodes):
+        nt.nodes.remove(n)
+    out, b = nt.nodes.new('ShaderNodeOutputMaterial'), nt.nodes.new('ShaderNodeBsdfPrincipled')
+    b.inputs['Base Color'].default_value = m.diffuse_color
+    b.inputs['Roughness'].default_value = 1.0
+    nt.links.new(b.outputs['BSDF'], out.inputs['Surface'])
+
 bpy.ops.object.select_all(action='SELECT')
 OUT.parent.mkdir(parents=True, exist_ok=True)
 bpy.ops.export_scene.gltf(filepath=str(OUT), export_format='GLB', use_selection=True, export_apply=True,
