@@ -63,6 +63,8 @@ customer note ─▶ Reader (no tools) ─▶ fixed hand-off fields
                                                          └─▶ held for a human
 ```
 
+The Reader's hand-off field names are Turkish, the author's working language. They are part of the prompt every measured run used, so they stay as they are: `musteri_email` (sender's e-mail), `siparis_no` (order number), `iade_kaydi_no` (return record id), `istek` (request: refund, charge or void), `tutar` (amount), `para_birimi` (currency), `kalemler` (items, each `{sku, adet}` with `adet` = quantity) and `not` (free-text note). The prompt itself is in English ([`counterfoil/agents.py`](counterfoil/agents.py)).
+
 The trusted source is the store's record, not the customer's text. Counterfoil ([`counterfoil/gateway.py`](counterfoil/gateway.py)) answers each money call with **PASS**, **APPROVAL** (held for a human) or **BLOCK**:
 
 | Check | Catches |
