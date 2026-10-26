@@ -26,6 +26,7 @@ export function CrewJourney() {
   const [chapter, setChapter] = useState(0);
   const [readerProgress, setReaderProgress] = useState(0);
   const [runnerProgress, setRunnerProgress] = useState(0);
+  const [foilProgress, setFoilProgress] = useState(0);
   const [inspected, setInspected] = useState<number | null>(null);
   const [hovered, setHovered] = useState<number | null>(null);
   const [pinned, setPinned] = useState(false);
@@ -41,10 +42,11 @@ export function CrewJourney() {
       if (compact.matches || reduced.matches) return;
       const range=el.offsetHeight-(innerHeight-76);
       const progress=Math.max(0,Math.min(1,(76-el.getBoundingClientRect().top)/Math.max(1,range)));
-      const position=progress*11;
-      const next=position<1?0:position<4?1:position<7?2:Math.min(6,Math.floor(position)-4);
+      const position=progress*13;
+      const next=position<1?0:position<4?1:position<7?2:position<10?3:Math.min(6,Math.floor(position)-6);
       setReaderProgress(Math.max(0,Math.min(1,(position-1)/3)));
       setRunnerProgress(Math.max(0,Math.min(1,(position-4)/3)));
+      setFoilProgress(Math.max(0,Math.min(1,(position-7)/3)));
       setChapter(prev => prev===next ? prev : next);
     };
     const schedule=()=>{if (!raf) raf=requestAnimationFrame(readScroll);};
@@ -55,10 +57,10 @@ export function CrewJourney() {
     return ()=>{cancelAnimationFrame(raf);window.removeEventListener('scroll',schedule);window.removeEventListener('resize',preferences);compact.removeEventListener('change',preferences);reduced.removeEventListener('change',preferences);};
   },[]);
   const go=(index:number)=>{
-    setInspected(null);setHovered(null);setChapter(index);setReaderProgress(0);setRunnerProgress(0);
+    setInspected(null);setHovered(null);setChapter(index);setReaderProgress(0);setRunnerProgress(0);setFoilProgress(0);
     if (pinned && root.current) {
       const el=root.current,range=el.offsetHeight-(innerHeight-76);
-      window.scrollTo({top:scrollY+el.getBoundingClientRect().top-76+range*(index===0?0:((index===1?1:index===2?4:index+4)+.05)/11),behavior:calm?'auto':'smooth'});
+      window.scrollTo({top:scrollY+el.getBoundingClientRect().top-76+range*(index===0?0:([0,1,4,7,10,11,12][index]+.05)/13),behavior:calm?'auto':'smooth'});
     }
   };
   useEffect(()=>{setHovered(null);setInspected(null);},[chapter]);
@@ -66,9 +68,9 @@ export function CrewJourney() {
   const ensemble=step.actor===-1;
   const selected=hovered??inspected;
   const detail=selected===null||selected===5?null:CREW[selected];
-  return <section ref={root} className={`${styles.journey} ${ensemble?styles.ensemble:''} ${chapter===1||chapter===2?styles.readerChapter:''}`} id="crew" aria-label="Meet the return crew" data-chapter={chapter}>
+  return <section ref={root} className={`${styles.journey} ${ensemble?styles.ensemble:''} ${chapter>=1&&chapter<=3?styles.readerChapter:''}`} id="crew" aria-label="Meet the return crew" data-chapter={chapter}>
     <div className={styles.stage}>
-      {(chapter===1||chapter===2) && <CharacterSpotlight key={chapter} character={chapter===1?'Reader':'Runner'} progress={chapter===1?readerProgress:runnerProgress} calm={calm} manual={!pinned}/>} 
+      {(chapter>=1&&chapter<=3) && <CharacterSpotlight key={chapter} character={chapter===1?'Reader':chapter===2?'Runner':'Counterfoil'} progress={chapter===1?readerProgress:chapter===2?runnerProgress:foilProgress} calm={calm} manual={!pinned}/>} 
       <div className={styles.heading}>
         <div><span className={styles.eyebrow}>HOMI / THE RETURN CREW</span><h2>{ensemble?(chapter===0?'Meet the crew.':'Better together.'):CREW[step.actor].name}<br/><em>{ensemble?'One firm boundary.':CREW[step.actor].role+'.'}</em></h2></div>
         <div className={styles.intro}><p>One crew. One firm boundary.</p><span>Scroll to meet each character.</span>
@@ -137,14 +139,19 @@ export function ProductIntro() {
 }
 
 
-function CharacterSpotlight({character,progress,calm,manual}:{character:'Reader'|'Runner';progress:number;calm:boolean;manual:boolean}) {
+function CharacterSpotlight({character,progress,calm,manual}:{character:'Reader'|'Runner'|'Counterfoil';progress:number;calm:boolean;manual:boolean}) {
   const [manualStep,setManualStep]=useState(0);
   const [nellaOpen,setNellaOpen]=useState(false);
   if(manual) progress=[0,.55,.72,.9][manualStep];
   const runner=character==='Runner';
+  const foil=character==='Counterfoil';
   const shift=calm?(manualStep===0?0:1):Math.max(0,Math.min(1,(progress-.18)/.28));
   const task=progress<.64?0:progress<.82?1:2;
-  const tasks=runner?[
+  const tasks=foil?[
+    ['I check the store’s records.', 'I compare the proposed money call with order ownership, return records and catalog prices. The customer’s note cannot rewrite those rules.'],
+    ['I hold the $60 request.', 'The amount does not match the $40 still owed. I keep this call away from Braintree and send it for a person to review.'],
+    ['I let valid calls through.', 'After the manager rejects the $60 request, Runner can submit a separate $40 request. I check it again; only a call that passes can reach Braintree.'],
+  ]:runner?[
     ['I pick up the request.', 'Reader gives me the order, returned items and requested amount. I use those details to plan the next action.'],
     ['I prepare the money call.', 'I can propose a refund, charge or void. A malicious note can mislead me: in this example, I ask for $60 even though only $40 is owed.'],
     ['I wait for Counterfoil.', 'My request is not permission to pay. Every money call must pass Counterfoil before it can reach Braintree.'],
@@ -157,9 +164,9 @@ function CharacterSpotlight({character,progress,calm,manual}:{character:'Reader'
     <div className={styles.readerFigure}>
       <div className={styles.readerImages}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={`crew/${runner?'runner':'reader'}-wave-v1.png`} alt={shift<.5?`${character} waving hello`:''} style={{opacity:1-shift}} width="1127" height="1400"/>
+        <img src={`crew/${character.toLowerCase()}-wave-v1.png`} alt={shift<.5?`${character} waving hello`:''} style={{opacity:1-shift}} width="1127" height="1400"/>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        {(runner?['runner-receive-v1','runner-prepare-v1','runner-wait-v1']:['reader-look-right-v1','reader-extract-v1','reader-no-payment-v1']).map((pose,i)=><img key={pose} src={`crew/${pose}.png`} alt={shift>=.5&&task===i?(runner?['Runner receiving the request','Runner preparing a proposed money call','Runner waiting for Counterfoil']:['Reader introducing the customer note','Reader pointing out details on the note','Reader opening both hands to explain that it cannot move money'])[i]:''} style={{opacity:task===i?shift:0}} width="1127" height="1400"/>)}
+        {(foil?['counterfoil-check-v1','counterfoil-hold-v1','counterfoil-allow-v1']:runner?['runner-receive-v1','runner-prepare-v1','runner-wait-v1']:['reader-look-right-v1','reader-extract-v1','reader-no-payment-v1']).map((pose,i)=><img key={pose} src={`crew/${pose}.png`} alt={shift>=.5&&task===i?(foil?['Counterfoil comparing store records','Counterfoil raising a hand to hold the call','Counterfoil giving a thumbs-up for a valid call']:runner?['Runner receiving the request','Runner preparing a proposed money call','Runner waiting for Counterfoil']:['Reader introducing the customer note','Reader pointing out details on the note','Reader opening both hands to explain that it cannot move money'])[i]:''} style={{opacity:task===i?shift:0}} width="1127" height="1400"/>)}
       </div>
       <h2>Hi, I’m {character}.</h2>
     </div>

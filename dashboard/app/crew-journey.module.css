@@ -271,3 +271,8 @@
 .poseControls button[aria-current] { border-color:#803c61; }
 @media (max-width:760px) { .runnerIntruder { margin-top:8px; } .runnerIntruder button { gap:6px; font-size:10px; } .runnerIntruder img { width:32px; height:44px; } }
 @media (max-height:580px),(prefers-reduced-motion:reduce) { .journey { height:auto; } }
+
+.journey { height: 1300svh; }
+.readerSpotlight[data-character=Counterfoil] .readerFigure h2 { font-size: clamp(26px,3.5vw,48px); }
+@media (max-width:760px) { .readerSpotlight[data-character=Counterfoil] .readerFigure h2 { font-size: 28px; } }
+@media (max-height:580px),(prefers-reduced-motion:reduce) { .journey { height:auto; } }
