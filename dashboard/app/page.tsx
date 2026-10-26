@@ -13,8 +13,7 @@ import { SOFT_WIDGETS } from './soft-charts';
 import { CASE_WIDGET } from './case-file';
 import { buildCaseHarness } from './case-agent';
 import { Story3D, StoryStrip } from './story-3d';
-import { ClosingBand, Crew, FollowingFoil, Hero, ResultBand, StoryAside, useFeltConditions } from './felt';
-import { ModelBars3D } from './model-bars-3d';
+import { ClosingBand, Crew, Hero, ResultBand, StoryAside, useFeltConditions } from './felt';
 import { EvidenceBoard } from './evidence';
 import { canvasPadding, counterfoilTheme } from './theme';
 
@@ -169,20 +168,6 @@ export default function Page() {
           </AgStudioProvider>
         )}
       </main>
-
-      {/* The console's model table, again in 3D, under it. Desktop only: phones keep just the table. */}
-      {pageId === 'overview' && data && compact === false && (
-        <section className="bars3d-section">
-          <div className="bars3d-head">
-            <div>
-              <h2>Wrong money paid, by model.</h2>
-              <p className="f-sub">Every latest-gate run, attack and clean · drag to turn, hover a bar</p>
-            </div>
-            <FollowingFoil src="crew/counterfoil-complete.webp" alt="" />
-          </div>
-          <ModelBars3D data={offSandbox(data)} />
-        </section>
-      )}
 
       {pageId === 'overview' && data && <ClosingBand />}
 
