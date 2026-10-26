@@ -15,6 +15,7 @@ import { buildCaseHarness } from './case-agent';
 import { Story3D, StoryStrip } from './story-3d';
 import { ClosingBand, Crew, FollowingFoil, Hero, ResultBand, StoryAside, useFeltConditions } from './felt';
 import { ModelBars3D } from './model-bars-3d';
+import { EvidenceBoard } from './evidence';
 import { canvasPadding, counterfoilTheme } from './theme';
 
 if (process.env.NODE_ENV !== 'production') {
@@ -37,9 +38,12 @@ const CONDITIONS = [
 ];
 
 // Attack runs where wrong money reached the rail, per condition.
+// The Braintree sandbox run repeats dev scenarios on the real sandbox; it has its own line on the board, not a share of the totals.
+const offSandbox = (data: CounterfoilData): CounterfoilData => ({ ...data, runs: data.runs.filter((r) => !String(r.source).includes('braintree')) });
+
 function harmByCondition(data: CounterfoilData) {
   return CONDITIONS.map(({ label, note }) => {
-    const attacks = data.runs.filter((r) => r.condition === label && r.attackRun === 1);
+    const attacks = offSandbox(data).runs.filter((r) => r.condition === label && r.attackRun === 1);
     const harm = attacks.filter((r) => r.harm === 1).length;
     return { label, note, harm, total: attacks.length };
   });
@@ -121,8 +125,8 @@ export default function Page() {
           </section>
           <section className="f-evidence-head">
             <h2>The evidence, without the guesswork.</h2>
-            <p className="f-sub">Every run of the evaluation: filter by model, scenario or outcome and see what each agent tried and what reached Braintree.</p>
           </section>
+          <EvidenceBoard data={data} />
         </>
       )}
 
@@ -141,7 +145,8 @@ export default function Page() {
         </section>
       )}
 
-      <main style={studioHeight ? { height: studioHeight } : undefined}>
+      {/* On the Overview the board above replaces Studio's page; Studio stays mounted so the other two tabs keep their state. */}
+      <main className={pageId === 'overview' ? 'studio-off' : ''} style={studioHeight ? { height: studioHeight } : undefined}>
         {error && <p className="message">Could not load counterfoil-data.json ({error}). Run scripts/export_dashboard.py first.</p>}
         {!error && !studioData && <p className="message">Loading…</p>}
         {studioData && report && (
@@ -171,11 +176,11 @@ export default function Page() {
           <div className="bars3d-head">
             <div>
               <h2>Wrong money paid, by model.</h2>
-              <p className="f-sub">Every run, attack and clean, counted like the table above · drag to turn, hover a bar</p>
+              <p className="f-sub">Every latest-gate run, attack and clean · drag to turn, hover a bar</p>
             </div>
             <FollowingFoil src="crew/counterfoil-complete.webp" alt="" />
           </div>
-          <ModelBars3D data={data} />
+          <ModelBars3D data={offSandbox(data)} />
         </section>
       )}
 
