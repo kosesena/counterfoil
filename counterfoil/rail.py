@@ -5,6 +5,9 @@ refunds above the remaining transaction total fail with 91521, refunds on a full
 refunds before settlement with 91506, and an identical sale (same payment method and amount) soon after another one
 with "Gateway Rejected: duplicate". Mocked PayPal in the sandbox does NOT enforce the refund total; the fake does,
 because production would.
+
+`refunds(since)` lists every refund and credit the rail sent out since a moment, for the store-wide sweep in
+reconcile.py (Braintree: one transaction.search for credits; spikes/braintree_refund_search_spike.py).
 """
 
 from __future__ import annotations
@@ -12,6 +15,7 @@ from __future__ import annotations
 import itertools
 import os
 from dataclasses import dataclass, field
+from datetime import datetime
 from decimal import Decimal
 from typing import Protocol
 
@@ -30,6 +34,10 @@ class Rail(Protocol):
     def void(self, transaction_id: str) -> RailResult: ...
     def charge(self, payment_method_token: str, amount: Decimal, order_id: str) -> RailResult: ...
     def find(self, transaction_id: str) -> dict | None: ...
+    def refunds(self, since: datetime) -> list[dict]: ...
+
+
+DEAD = ("failed", "gateway_rejected", "processor_declined", "voided")  # refunds that moved no money
 
 
 @dataclass
@@ -48,6 +56,8 @@ class FakeRail:
         self.calls: list[tuple] = []
         self._ids = itertools.count(1)
         self._sales: set[tuple[str, Decimal]] = set()
+        # money that went back out: {"id", "refunded_transaction_id" (None for a standalone credit), "amount", "status"}
+        self.refund_log: list[dict] = []
 
     @classmethod
     def from_store(cls, store) -> FakeRail:
@@ -57,7 +67,19 @@ class FakeRail:
                 (Decimal(r["amount"]) for r in o.get("refunds", []) if r["status"] == "completed"), Decimal("0.00")
             )
             txns[o["braintree_transaction_id"]] = FakeTxn(Decimal(o["total"]), o.get("status", "settled"), refunded)
-        return cls(txns)
+        rail = cls(txns)
+        for o in store.orders.values():
+            for r in o.get("refunds", []):
+                if r["status"] == "completed":
+                    rail.refund_log.append(
+                        {
+                            "id": r["refund_id"],
+                            "refunded_transaction_id": o["braintree_transaction_id"],
+                            "amount": Decimal(r["amount"]),
+                            "status": "settled",
+                        }
+                    )
+        return rail
 
     def refund(self, transaction_id, amount):
         self.calls.append(("refund", transaction_id, amount))
@@ -73,6 +95,14 @@ class FakeRail:
         t.refunded += amount
         rid = f"fake-refund-{next(self._ids)}"
         t.refund_ids.append(rid)
+        self.refund_log.append(
+            {
+                "id": rid,
+                "refunded_transaction_id": transaction_id,
+                "amount": amount,
+                "status": "submitted_for_settlement",
+            }
+        )
         return RailResult(True, rid, "submitted_for_settlement")
 
     def void(self, transaction_id):
@@ -113,6 +143,10 @@ class FakeRail:
             "refunded": str(t.refunded),
             "refund_ids": list(t.refund_ids),
         }
+
+    def refunds(self, since):
+        self.calls.append(("refunds", since))
+        return [dict(r) for r in self.refund_log if r["status"] not in DEAD]
 
 
 class BraintreeRail:
@@ -168,7 +202,7 @@ class BraintreeRail:
         total = Decimal("0.00")
         for rid in t.refund_ids:
             r = self.gw.transaction.find(rid)
-            if r.status not in ("failed", "gateway_rejected", "processor_declined", "voided"):
+            if r.status not in DEAD:
                 total += Decimal(str(r.amount))
         return total
 
@@ -184,6 +218,20 @@ class BraintreeRail:
             "refund_ids": list(t.refund_ids),
             "payment_instrument_type": t.payment_instrument_type,
         }
+
+    def refunds(self, since):
+        """Every credit since `since` in one search: refunds carry the sale they refund, standalone credits None."""
+        S = self.bt.TransactionSearch
+        return [
+            {
+                "id": t.id,
+                "refunded_transaction_id": t.refunded_transaction_id,
+                "amount": Decimal(str(t.amount)),
+                "status": t.status,
+            }
+            for t in self.gw.transaction.search(S.type == "credit", S.created_at >= since).items
+            if t.status not in DEAD
+        ]
 
 
 class SandboxRail(BraintreeRail):
@@ -263,3 +311,14 @@ class SandboxRail(BraintreeRail):
         self.calls.append(("find", transaction_id, real))
         data = None if real is None else super().find(real)
         return None if data is None else {**data, "id": transaction_id, "braintree_id": real}
+
+    def refunds(self, since):
+        """Refunds on this run's sandbox sales, under their fixture ids. The sandbox account is shared by every run,
+        so refunds on other sales are left out; standalone credits are kept wherever they come from."""
+        fixture = {real: fid for fid, real in self.real.items()}
+        out = []
+        for r in super().refunds(since):
+            parent = r["refunded_transaction_id"]
+            if parent is None or parent in fixture:
+                out.append({**r, "refunded_transaction_id": fixture.get(parent), "braintree_parent_id": parent})
+        return out

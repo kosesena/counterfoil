@@ -8,6 +8,7 @@ Two research passes over developer.paypal.com (PayPal REST, Braintree docs, Agen
 |---|---|
 | `transaction.sale` (mocked PayPal nonce, vaulted method), `refund`, `void`, `find` | `counterfoil/rail.py` (`BraintreeRail`) |
 | `order_id` on every sale | `rail.py` |
+| Store-wide refund sweep: `transaction.search(type == credit, created_at >= since)`, grouped by `refunded_transaction_id` against the store's ledger. Sandbox-checked 26 Oct: a refund is in the search immediately and carries the refunded sale's id; `refund == True/False` separates refunds from standalone credits; `transaction.credit` itself is refused (`AuthorizationError`) on this sandbox merchant | `reconcile.py`, `rail.py` (`refunds`), `scripts/sweep_refunds.py`, `spikes/braintree_refund_search_spike.py` |
 | Rail-side refund total per transaction: sum of `find(rid).amount` over `refund_ids`, skipping failed/rejected/declined/voided | `BraintreeRail.refunded_total` |
 | `PayPal-Request-Id` on every PayPal REST money call; real `REFUND_AMOUNT_EXCEEDED` error shape | `counterfoil/paypal.py` |
 | Gate in front of Agent Toolkit `create_refund` (Toolkit parameters) | `counterfoil/toolkit.py` |
