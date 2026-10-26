@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import styles from './crew-journey.module.css';
 import { CounterfoilGaze } from './counterfoil-gaze';
 
@@ -24,6 +24,7 @@ const CHAPTERS = [
 export function CrewJourney() {
   const root = useRef<HTMLElement>(null);
   const [chapter, setChapter] = useState(0);
+  const [readerProgress, setReaderProgress] = useState(0);
   const [inspected, setInspected] = useState<number | null>(null);
   const [hovered, setHovered] = useState<number | null>(null);
   const [pinned, setPinned] = useState(false);
@@ -39,7 +40,9 @@ export function CrewJourney() {
       if (compact.matches || reduced.matches) return;
       const range=el.offsetHeight-(innerHeight-76);
       const progress=Math.max(0,Math.min(1,(76-el.getBoundingClientRect().top)/Math.max(1,range)));
-      const next=Math.min(CHAPTERS.length-1,Math.floor(progress*CHAPTERS.length));
+      const position=progress*9;
+      const next=position<1?0:position<4?1:Math.min(6,Math.floor(position)-2);
+      setReaderProgress(Math.max(0,Math.min(1,(position-1)/3)));
       setChapter(prev => prev===next ? prev : next);
     };
     const schedule=()=>{if (!raf) raf=requestAnimationFrame(readScroll);};
@@ -50,10 +53,10 @@ export function CrewJourney() {
     return ()=>{cancelAnimationFrame(raf);window.removeEventListener('scroll',schedule);window.removeEventListener('resize',preferences);compact.removeEventListener('change',preferences);reduced.removeEventListener('change',preferences);};
   },[]);
   const go=(index:number)=>{
-    setInspected(null);setHovered(null);setChapter(index);
+    setInspected(null);setHovered(null);setChapter(index);setReaderProgress(pinned?0:1);
     if (pinned && root.current) {
       const el=root.current,range=el.offsetHeight-(innerHeight-76);
-      window.scrollTo({top:scrollY+el.getBoundingClientRect().top-76+range*(index===0?0:(index+.35)/CHAPTERS.length),behavior:calm?'auto':'smooth'});
+      window.scrollTo({top:scrollY+el.getBoundingClientRect().top-76+range*(index===0?0:((index===1?1:index+2)+.05)/9),behavior:calm?'auto':'smooth'});
     }
   };
   useEffect(()=>{setHovered(null);setInspected(null);},[chapter]);
@@ -61,8 +64,9 @@ export function CrewJourney() {
   const ensemble=step.actor===-1;
   const selected=hovered??inspected;
   const detail=selected===null||selected===5?null:CREW[selected];
-  return <section ref={root} className={`${styles.journey} ${ensemble?styles.ensemble:''}`} id="crew" aria-label="Meet the return crew" data-chapter={chapter}>
+  return <section ref={root} className={`${styles.journey} ${ensemble?styles.ensemble:''} ${chapter===1?styles.readerChapter:''}`} id="crew" aria-label="Meet the return crew" data-chapter={chapter}>
     <div className={styles.stage}>
+      {chapter===1 && <ReaderSpotlight progress={pinned?readerProgress:1} calm={calm}/>} 
       <div className={styles.heading}>
         <div><span className={styles.eyebrow}>HOMI / THE RETURN CREW</span><h2>{ensemble?(chapter===0?'Meet the crew.':'Better together.'):CREW[step.actor].name}<br/><em>{ensemble?'One firm boundary.':CREW[step.actor].role+'.'}</em></h2></div>
         <div className={styles.intro}><p>One crew. One firm boundary.</p><span>Scroll to meet each character.</span>
@@ -128,4 +132,31 @@ export function ProductIntro() {
     <div className={styles.productMascot}><CounterfoilGaze/><div className={styles.mascotIdentity}><strong>Meet Counterfoil.</strong><span>Your returns gatekeeper.</span><p>Checks every money call before it reaches the payment rail.</p></div></div>
     <a className={styles.productScroll} href="#crew">Meet the team behind each return <span aria-hidden="true">↓</span></a>
   </section>;
+}
+
+
+function ReaderSpotlight({progress,calm}:{progress:number;calm:boolean}) {
+  const shift=calm?1:Math.max(0,Math.min(1,(progress-.18)/.28));
+  const task=progress<.64?0:progress<.82?1:2;
+  const tasks=[
+    ['I read the customer’s note.', 'I find the order and understand which items the customer wants to return.'],
+    ['I pick out the useful details.', 'I pass the order, returned items and requested amount to Runner.'],
+    ['I read. I don’t move money.', 'I have no payment tools. I treat customer text as input, not authority. Counterfoil checks the money call later.'],
+  ];
+  return <div className={styles.readerSpotlight} style={{'--reader-shift':shift} as CSSProperties} data-reader-phase={shift===0?'hello':shift<1?'moving':'tasks'}>
+    <div className={styles.readerFigure}>
+      <div className={styles.readerImages}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="crew/reader-wave-v1.png" alt={shift<.5?'Reader waving hello':''} style={{opacity:1-shift}} width="1127" height="1400"/>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        {['reader-look-right-v1','reader-extract-v1','reader-no-payment-v1'].map((pose,i)=><img key={pose} src={`crew/${pose}.png`} alt={shift>=.5&&task===i?['Reader introducing the customer note','Reader pointing out details on the note','Reader opening both hands to explain that it cannot move money'][i]:''} style={{opacity:task===i?shift:0}} width="1127" height="1400"/>)}
+      </div>
+      <h2>Hi, I’m Reader.</h2>
+    </div>
+    <div className={styles.readerTasks} style={{opacity:shift}} aria-hidden={shift<1}>
+      <span className={styles.eyebrow}>READER / {String(task+1).padStart(2,'0')}</span>
+      <div key={task} className={styles.readerTask}><h3>{tasks[task][0]}</h3><p>{tasks[task][1]}</p></div>
+      <div className={styles.readerDots} aria-label={`Task ${task+1} of 3`}>{tasks.map((_,i)=><span key={i} data-active={i===task}/>)}</div>
+    </div>
+  </div>;
 }
