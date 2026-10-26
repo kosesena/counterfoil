@@ -12,6 +12,7 @@ export type CounterfoilData = {
   scenarios: Record<string, unknown>[];
   orders: Record<string, unknown>[];
   returns: Record<string, unknown>[];
+  skipped?: Record<string, unknown>[]; // runs the model never finished (timeouts): listed, not scored
 };
 
 // [id, name, format, hide?]

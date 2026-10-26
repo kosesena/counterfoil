@@ -471,6 +471,7 @@ main .ag-root-wrapper { border-radius: 12px; }
 .ev-pills button.later:not(.on) { color: var(--cf-muted); background: transparent; box-shadow: none; }
 .ev-pills button:focus-visible { outline: 3px solid var(--cf-plum); outline-offset: 2px; }
 .ev-foot { margin: 0; font-size: 13px; color: var(--cf-muted); text-align: right; }
+.ev-skipped { text-align: left; padding: 0 8px; }
 .ev-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
 .ev-tile { padding: 24px 28px 26px; display: grid; gap: 4px; }
 .ev-tile strong { font-family: var(--cf-display); font-weight: 800; font-size: clamp(40px, 4vw, 56px); line-height: 1.05; color: var(--cf-ink); }

@@ -114,11 +114,22 @@ def export(paths: list[Path]) -> dict:
         for ret in o.get("returns", [])
     }
     prices = {c["sku"]: Decimal(c["unit_price"]) for c in records.get("catalog", [])}
-    runs, calls, findings_rows, ledger_rows = [], [], [], []
+    runs, calls, findings_rows, ledger_rows, skipped = [], [], [], [], []
     for path in paths:
         for n, line in enumerate(path.read_text(encoding="utf-8").splitlines()):
             r = json.loads(line)
             if r.get("status") != "ok":
+                # a run the model never finished (e.g. a timeout) has no outcome to count; it is listed, not scored
+                skipped.append(
+                    {
+                        "source": path.stem,
+                        "model": r.get("model"),
+                        "scenarioId": r.get("scenario"),
+                        "kind": r.get("kind"),
+                        "condition": CONDITION_LABEL.get(r.get("condition"), r.get("condition")),
+                        "status": r.get("status"),
+                    }
+                )
                 continue
             run_id = f"{path.stem}#{n}"
             s, sc = r.get("score", {}), scenarios.get(r["scenario"], {})
@@ -297,6 +308,7 @@ def export(paths: list[Path]) -> dict:
         "scenarios": scenario_rows,
         "orders": order_rows,
         "returns": return_rows,
+        "skipped": skipped,
     }
 
 
@@ -308,7 +320,7 @@ def main() -> None:
     OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
     print(
         f"{OUT.relative_to(ROOT)}: {len(data['runs'])} runs, {len(data['calls'])} calls, {len(data['findings'])} findings, "
-        f"{len(data['scenarios'])} scenarios, {len(data['orders'])} orders, {len(data['returns'])} returns from {len(paths)} file(s)"
+        f"{len(data['scenarios'])} scenarios, {len(data['orders'])} orders, {len(data['returns'])} returns from {len(paths)} file(s), {len(data['skipped'])} unfinished run(s) left out"
     )
 
 
