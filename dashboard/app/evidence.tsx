@@ -130,7 +130,7 @@ export function EvidenceBoard({ data }: { data: CounterfoilData }) {
           <h3>Model</h3>
           <div className="ev-pills">
             {['All', ...MODELS].map((m) => {
-              const patch = m !== 'All' && !noPatch.has(m);
+              const patch = !noPatch.has(m);
               return (
                 <button
                   key={m}
