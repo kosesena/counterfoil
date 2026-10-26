@@ -81,6 +81,10 @@ Cross-cutting guarantees, each with tests in `tests/test_gateway_mechanics.py` a
   refused (`parse_amount` in [`money.py`](../counterfoil/money.py)).
 - An exception from the rail is recorded as outcome *unknown* and keeps the money counted, so a retry cannot double-pay
   (`Gateway._call`, `_execute_refund`).
+- Every refund and void carries a rail idempotency key (Braintree `api_request_key`, PayPal `PayPal-Request-Id`)
+  derived from the transaction, order, RMA, amount and what the RMA had already refunded. Two gate processes that both
+  passed the check before either refund landed send the same key and the rail pays once (`request_key`; sandbox
+  behaviour in `spikes/braintree_request_key_spike.py`).
 
 ## What the gate cannot stop
 

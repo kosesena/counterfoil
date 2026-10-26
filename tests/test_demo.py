@@ -358,6 +358,8 @@ class FakeBraintree:
         return self._txn(params["amount"])
 
     def _refund(self, txn_id, amount):
+        if isinstance(amount, dict):  # {"amount": ..., "api_request_key": ...}
+            amount = amount["amount"]
         r = self._txn(amount, "refund")
         self.txns[txn_id].refund_ids.append(r.transaction.id)
         return r

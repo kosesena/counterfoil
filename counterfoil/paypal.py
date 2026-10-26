@@ -158,7 +158,7 @@ class PayPalRestRail:
         code, data = self._req("GET", f"/v2/payments/captures/{capture_id}")
         return data if code == 200 else None
 
-    def refund(self, transaction_id, amount, request_id: str | None = None):
+    def refund(self, transaction_id, amount, request_key: str | None = None):
         cap = self._capture(transaction_id)
         if cap is None:
             return RailResult(False, error=f"404 RESOURCE_NOT_FOUND capture {transaction_id}")
@@ -167,13 +167,16 @@ class PayPalRestRail:
             "POST",
             f"/v2/payments/captures/{transaction_id}/refund",
             payload,
-            request_id or f"cf-refund-{uuid.uuid4().hex}",
+            (request_key or f"cf-refund-{uuid.uuid4().hex}")[:108],
         )
         return self._money_result(code, data)
 
-    def void(self, transaction_id):
+    def void(self, transaction_id, request_key: str | None = None):
         code, data = self._req(
-            "POST", f"/v2/payments/authorizations/{transaction_id}/void", None, f"cf-void-{uuid.uuid4().hex}"
+            "POST",
+            f"/v2/payments/authorizations/{transaction_id}/void",
+            None,
+            (request_key or f"cf-void-{uuid.uuid4().hex}")[:108],
         )
         if code == 204 or (200 <= code < 300 and not data):
             return RailResult(True, transaction_id, "VOIDED")
@@ -313,22 +316,22 @@ class PayPalSandboxRail(PayPalRestRail):
     def money_calls(self) -> list[tuple]:
         return [c for c in self.calls if c[0] in ("refund", "void", "charge")]
 
-    def refund(self, transaction_id, amount, request_id=None):
+    def refund(self, transaction_id, amount, request_key=None):
         real = self._txn(transaction_id)
         out = (
             RailResult(False, error="404 RESOURCE_NOT_FOUND not a store transaction")
             if real is None
-            else super().refund(real, amount, request_id)
+            else super().refund(real, amount, request_key and f"{request_key}-{self.tag}")
         )
         self.calls.append(("refund", transaction_id, amount, real, out.id))
         return out
 
-    def void(self, transaction_id):
+    def void(self, transaction_id, request_key=None):
         real = self._txn(transaction_id)
         out = (
             RailResult(False, error="404 RESOURCE_NOT_FOUND not a store transaction")
             if real is None
-            else super().void(real)
+            else super().void(real, request_key and f"{request_key}-{self.tag}")
         )
         self.calls.append(("void", transaction_id, real))
         return out

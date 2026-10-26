@@ -231,11 +231,11 @@ def test_5xx_and_network_errors_are_unknown_not_failed():
         r.refund(cid, Decimal("1.00"))
 
 
-def test_retry_with_the_same_request_id_moves_money_once():
+def test_retry_with_the_same_request_key_moves_money_once():
     r, pp = rail()
     cid = pp.add_capture("50.00")
-    first = r.refund(cid, Decimal("20.00"), request_id="cf-refund-res-1")
-    again = r.refund(cid, Decimal("20.00"), request_id="cf-refund-res-1")
+    first = r.refund(cid, Decimal("20.00"), request_key="cf-refund-res-1")
+    again = r.refund(cid, Decimal("20.00"), request_key="cf-refund-res-1")
     assert first.id == again.id and r.refunded_total(cid) == Decimal("20.00")
 
 

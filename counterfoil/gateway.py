@@ -82,6 +82,17 @@ def _decide(findings: list[Finding]) -> str:
     return max((f.severity for f in findings), key=_RANK.__getitem__, default=PASS)
 
 
+def request_key(tool: str, *parts) -> str:
+    """The rail's idempotency key (Braintree api_request_key, PayPal-Request-Id) for one money movement.
+
+    Derived from what the money movement is, not from the session or the attempt: the same refund asked for again
+    (an agent retry, a second gate process, a store that lost its ledger) carries the same key, and the rail answers
+    with the first refund instead of paying twice. For refunds the parts include what the store had already refunded
+    on the RMA, so a second, genuine partial refund of the same amount gets a new key."""
+    blob = json.dumps([tool, *map(str, parts)])
+    return f"cf-{tool}-{hashlib.sha256(blob.encode()).hexdigest()[:24]}"
+
+
 def _fingerprint(session_id: str, tool: str, args: dict) -> str:
     blob = json.dumps({"s": session_id, "t": tool, "a": args}, sort_keys=True, default=str)
     return hashlib.sha256(blob.encode()).hexdigest()
@@ -420,8 +431,8 @@ class Gateway:
         if tool == "lookup_transaction":
             return Outcome(decision, findings, "succeeded", data=order_view(self.store, self.rail, args["order_no"]))
         if tool == "void":
-            order = self.store.orders[args["order_no"]]
-            return self._call(decision, findings, lambda: self.rail.void(order["braintree_transaction_id"]))
+            txn = self.store.orders[args["order_no"]]["braintree_transaction_id"]
+            return self._call(decision, findings, lambda: self.rail.void(txn, request_key("void", txn)))
         if tool == "charge":
             return self._execute_charge(ctx, args, findings, decision)
         return self._execute_refund(ctx, args, findings, decision, approved)
@@ -470,7 +481,9 @@ class Gateway:
                 ctx.blocked_attempts += 1
                 return Outcome(BLOCK, findings + [Finding(BLOCK, "CONCURRENT_REFUND", late)])
             self.store.reserve(reservation, order["order_no"], rma_id, amount, ctx.session_id)
-        out = self._call(decision, findings, lambda: self.rail.refund(order["braintree_transaction_id"], amount))
+            txn = order["braintree_transaction_id"]
+            key = request_key("refund", txn, order["order_no"], rma_id, amount, ent.spent)
+        out = self._call(decision, findings, lambda: self.rail.refund(txn, amount, key))
         if out.rail_state == "succeeded":
             self.store.settle_reservation(
                 reservation, (out.rail and out.rail.id) or f"accepted-{reservation}", "accepted"
