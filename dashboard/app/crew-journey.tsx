@@ -28,6 +28,7 @@ export function CrewJourney() {
   const [runnerProgress, setRunnerProgress] = useState(0);
   const [foilProgress, setFoilProgress] = useState(0);
   const [managerProgress, setManagerProgress] = useState(0);
+  const [paymentProgress, setPaymentProgress] = useState(0);
   const [inspected, setInspected] = useState<number | null>(null);
   const [hovered, setHovered] = useState<number | null>(null);
   const [pinned, setPinned] = useState(false);
@@ -43,12 +44,13 @@ export function CrewJourney() {
       if (compact.matches || reduced.matches) return;
       const range=el.offsetHeight-(innerHeight-76);
       const progress=Math.max(0,Math.min(1,(76-el.getBoundingClientRect().top)/Math.max(1,range)));
-      const position=progress*15;
-      const next=position<1?0:position<4?1:position<7?2:position<10?3:position<13?4:Math.min(6,Math.floor(position)-8);
+      const position=progress*17;
+      const next=position<1?0:position<4?1:position<7?2:position<10?3:position<13?4:position<16?5:6;
       setReaderProgress(Math.max(0,Math.min(1,(position-1)/3)));
       setRunnerProgress(Math.max(0,Math.min(1,(position-4)/3)));
       setFoilProgress(Math.max(0,Math.min(1,(position-7)/3)));
       setManagerProgress(Math.max(0,Math.min(1,(position-10)/3)));
+      setPaymentProgress(Math.max(0,Math.min(1,(position-13)/3)));
       setChapter(prev => prev===next ? prev : next);
     };
     const schedule=()=>{if (!raf) raf=requestAnimationFrame(readScroll);};
@@ -59,10 +61,10 @@ export function CrewJourney() {
     return ()=>{cancelAnimationFrame(raf);window.removeEventListener('scroll',schedule);window.removeEventListener('resize',preferences);compact.removeEventListener('change',preferences);reduced.removeEventListener('change',preferences);};
   },[]);
   const go=(index:number)=>{
-    setInspected(null);setHovered(null);setChapter(index);setReaderProgress(0);setRunnerProgress(0);setFoilProgress(0);setManagerProgress(0);
+    setInspected(null);setHovered(null);setChapter(index);setReaderProgress(0);setRunnerProgress(0);setFoilProgress(0);setManagerProgress(0);setPaymentProgress(0);
     if (pinned && root.current) {
       const el=root.current,range=el.offsetHeight-(innerHeight-76);
-      window.scrollTo({top:scrollY+el.getBoundingClientRect().top-76+range*(index===0?0:([0,1,4,7,10,13,14][index]+.05)/15),behavior:calm?'auto':'smooth'});
+      window.scrollTo({top:scrollY+el.getBoundingClientRect().top-76+range*(index===0?0:([0,1,4,7,10,13,16][index]+.05)/17),behavior:calm?'auto':'smooth'});
     }
   };
   useEffect(()=>{setHovered(null);setInspected(null);},[chapter]);
@@ -70,9 +72,9 @@ export function CrewJourney() {
   const ensemble=step.actor===-1;
   const selected=hovered??inspected;
   const detail=selected===null||selected===5?null:CREW[selected];
-  return <section ref={root} className={`${styles.journey} ${ensemble?styles.ensemble:''} ${chapter>=1&&chapter<=4?styles.readerChapter:''}`} id="crew" aria-label="Meet the return crew" data-chapter={chapter}>
+  return <section ref={root} className={`${styles.journey} ${ensemble?styles.ensemble:''} ${chapter>=1&&chapter<=5?styles.readerChapter:''}`} id="crew" aria-label="Meet the return crew" data-chapter={chapter}>
     <div className={styles.stage}>
-      {(chapter>=1&&chapter<=4) && <CharacterSpotlight key={chapter} character={chapter===1?'Reader':chapter===2?'Runner':chapter===3?'Counterfoil':'Manager'} progress={chapter===1?readerProgress:chapter===2?runnerProgress:chapter===3?foilProgress:managerProgress} calm={calm} manual={!pinned}/>} 
+      {(chapter>=1&&chapter<=5) && <CharacterSpotlight key={chapter} character={chapter===1?'Reader':chapter===2?'Runner':chapter===3?'Counterfoil':chapter===4?'Manager':'PayPal'} progress={chapter===1?readerProgress:chapter===2?runnerProgress:chapter===3?foilProgress:chapter===4?managerProgress:paymentProgress} calm={calm} manual={!pinned}/>} 
       <div className={styles.heading}>
         <div><span className={styles.eyebrow}>HOMI / THE RETURN CREW</span><h2>{ensemble?(chapter===0?'Meet the crew.':'Better together.'):CREW[step.actor].name}<br/><em>{ensemble?'One firm boundary.':CREW[step.actor].role+'.'}</em></h2></div>
         <div className={styles.intro}><p>One crew. One firm boundary.</p><span>Scroll to meet each character.</span>
@@ -141,16 +143,22 @@ export function ProductIntro() {
 }
 
 
-function CharacterSpotlight({character,progress,calm,manual}:{character:'Reader'|'Runner'|'Counterfoil'|'Manager';progress:number;calm:boolean;manual:boolean}) {
+function CharacterSpotlight({character,progress,calm,manual}:{character:'Reader'|'Runner'|'Counterfoil'|'Manager'|'PayPal';progress:number;calm:boolean;manual:boolean}) {
   const [manualStep,setManualStep]=useState(0);
-  const [nellaOpen,setNellaOpen]=useState(false);
-  if(manual) progress=[0,.55,.72,.9][manualStep];
+
+  if(manual) progress=(character==='Runner'?[0,.52,.65,.78,.94]:[0,.55,.72,.9])[manualStep];
   const runner=character==='Runner';
   const foil=character==='Counterfoil';
   const manager=character==='Manager';
+  const payment=character==='PayPal';
   const shift=calm?(manualStep===0?0:1):Math.max(0,Math.min(1,(progress-.18)/.28));
-  const task=progress<.64?0:progress<.82?1:2;
-  const tasks=manager?[
+  const task=runner?(progress<.60?0:progress<.73?1:progress<.86?2:3):(progress<.64?0:progress<.82?1:2);
+  const intrusion=runner&&task===1;
+  const tasks=payment?[
+    ['I receive the allowed call.', 'I represent PayPal through Braintree in this story. Counterfoil holds the original $60 request, so it never reaches me.'],
+    ['I process the valid refund.', 'After the manager rejects the $60 call, a new $40 request passes Counterfoil. Braintree processes that refund, subject to its own transaction checks.'],
+    ['I report the result.', 'In this example, the $40 refund succeeds and the store receives the result. This demo uses Braintree sandbox with mocked PayPal accounts. No real funds move.'],
+  ]:manager?[
     ['I review the held call.', 'I see what the agent asked for, why Counterfoil held it and what the store’s records say. I make the human decision.'],
     ['I reject the extra $60.', 'In this example, the request does not match the $40 still owed. I reject this $60 call; I do not turn it into a $40 payment.'],
     ['I record my decision.', 'Runner can submit a new, valid $40 request. Counterfoil checks that separate call again before it can reach Braintree.'],
@@ -160,6 +168,7 @@ function CharacterSpotlight({character,progress,calm,manual}:{character:'Reader'
     ['I let valid calls through.', 'After the manager rejects the $60 request, Runner can submit a separate $40 request. I check it again; only a call that passes can reach Braintree.'],
   ]:runner?[
     ['I pick up the request.', 'Reader gives me the order, returned items and requested amount. I use those details to plan the next action.'],
+    ['I hide instructions in the note.', 'I’m Nella, the attacker. I try to make the agents treat my words as instructions, so they ask for an extra refund. I’m outside the return crew.'],
     ['I prepare the money call.', 'I can propose a refund, charge or void. A malicious note can mislead me: in this example, I ask for $60 even though only $40 is owed.'],
     ['I wait for Counterfoil.', 'My request is not permission to pay. Every money call must pass Counterfoil before it can reach Braintree.'],
   ]:[
@@ -167,29 +176,21 @@ function CharacterSpotlight({character,progress,calm,manual}:{character:'Reader'
     ['I pick out the useful details.', 'I pass the order, returned items and requested amount to Runner.'],
     ['I read. I don’t move money.', 'I have no payment tools. I treat customer text as input, not authority. Counterfoil checks the money call later.'],
   ];
-  return <div className={styles.readerSpotlight} style={{'--reader-shift':shift} as CSSProperties} data-character={character} data-reader-phase={shift===0?'hello':shift<1?'moving':'tasks'}>
+  return <div className={styles.readerSpotlight} style={{'--reader-shift':shift} as CSSProperties} data-character={character} data-intrusion={intrusion} data-reader-phase={shift===0?'hello':shift<1?'moving':'tasks'}>
     <div className={styles.readerFigure}>
       <div className={styles.readerImages}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={`crew/${character.toLowerCase()}-wave-v1.png`} alt={shift<.5?`${character} waving hello`:''} style={{opacity:1-shift}} width="1127" height="1400"/>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        {(manager?['manager-review-v1','manager-decline-v1','manager-record-v1']:foil?['counterfoil-check-v1','counterfoil-hold-v1','counterfoil-allow-v1']:runner?['runner-receive-v1','runner-prepare-v1','runner-wait-v1']:['reader-look-right-v1','reader-extract-v1','reader-no-payment-v1']).map((pose,i)=><img key={pose} src={`crew/${pose}.png`} alt={shift>=.5&&task===i?(manager?['Store manager reviewing the held request','Store manager refusing the extra refund','Store manager recording a decision on the tablet']:foil?['Counterfoil comparing store records','Counterfoil raising a hand to hold the call','Counterfoil giving a thumbs-up for a valid call']:runner?['Runner receiving the request','Runner preparing a proposed money call','Runner waiting for Counterfoil']:['Reader introducing the customer note','Reader pointing out details on the note','Reader opening both hands to explain that it cannot move money'])[i]:''} style={{opacity:task===i?shift:0}} width="1127" height="1400"/>)}
+        {(payment?['paypal-receive-v1','paypal-process-v1','paypal-complete-v1']:manager?['manager-review-v1','manager-decline-v1','manager-record-v1']:foil?['counterfoil-check-v1','counterfoil-hold-v1','counterfoil-allow-v1']:runner?['runner-receive-v1','nella-runner-handoff-v1','runner-prepare-v1','runner-wait-v1']:['reader-look-right-v1','reader-extract-v1','reader-no-payment-v1']).map((pose,i)=><img key={pose} src={`crew/${pose}.png`} alt={shift>=.5&&task===i?(payment?['Payment mascot receiving the allowed call','Payment mascot processing a refund','Payment mascot presenting the successful result']:manager?['Store manager reviewing the held request','Store manager refusing the extra refund','Store manager recording a decision on the tablet']:foil?['Counterfoil comparing store records','Counterfoil raising a hand to hold the call','Counterfoil giving a thumbs-up for a valid call']:runner?['Runner receiving the request','Nella passing a manipulated note to Runner','Runner preparing a proposed money call','Runner waiting for Counterfoil']:['Reader introducing the customer note','Reader pointing out details on the note','Reader opening both hands to explain that it cannot move money'])[i]:''} style={{opacity:task===i?shift:0}} width="1127" height="1400"/>)}
       </div>
-      <h2>Hi, I’m {manager?'the store manager':character}.</h2>
+      <h2>{shift<.5?`Hi, I’m ${manager?'the store manager':payment?'the payment rail':character}.`:intrusion?'Nella & Runner':manager?'Store manager':payment?'PayPal / Braintree':character}</h2>
     </div>
     <div className={styles.readerTasks} style={{opacity:shift}} aria-hidden={shift<1}>
-      <span className={styles.eyebrow}>{character.toUpperCase()} / {String(task+1).padStart(2,'0')}</span>
+      <span className={styles.eyebrow}>{intrusion?'OUTSIDE THE CREW · NELLA':payment?'PAYPAL / BRAINTREE':character.toUpperCase()} / {String(task+1).padStart(2,'0')}</span>
       <div key={task} className={styles.readerTask}><h3>{tasks[task][0]}</h3><p>{tasks[task][1]}</p></div>
-      {runner&&task===1&&shift===1&&<div className={styles.runnerIntruder}>
-        <button type="button" onClick={()=>setNellaOpen(!nellaOpen)} aria-expanded={nellaOpen}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="crew/nella.png" alt="Nella, the attacker" width="60" height="80"/>
-          <span>Nella slipped in a false instruction. <u>Meet the attacker</u></span>
-        </button>
-        {nellaOpen&&<p>“I hide instructions in the customer’s note to trick the agents into requesting an extra refund.”</p>}
-      </div>}
-      <div className={styles.readerDots} aria-label={`Task ${task+1} of 3`}>{tasks.map((_,i)=><span key={i} data-active={i===task}/>)}</div>
+      <div className={styles.readerDots} aria-label={`Task ${task+1} of ${tasks.length}`}>{tasks.map((_,i)=><span key={i} data-active={i===task}/>)}</div>
     </div>
-    {manual&&<nav className={styles.poseControls} aria-label={`${character} introduction steps`}>{['Hello','Request','Details','Boundary'].map((label,i)=><button key={label} onClick={()=>setManualStep(i)} aria-current={manualStep===i?'step':undefined}>{label}</button>)}</nav>}
+    {manual&&<nav className={styles.poseControls} aria-label={`${character} introduction steps`}>{(runner?['Hello','Request','Nella','Details','Boundary']:['Hello','Request','Details','Boundary']).map((label,i)=><button key={label} onClick={()=>setManualStep(i)} aria-current={manualStep===i?'step':undefined}>{label}</button>)}</nav>}
   </div>;
 }
