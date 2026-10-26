@@ -13,15 +13,15 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { FollowingFoil } from './felt';
 
-const MODEL = '3d/counterfoil-claude.glb?v=20261026f';
+const MODEL = '3d/counterfoil-claude.glb?v=20261026g';
 const BODY = { yaw: 0.5, up: 0.12, down: 0.2 };      // radians the upper half may turn / nod
 const EYES = { yaw: 0.22, up: 0.1, down: 0.03 };     // extra roll of the bead eyes on top of that (barely down: the moustache is right below)
 const DEPTH = 650;                                   // px: how far in front of the screen he imagines the pointer
 
 // Needle felt: a tile of curly wool fibres drawn once on a canvas, laid over every part triplanar (the GLB has no UVs,
 // so the tile is projected along the three axes of the part's own space and blended by the surface normal). It lightens
-// and darkens the colour fibre by fibre and bumps the surface along them. Wool is matte: little sheen, specular and
-// reflection. Only the beads shine.
+// and darkens the colour fibre by fibre and bumps the surface along them. Wool is matte: no sheen, no specular, only a
+// little diffuse light from the room. The beads keep a soft gloss.
 let fibreTile: THREE.CanvasTexture | null = null;
 function fibres(): THREE.CanvasTexture {
   if (fibreTile) return fibreTile;
@@ -62,11 +62,10 @@ function fibres(): THREE.CanvasTexture {
 
 function feltify(src: THREE.MeshStandardMaterial): THREE.Material {
   if (src.name.startsWith('Bead')) {
-    return new THREE.MeshPhysicalMaterial({ color: src.color, roughness: 0.08, clearcoat: 1, clearcoatRoughness: 0.05, envMapIntensity: 2.5 });
+    return new THREE.MeshPhysicalMaterial({ color: src.color, roughness: 0.08, clearcoat: 0.4, clearcoatRoughness: 0.2, envMapIntensity: 1.2 });
   }
   const m = new THREE.MeshPhysicalMaterial({
-    color: src.color, roughness: 1, sheen: 0.18, sheenRoughness: 0.8, specularIntensity: 0.15, envMapIntensity: 0.4,
-    sheenColor: new THREE.Color(src.color).lerp(new THREE.Color(0xffffff), 0.1),
+    color: src.color, roughness: 1, specularIntensity: 0, envMapIntensity: 0.35,
   });
   m.onBeforeCompile = (sh) => {
     sh.uniforms.feltMap = { value: fibres() };

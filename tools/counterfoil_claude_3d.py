@@ -22,7 +22,7 @@ def srgb(h):
 
 
 def felt(name, hexcol, fuzz=1.0):
-    """Felt: matte, strong sheen, fine fibre bump (same recipe as homi_felt_cast.py)."""
+    """Felt: fully matte, a touch of sheen, fine fibre bump."""
     m = bpy.data.materials.get(name) or bpy.data.materials.new(name)
     m.use_nodes = True
     nt = m.node_tree
@@ -31,8 +31,9 @@ def felt(name, hexcol, fuzz=1.0):
     out = nt.nodes.new('ShaderNodeOutputMaterial')
     b = nt.nodes.new('ShaderNodeBsdfPrincipled')
     b.inputs['Base Color'].default_value = (*srgb(hexcol), 1)
-    b.inputs['Roughness'].default_value = 0.95
-    b.inputs['Sheen Weight'].default_value = 1.0 * fuzz
+    b.inputs['Roughness'].default_value = 1.0
+    b.inputs['Specular IOR Level'].default_value = 0.05     # wool is matte: almost no highlight, little sheen
+    b.inputs['Sheen Weight'].default_value = 0.15 * fuzz
     b.inputs['Sheen Roughness'].default_value = 0.35
     b.inputs['Sheen Tint'].default_value = (1, 1, 1, 1)
     noise_n = nt.nodes.new('ShaderNodeTexNoise')
@@ -53,8 +54,8 @@ def bead(name, hexcol):
     m.use_nodes = True
     b = next(n for n in m.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
     b.inputs['Base Color'].default_value = (*srgb(hexcol), 1)
-    b.inputs['Roughness'].default_value = 0.06
-    b.inputs['Coat Weight'].default_value = 0.5
+    b.inputs['Roughness'].default_value = 0.15
+    b.inputs['Coat Weight'].default_value = 0.2
     m.diffuse_color = (*srgb(hexcol), 1)
     return m
 
