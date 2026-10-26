@@ -5,7 +5,7 @@
 // renders on cream (public/crew/); the page multiplies them onto its own cream, so their backdrop disappears.
 
 import { useEffect, useRef } from 'react';
-import { Counterfoil3D } from './counterfoil-3d';
+import { CounterfoilGaze } from './counterfoil-gaze';
 
 const DEMO = 'https://counterfoil-demo.onrender.com';
 
@@ -67,7 +67,7 @@ export function Hero({ onStory }: { onStory: () => void }) {
         </div>
       </div>
       <div className="f-hero-art">
-        <Counterfoil3D />
+        <CounterfoilGaze />
         <div className="f-receipt" aria-label="The agent asked for 60 USD; Counterfoil blocked it; 40 USD is still owed">
           <b>$60</b><span>requested</span>
           <i />
