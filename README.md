@@ -18,6 +18,13 @@ A gate between an AI returns agent and Braintree. Every refund or charge the age
 
 > The live demo runs on Render's free tier, so the first load can take about a minute.
 
+> ### Judge this in 90 seconds
+>
+> 1. **No setup:** open the [live dashboard](https://counterfoil-dashboard.vercel.app). Step through the story (one button per step, nothing plays on its own), then the evidence board: wrong money moved **0/270** with Counterfoil, **99/270** with no gate, **100/270** with a $200 cap.
+> 2. **One attack, three conditions side by side:** open the [live demo](https://counterfoil-demo.onrender.com) and pick **P6-01** (split refund). You see what the Reader extracted, every call the agent made, the gate's PASS / APPROVAL / BLOCK with its reason, and whether money reached the rail. This is a replay of a measured run: no model call, no cost.
+> 3. **In a terminal, no model and no keys:** after the [quick start](#quick-start), `.venv/bin/python scripts/run_eval.py --model worst-case --split all` puts a Reader and an agent fully on the attacker's side across all 14 attacks. Wrong money moved: Counterfoil **0/14**, no gate **11/14**, the cap **11/14**.
+> 4. **Where it stops:** [What these results show, and what they don't](#what-these-results-show-and-what-they-dont).
+
 ## The return crew
 
 Two AI agents and one gate. Different skills, a safer outcome.
@@ -68,6 +75,39 @@ The trusted source is the store's record, not the customer's text. Counterfoil (
 | Tool allowlist, refund window, automatic-refund limit | unlisted tools, policy overrides |
 
 Approvals are single-use, expire after 30 minutes and are bound to the exact arguments the human saw. Counterfoil does not look for "injection-looking" text; it checks what the call would do against the record. The reasoning behind each choice is in [`docs/adr/`](docs/adr/README.md).
+
+## Why PayPal and Braintree
+
+**The money is real sandbox money.** Every sale, refund and void in the Braintree results below is a real Braintree sandbox transaction, paid with a mocked PayPal account. Take the rail away and there is nothing to protect and nothing to measure.
+
+**Counterfoil is built around the rail's own checks, not on top of them.** On card transactions Braintree already refuses a refund larger than the sale (`91521`), a refund on a fully refunded transaction (`91512`) and a refund before settlement (`91506`) ([our test](docs/arastirma/2026-10-23-braintree-deneme.md)). Counterfoil does not repeat any of that. It checks what the rail cannot know: whether the items actually came back (the RMA), who owns the order, and whether a charge equals catalog price × quantity.
+
+| | Braintree | Counterfoil |
+|---|---|---|
+| Refund larger than the sale, on a fully refunded or unsettled transaction | refuses it | leaves it to Braintree |
+| Refund under the sale total, but more than the return record allows | pays it | holds or blocks it |
+| Refund requested by someone who doesn't own the order | pays it | holds it for a human |
+| Charge that doesn't match catalog price × quantity | takes it | holds it for a human |
+
+Each scenario records whether the rail's own rules would have stopped it (`rail_would_block`, in [`docs/senaryolar/scenarios.json`](docs/senaryolar/scenarios.json)). For 13 of the 14 attacks they would not. The exception, holdout P4-02, refunds an unsettled transaction, and is reported as "the payment service would block it", not as a Counterfoil catch.
+
+**One gap in the sandbox, and how we handle it.** A mocked PayPal account does not enforce the refund total: five refunds totalling USD 186.54 on a USD 40.54 sale all went through. Real PayPal refunds are limited, so the evaluation's in-memory rail applies the card limits, and no stop that only this gap explains is counted for Counterfoil ([ADR 0007](docs/adr/0007-braintree-sandbox-with-mocked-paypal.md)).
+
+**PayPal Agent Toolkit.** The Toolkit gives an agent a `create_refund` tool. [`counterfoil/toolkit.py`](counterfoil/toolkit.py) takes the Toolkit's own parameters (`capture_id`, `amount`) and sends the call through the gate first; only a pass or a human approval reaches the PayPal REST rail ([`counterfoil/paypal.py`](counterfoil/paypal.py)). The agent never holds PayPal keys. This path is tested with a faked HTTP layer and has **not** run against a real PayPal REST sandbox, because PayPal accounts can't be opened from Türkiye ([ADR 0008](docs/adr/0008-paypal-rest-rail-in-front-of-agent-toolkit.md)).
+
+## What else guards agent payments, and where it stops
+
+The guards we found for agent payments sit on the **buyer's** side: an agent spends on a customer's behalf, and the guard limits how much and where. A returns agent works on the **seller's** side, giving the store's money back, and the question there is different: *does this refund match what this store's record says is owed?*
+
+| | Side | What it checks | The record of this order and its return |
+|---|---|---|---|
+| Spend caps, allowlists, kill switches (agent-payment SDKs and guard projects) | buyer | how much, to whom | no |
+| Signed intent ([IntentGuard](https://hackquest.io/projects/IntentBinding)) | buyer | the payment matches what the user signed | no |
+| Human approval over a cap ([Countersign](https://lablab.ai/submissions/p4iic6ylqcqd0hw5utigsqiz)) | buyer | amount above a threshold | no |
+| [n8n refund gateway](https://community.n8n.io/t/deterministic-human-in-the-loop-gateway-for-ai-agent-refunds/315643) | seller | nothing: every refund goes to a manager | no |
+| **Counterfoil** | **seller** | owner, return record, refunds already made, catalog price × quantity | **yes** |
+
+A cap can't tell a USD 60 refund that is owed from one that isn't, so it lets through what Counterfoil holds: the $200 cap moved wrong money in 100 of 270 attack runs. Sending every refund to a person stops the harm but does no work: Counterfoil completes the same genuine requests as no gate (102 of 183) and sends to a person only what its record checks or the store's rules flag. This is what we found in October 2026, not a full survey ([our scan](docs/arastirma/2026-10-23-rakipler.md)).
 
 ## Results
 
