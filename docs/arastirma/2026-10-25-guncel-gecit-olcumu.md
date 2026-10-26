@@ -16,6 +16,8 @@ Ham kayıtlar `claude/runs-2026-10-25` dalında: `results/2026-10-25-dev-r3-curr
 | | 200 $ tavan | 6/21 | 6/18 | 0 |
 | | **Counterfoil** | **0/21** | 6/18 | 0 |
 
+Not (26 Eki): Llama 3.1 temiz satırındaki 6/18, CLEAN-03'ün 9 zaman aşımını başarısız sayar. Dashboard ve 26 Eki notu bitmeyen koşuları paydadan çıkarır; bitenlerle 6/15. Ayrıntı: `2026-10-26-bulut-ve-hermes-olcumu.md`, "Sayım kuralı".
+
 ## Süreler
 
 | Model | Başlangıç → bitiş | Duvar saati | Ajan süresi (medyan, koşu başına) | En uzun koşu | Zaman aşımı |
