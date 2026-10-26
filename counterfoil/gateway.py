@@ -289,6 +289,11 @@ class Gateway:
                     )
                 )
 
+        if rma is not None and rma["status"] == "open":
+            sold = self._rail_items(order, rma)
+            if sold:
+                findings.append(sold)
+
         findings += self._reader_check(
             ctx, "refund", {"tutar": amount, "siparis_no": order_no, "iade_kaydi_no": rma_id, "para_birimi": currency}
         )
@@ -316,6 +321,48 @@ class Gateway:
                 f"rail shows {rail_total} refunded on {order['order_no']}, store knows {local}",
             )
         return None
+
+    def _rail_items(self, order, rma) -> Finding | None:
+        """Second source for the return record: what the rail itself recorded as sold on this sale (line items).
+
+        Every other refund check reads the store's own records; this one does not. The returned quantities (this RMA
+        and the order's other open or refunded RMAs) must fit what the rail sold, and the amount this RMA approves must
+        not exceed what the rail charged for those lines. A sale with no line items on the rail is not checked."""
+        line_items = getattr(self.rail, "line_items", None)
+        lines = line_items(order["braintree_transaction_id"]) if line_items else None
+        if not lines:
+            return None
+        sold: dict[str, tuple[Decimal, Decimal]] = {}  # sku -> (quantity, total)
+        for ln in lines:
+            q, t = sold.get(ln["product_code"], (Decimal(0), Decimal("0.00")))
+            sold[ln["product_code"]] = (q + ln["quantity"], t + ln["total_amount"])
+        returned: dict[str, Decimal] = {}
+        for r in order.get("returns", []):
+            if r["status"] in ("open", "refunded"):
+                for it in r["items"]:
+                    returned[it["sku"]] = returned.get(it["sku"], Decimal(0)) + Decimal(str(it["qty"]))
+        problems = []
+        for sku in sorted({it["sku"] for it in rma["items"]}):
+            have = sold.get(sku, (Decimal(0), None))[0]
+            if returned[sku] > have:
+                problems.append(f"{returned[sku]} × {sku} returned, rail sold {have}")
+        if not problems:
+            value = sum(
+                (
+                    Decimal(str(it["qty"])) * sold[it["sku"]][1] / sold[it["sku"]][0]
+                    for it in rma["items"]
+                    if Decimal(str(it["qty"]))  # a zero line may name an item the rail never sold
+                ),
+                Decimal("0.00"),
+            ).quantize(Decimal("0.01"))
+            approved = parse_amount(rma["approved_refund_amount"])
+            if approved > value:
+                problems.append(f"{rma['rma_id']} approves {approved}, rail charged {value} for those items")
+        if not problems:
+            return None
+        return Finding(
+            BLOCK, "RAIL_ITEMS_MISMATCH", f"return record disagrees with the rail's line items: {'; '.join(problems)}"
+        )
 
     def _check_charge(self, ctx, args):
         try:

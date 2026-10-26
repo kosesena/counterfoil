@@ -9,6 +9,9 @@ because production would.
 Idempotency: refund and void take a `request_key` (Braintree `api_request_key`). The sandbox honours it (26 Oct,
 spikes/braintree_request_key_spike.py): a repeated key returns the first refund or void and moves no money; the same
 key with other parameters fails with 915232. The fake does the same.
+
+Line items: the sandbox sales carry the order's lines (`line_items` on transaction.sale) and `line_items()` reads them
+back with transaction_line_item.find_all, so the gate can check a return record against what the rail says was sold.
 """
 
 from __future__ import annotations
@@ -34,6 +37,38 @@ class Rail(Protocol):
     def void(self, transaction_id: str, request_key: str | None = None) -> RailResult: ...
     def charge(self, payment_method_token: str, amount: Decimal, order_id: str) -> RailResult: ...
     def find(self, transaction_id: str) -> dict | None: ...
+    def line_items(self, transaction_id: str) -> list[dict] | None: ...
+
+
+def sale_line_items(store, order: dict) -> list[dict]:
+    """The order's lines in Braintree's line_items shape (name is required, at most 35 characters)."""
+    out = []
+    for it in order["items"]:
+        unit = Decimal(it["unit_price"])
+        name = store.catalog.get(it["sku"], {}).get("name", it["sku"])[:35]
+        out.append(
+            {
+                "kind": "debit",
+                "name": name,
+                "product_code": it["sku"],
+                "quantity": str(it["qty"]),
+                "unit_amount": str(unit),
+                "total_amount": str(unit * it["qty"]),
+            }
+        )
+    return out
+
+
+def _line(item) -> dict:
+    """An SDK TransactionLineItem (or the dict we sent) → the fields the gate compares."""
+    get = item.get if isinstance(item, dict) else lambda k: getattr(item, k, None)
+    return {
+        "product_code": get("product_code"),
+        "name": get("name"),
+        "quantity": Decimal(str(get("quantity"))),
+        "unit_amount": Decimal(str(get("unit_amount"))),
+        "total_amount": Decimal(str(get("total_amount"))),
+    }
 
 
 @dataclass
@@ -42,6 +77,7 @@ class FakeTxn:
     status: str = "settled"
     refunded: Decimal = Decimal("0.00")
     refund_ids: list[str] = field(default_factory=list)
+    line_items: list[dict] | None = None
 
 
 class FakeRail:
@@ -61,7 +97,9 @@ class FakeRail:
             refunded = sum(
                 (Decimal(r["amount"]) for r in o.get("refunds", []) if r["status"] == "completed"), Decimal("0.00")
             )
-            txns[o["braintree_transaction_id"]] = FakeTxn(Decimal(o["total"]), o.get("status", "settled"), refunded)
+            txns[o["braintree_transaction_id"]] = FakeTxn(
+                Decimal(o["total"]), o.get("status", "settled"), refunded, line_items=sale_line_items(store, o)
+            )
         return cls(txns)
 
     def _replay(self, request_key, params) -> RailResult | None:
@@ -146,6 +184,11 @@ class FakeRail:
             "refund_ids": list(t.refund_ids),
         }
 
+    def line_items(self, transaction_id):
+        self.calls.append(("line_items", transaction_id))
+        t = self.txns.get(transaction_id)
+        return None if t is None or t.line_items is None else [_line(i) for i in t.line_items]
+
 
 class BraintreeRail:
     """Braintree sandbox. Sandbox only; production keys are refused."""
@@ -223,13 +266,21 @@ class BraintreeRail:
             "payment_instrument_type": t.payment_instrument_type,
         }
 
+    def line_items(self, transaction_id):
+        """What the rail recorded as sold on this sale; None if the transaction is unknown. [] = sale had no lines."""
+        try:
+            items = self.gw.transaction_line_item.find_all(transaction_id)
+        except self.bt.exceptions.NotFoundError:
+            return None
+        return [_line(i) for i in items]
+
 
 class SandboxRail(BraintreeRail):
     """Braintree sandbox behind the store's fixture ids, for end-to-end evaluation runs.
 
     The scenarios name fixture transactions (fixture-txn-001) and vaulted methods (fixture-vault-02). The first time a
-    run touches one, a real sandbox counterpart is created: a mocked-PayPal sale for the order total (plus any refunds
-    the store already completed), or a vaulted mocked-PayPal customer. Everything after that hits Braintree for real,
+    run touches one, a real sandbox counterpart is created: a mocked-PayPal sale for the order total with the order's
+    line items (plus any refunds the store already completed), or a vaulted mocked-PayPal customer. Everything after that hits Braintree for real,
     so a run leaves real sandbox transactions behind; `money_calls()` reports them next to the fixture id.
     """
 
@@ -249,6 +300,7 @@ class SandboxRail(BraintreeRail):
                 "amount": str(o["total"]),
                 "payment_method_nonce": "fake-paypal-one-time-nonce",
                 "order_id": f"{self.tag}:{o['order_no']}",
+                "line_items": sale_line_items(self.store, o),
                 "options": {"submit_for_settlement": True},
             }
             if os.environ.get("BRAINTREE_MERCHANT_ACCOUNT_ID"):
@@ -313,3 +365,8 @@ class SandboxRail(BraintreeRail):
         self.calls.append(("find", transaction_id, real))
         data = None if real is None else super().find(real)
         return None if data is None else {**data, "id": transaction_id, "braintree_id": real}
+
+    def line_items(self, transaction_id):
+        real = self._txn(transaction_id)
+        self.calls.append(("line_items", transaction_id, real))
+        return None if real is None else super().line_items(real)
