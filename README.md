@@ -92,6 +92,8 @@ Approvals are single-use, expire after 30 minutes and are bound to the exact arg
 | Charge that doesn't match catalog price × quantity | takes it | holds it for a human |
 | Refund on a transaction with an open chargeback | pays it ([our test](spikes/braintree_dispute_spike.py)) | blocks it |
 
+Section 4 of the live demo ("What Braintree refuses on its own") runs this table on fresh sandbox sales: a test card settled with `testing.settle_transaction` refuses `91506`, `91521` and `91512`, mocked PayPal accepts the same calls, and on the dispute test card Braintree pays a refund on top of the chargeback while Counterfoil blocks it.
+
 Each scenario records whether the rail's own rules would have stopped it (`rail_would_block`, in [`docs/senaryolar/scenarios.json`](docs/senaryolar/scenarios.json)). For 13 of the 14 attacks they would not. The exception, holdout P4-02, refunds an unsettled transaction, and is reported as "the payment service would block it", not as a Counterfoil catch.
 
 **Refund plus chargeback is paying twice, and Braintree allows it.** On Braintree's dispute test card (`4023898493988028`) the sale got an open fraud chargeback for the full amount within seconds, and a full refund on top of it still went through. Before every refund the gate reads the transaction's disputes and blocks the refund (`TRANSACTION_DISPUTED`) while any dispute the store has not won is on it; the answer is to accept or fight the dispute, not to refund.

@@ -77,7 +77,7 @@ Details and sources: [`arastirma/2026-10-26-paypal-braintree-features.md`](arast
 | 2 | `api_request_key` on refund and void (from order + RMA + amount) | If the agent retries, there is no double payment; must be tried once in the sandbox | ⚠️ `PayPal-Request-Id` exists on the PayPal REST side, not on Braintree |
 | 3 | Block refunds on a transaction with an open dispute | Refund + chargeback = paying twice; shown in the demo with a test card | ✅ gate rule (26 Oct, `TRANSACTION_DISPUTED`; the sandbox itself let a full refund through on top of an open chargeback; worst-case decisions unchanged). Demo scene comes with #5 |
 | 4 | Store-wide refund scan (`transaction.search`) | Lists refunds the store does not know about | ⚠️ per-transaction `refunded_total` exists |
-| 5 | Card + `testing.settle` in the demo, next to the mock PayPal | The "Braintree already rejects this" division of labour becomes visible live | ❌ |
+| 5 | Card + `testing.settle` in the demo, next to the mock PayPal | The "Braintree already rejects this" division of labour becomes visible live | ✅ (26 Oct, demo section 4 "What Braintree refuses on its own": card / mocked PayPal / dispute card, run on the sandbox) |
 
 Note: PayPal's own agent products (Agent Ready, Store Sync) cover purchasing, not refunds. A strong sentence for the Innovation story.
 

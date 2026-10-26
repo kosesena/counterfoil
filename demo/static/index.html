@@ -247,6 +247,22 @@ footer { color: var(--muted); font-size: 13px; padding: 20px 16px 40px; max-widt
     </div>
     <p class="err" id="payErr"></p>
   </section>
+
+  <section class="panel hidden" id="railBox">
+    <h2>4 · What Braintree refuses on its own</h2>
+    <p class="note">Counterfoil does not repeat the payment service's own rules. This sends fresh sandbox sales straight
+    to Braintree, no agent and no gate, and shows which refunds Braintree itself refuses. On a test card it refuses a
+    refund before settlement, above the sale and after a full refund (the card is settled with the sandbox's
+    <code>testing.settle_transaction</code> in between). Mocked PayPal in the sandbox enforces none of them. And Braintree
+    pays a refund on top of an open chargeback: on its dispute test card, Counterfoil blocks that refund.
+    About 15 sandbox calls; takes a few seconds.</p>
+    <div class="row" style="margin-top:8px">
+      <button id="railRun">Run the calls on Braintree</button>
+      <span class="note" id="railStatus"></span>
+    </div>
+    <div class="cols" id="railOut" style="margin-top:10px"></div>
+    <p class="err" id="railErr"></p>
+  </section>
 </main>
 <footer>
   Fictional store, fictional customers, test money. Replay mode shows saved evaluation runs (results/*.jsonl) exactly as
@@ -619,6 +635,39 @@ async function refundRun(condition) {
   } catch (e) { $("payErr").textContent = e.message; }
 }
 
+// --- 4 · Braintree's own rules (fresh sandbox sales, no gate) ------------------------------------------
+function railStep(s) {
+  const gate = s.gate;
+  const tag = gate ? gate : s.ok ? "OK" : "REFUSED";
+  const cls = gate ? gate : s.ok ? "PASS" : "BLOCK";
+  return h("li", { class: `shown ${cls}` }, h("span", { class: `dec ${cls}` }, tag), " ", s.label,
+    s.id ? h("div", { class: "note" }, "Braintree: ", h("code", {}, s.id), ` · ${s.status}`) : null,
+    s.error ? h("div", { class: "finding" }, h("code", {}, s.error.split(" ")[0]), " ", s.error.split(" ").slice(1).join(" ")) : null,
+    ...(s.disputes || []).map((d) => h("div", { class: "finding" }, h("code", {}, d.kind), ` ${d.id} · ${d.status} · ${d.amount}`)),
+    ...(s.findings || []).filter((f) => f.severity !== "PASS").map((f) => h("div", { class: "finding" }, h("code", {}, f.code), " ", f.detail)));
+}
+function railCol(title, sub, steps, verdict, cls) {
+  return h("div", { class: "col" }, h("h3", {}, title, " ", h("small", {}, sub)),
+    h("ul", { class: "tl" }, ...steps.map(railStep)), h("div", { class: `verdict ${cls}` }, verdict));
+}
+async function railRun() {
+  $("railErr").textContent = ""; $("railRun").disabled = true; $("railStatus").textContent = "Calling the Braintree sandbox…";
+  try {
+    const r = await api("/api/checkout/rail-rules", {});
+    const refused = (steps) => steps.filter((s) => !s.ok && !s.gate).length;
+    const bt = r.dispute.find((s) => s.label.startsWith("Braintree alone")), cf = r.dispute.find((s) => s.gate);
+    $("railOut").replaceChildren(
+      railCol("Test card", "fake-valid-nonce", r.card, `Braintree refused ${refused(r.card)} of the refunds. Counterfoil leaves these to Braintree.`, "ok"),
+      railCol("Mocked PayPal", "fake-paypal-one-time-nonce", r.paypal,
+        refused(r.paypal) ? `Braintree refused ${refused(r.paypal)}.` : "Braintree refused none: refunds above the sale went through. The evaluation applies card limits instead (ADR 0007).", "neutral"),
+      railCol("Dispute test card", "4023 8984 9398 8028", r.dispute,
+        bt && bt.ok && cf && cf.gate === "BLOCK" ? "Braintree refunds on top of the chargeback: the customer is paid twice. Counterfoil blocks it." : "See the steps.",
+        bt && bt.ok ? "harm" : "neutral"));
+    $("railStatus").textContent = "";
+  } catch (e) { $("railErr").textContent = e.message; $("railStatus").textContent = ""; }
+  finally { $("railRun").disabled = false; }
+}
+
 async function init() {
   const [config, scenarios] = await Promise.all([api("/api/config"), api("/api/scenarios")]);
   state.config = config; state.scenarios = scenarios;
@@ -638,6 +687,8 @@ async function init() {
     $("payConfirm").addEventListener("click", payConfirm);
     $("refundNone").addEventListener("click", () => refundRun("none"));
     $("refundCf").addEventListener("click", () => refundRun("counterfoil"));
+    $("railBox").classList.remove("hidden");
+    $("railRun").addEventListener("click", railRun);
     document.addEventListener("click", (e) => { if (e.target.closest(".sc")) setTimeout(showPayOrder, 0); });
   }
   setMode("replay");
