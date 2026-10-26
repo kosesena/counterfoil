@@ -14,6 +14,7 @@ from demo.settings import Settings
 
 FAKE_CONFIG = LLMConfig(base_url="https://llm.invalid/v1", model="fake-model", api_key="unused")
 SAVED = ROOT / "results" / "2026-10-23-dev-qwen2.5-8k.jsonl"
+DEFAULT_REPLAY = ROOT / "results" / "2026-10-25-dev-r3-current-gate-qwen2.5.jsonl"  # current gate, qwen2.5, dev
 
 
 def call(i, name, args):
@@ -81,12 +82,21 @@ def test_scenarios_lists_all_with_replay_availability():
 def test_replay_returns_the_saved_row_unchanged(condition):
     saved = next(
         r
-        for r in map(json.loads, SAVED.read_text().splitlines())
-        if r["scenario"] == "P2-01" and r["condition"] == condition
+        for r in map(json.loads, DEFAULT_REPLAY.read_text().splitlines())
+        if r["scenario"] == "P2-01" and r["condition"] == condition and r.get("repeat", 0) == 0
     )
     row = client().post("/api/run", json={"scenario_id": "P2-01", "condition": condition}).json()
-    assert row.pop("demo") == {"mode": "replay", "source": SAVED.stem}
+    assert row.pop("demo") == {"mode": "replay", "source": DEFAULT_REPLAY.stem}
     assert row == saved
+
+
+def test_replay_defaults_to_the_current_gate_and_marks_older_runs():
+    cfg = client().get("/api/config").json()
+    assert cfg["replay_default"] == DEFAULT_REPLAY.stem
+    gates = {s["id"]: s["gate"] for s in cfg["replay_sources"]}
+    assert gates[DEFAULT_REPLAY.stem] == "current"
+    assert gates[SAVED.stem] == "previous"
+    assert all((g == "current") == (src[:10] >= "2026-10-25") for src, g in gates.items())
 
 
 def test_replay_errors():

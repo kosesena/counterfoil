@@ -1,39 +1,39 @@
-HOMI P6-01 Blender güncellemesi — 24 Ekim 2026
-Commit/push yapılmadı.
+HOMI P6-01 Blender update — 24 October 2026
+No commit/push was made.
 
-Dosya: docs/gorseller/counterfoil-magaza.blend
-Betik: tools/homi_p6_story.py (mevcut sahne üzerinde bir kez çalışır)
+File: docs/gorseller/counterfoil-magaza.blend
+Script: tools/homi_p6_story.py (runs once over the existing scene)
 
-Doğrulanan kaynaklar: docs/senaryolar/store_records.json, scenarios.json ve README.md.
+Verified sources: docs/senaryolar/store_records.json, scenarios.json and README.md.
 ST-1057: 8 Cloudstone cup x 25 USD = 200 USD.
-RMA-1057: 4 fincan, 100 USD onaylı iade.
-60 USD mevcut yerel rezervasyon; yeni 60 USD istek; toplam 120 USD > 100 USD RMA.
-Kalan hak 40 USD. 60 USD tamamlanmış ödeme olarak gösterilmedi.
-Not: devir notu başka oturum diyor; P6-01 fixture rezervasyonu session-P6-01 içinde tanımlıyor. Görsele oturum iddiası eklenmedi.
+RMA-1057: 4 cups, 100 USD approved refund.
+60 USD existing local reservation; new 60 USD request; total 120 USD > 100 USD RMA.
+Remaining entitlement 40 USD. The 60 USD was not shown as a completed payment.
+Note: the hand-off note says another session; the P6-01 fixture defines the reservation inside session-P6-01. No session claim was added to the visual.
 
-Değişiklikler:
-- İade müşteri ekranı: 4 fincan, 100 USD onay, ST-1057/RMA-1057; saldırıda amber REVIEW REQUIRED.
-- Diğer iki ödeme kasası: 8 fincan / 200 USD.
-- Tepsi, barkod etiketi ve eski bant ürünleri gizlendi; içi boş, kulplu dört seramik fincan eklendi.
-- Müdürün gerçek rigli tabletine kayıt özeti, 60+60=120>100, 40 USD kalan hak, 20 USD aşım ve CUMULATIVE_REFUND_EXCEEDS_RMA yazıldı.
-- Ofis monitörü P6 rakamlarıyla güncellendi.
-- Fiş 40 USD ve RMA-1057 olarak güncellendi.
-- Eski 30/90 tutarları modern HOMI ekranlarından kaldırıldı; görünür metin taraması temiz.
+Changes:
+- Return customer screen: 4 cups, 100 USD approval, ST-1057/RMA-1057; amber REVIEW REQUIRED during the attack.
+- The other two payment tills: 8 cups / 200 USD.
+- Tray, barcode label and old belt products hidden; four hollow ceramic cups with handles added.
+- On the manager's real rigged tablet: record summary, 60+60=120>100, 40 USD remaining entitlement, 20 USD excess and CUMULATIVE_REFUND_EXCEEDS_RMA written.
+- Office monitor updated with the P6 figures.
+- Receipt updated to 40 USD and RMA-1057.
+- Old 30/90 amounts removed from the modern HOMI screens; visible-text scan is clean.
 
-Zaman çizelgesi:
-620-679 kayıt; 680-779 inceleme/BLOCK; 780-859 müdür reddi;
-860-949 yeni 40 USD talebi yeniden geçit kontrolü; 950-1019 servis yanıtı bekleniyor;
-1020 demo servis onayı; 1055 fiş tamamen çıktı.
-650/740/810/900/980/1090 karelerinde metin ve fiş görünürlüğü doğrulandı.
-Bunlar Blender içindeki senaryolu görsellerdir; canlı backend/ödeme sonucu bağlantısı değildir.
-Önceden kalan el-ürün kavrama/okutma ve müdür hareket koreografisi bu değişiklikte tamamlanmadı.
+Timeline:
+620-679 record; 680-779 review/BLOCK; 780-859 manager rejection;
+860-949 new 40 USD request re-checked by the gate; 950-1019 waiting for service response;
+1020 demo service approval; 1055 receipt fully out.
+Text and receipt visibility verified at frames 650/740/810/900/980/1090.
+These are scripted visuals inside Blender; they are not connected to a live backend/payment result.
+The previously outstanding hand-product grasping/scanning and the manager movement choreography were not completed in this change.
 
-Renderlar:
+Renders:
 /Users/kosesena/Documents/Codex/2026-10-23/se/outputs/homi-p6-review.png
 /Users/kosesena/Documents/Codex/2026-10-23/se/outputs/homi-p6-tablet.png
 /Users/kosesena/Documents/Codex/2026-10-23/se/outputs/homi-p6-refund-complete.png
 
-Tablet detay sahnesi: HOMI_P6_Tablet_Review (yakın çekim için fiziksel tabletin kopyası).
-Ana sahnedeki asıl tablet metni Cast_Store_Manager içinde ekranın çocuğu olarak rig'i takip eder.
-Yedek: /Users/kosesena/Documents/Codex/2026-10-23/se/work/before-p6.blend
-Çalışma ağacındaki astropods/run.env ve sonuç JSONL dosyalarına dokunulmadı.
+Tablet detail scene: HOMI_P6_Tablet_Review (copy of the physical tablet for the close-up).
+In the main scene, the actual tablet text is inside Cast_Store_Manager as a child of the screen and follows the rig.
+Backup: /Users/kosesena/Documents/Codex/2026-10-23/se/work/before-p6.blend
+astropods/run.env and the result JSONL files in the working tree were not touched.
