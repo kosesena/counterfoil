@@ -2,7 +2,7 @@
 
 // The Overview's evidence board (Codex's felt palette v3, docs/gorseller/site-tasarim/evidence-palette-v3/): a gate and
 // a model filter, three tiles for the chosen gate, and the wrong-money count of every model on the dev and holdout sets,
-// one felt bar per gate (Codex's strips, docs/gorseller/site-tasarim/bar-strips-v1, as border-images in globals.css). Everything is counted from counterfoil-data.json, which holds the latest-gate runs only; the
+// one felt bar per gate (Codex's strips, docs/gorseller/site-tasarim/fill-strips-v1, as border-images in globals.css). Everything is counted from counterfoil-data.json, which holds the latest-gate runs only; the
 // Braintree sandbox run is shown on its own line, not mixed into the dev bars.
 
 import { useMemo, useState } from 'react';

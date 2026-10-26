@@ -1,0 +1,11 @@
+Generated with built-in image_gen. Four separate transparent PNGs, no text or logos.
+
+Base prompt: One isolated full-length horizontal capsule-shaped padded felt chart bar. Long slim shape, centered on transparent canvas, front-on orthographic view. Rounded semicircular ends, dense fine wool fibers, subtle raised cushion volume, neat small running stitches along both long edges and around ends in a slightly lighter tonal thread. Minimal soft contact shadow at edges. Entire strip fully visible. Reusable UI fill texture, solid color across entire length. No text, numbers, logos, icons, watermark, backdrop, checkerboard pattern, frame, or dashboard. Real alpha transparency outside felt. Muted lavender #B8A7C4.
+
+Blue edit: Recolor this exact felt strip to dusty blue #8E9FBB for the cap condition. Preserve identical shape, size, framing, stitches, texture, lighting and transparency. One fully blue strip, lighter blue tonal thread. No text or logos.
+
+Plum edit: Recolor this exact felt strip to deep saturated plum #782469 for Counterfoil. Preserve identical shape, size, framing, stitches, texture, lighting and transparency. One fully plum strip, lighter plum tonal thread. No text or logos.
+
+Cream edit: Recolor this exact felt strip entirely to warm pale cream #E8DDCA for an empty chart track. Preserve identical capsule shape, size, framing, stitches, wool texture, lighting and transparency. One fully cream strip, slightly lighter cream tonal thread. No colored fill section. No text or logos.
+
+Palette hex values are generation targets; felt lighting and texture produce tonal variations.
