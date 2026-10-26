@@ -6,6 +6,10 @@ refunds before settlement with 91506, and an identical sale (same payment method
 with "Gateway Rejected: duplicate". Mocked PayPal in the sandbox does NOT enforce the refund total; the fake does,
 because production would.
 
+Idempotency: refund and void take a `request_key` (Braintree `api_request_key`). The sandbox honours it (26 Oct,
+spikes/braintree_request_key_spike.py): a repeated key returns the first refund or void and moves no money; the same
+key with other parameters fails with 915232. The fake does the same.
+
 Line items: the sandbox sales carry the order's lines (`line_items` on transaction.sale) and `line_items()` reads them
 back with transaction_line_item.find_all, so the gate can check a return record against what the rail says was sold.
 """
@@ -28,9 +32,9 @@ class RailResult:
 
 
 class Rail(Protocol):
-    def refund(self, transaction_id: str, amount: Decimal) -> RailResult: ...
+    def refund(self, transaction_id: str, amount: Decimal, request_key: str | None = None) -> RailResult: ...
     def refunded_total(self, transaction_id: str) -> Decimal | None: ...
-    def void(self, transaction_id: str) -> RailResult: ...
+    def void(self, transaction_id: str, request_key: str | None = None) -> RailResult: ...
     def charge(self, payment_method_token: str, amount: Decimal, order_id: str) -> RailResult: ...
     def find(self, transaction_id: str) -> dict | None: ...
     def line_items(self, transaction_id: str) -> list[dict] | None: ...
@@ -84,6 +88,7 @@ class FakeRail:
         self.calls: list[tuple] = []
         self._ids = itertools.count(1)
         self._sales: set[tuple[str, Decimal]] = set()
+        self._keys: dict[str, tuple[tuple, RailResult]] = {}  # request key -> (parameters, first result)
 
     @classmethod
     def from_store(cls, store) -> FakeRail:
@@ -97,8 +102,31 @@ class FakeRail:
             )
         return cls(txns)
 
-    def refund(self, transaction_id, amount):
+    def _replay(self, request_key, params) -> RailResult | None:
+        """A request key seen before: the first answer again, or 915232 if the parameters differ."""
+        if request_key is None or request_key not in self._keys:
+            return None
+        seen, result = self._keys[request_key]
+        if seen != params:
+            return RailResult(
+                False,
+                error="915232 An Api Request Key may only be reused with parameters identical to original request.",
+            )
+        return result
+
+    def _remember(self, request_key, params, result: RailResult) -> RailResult:
+        if request_key is not None and result.ok:
+            self._keys[request_key] = (params, result)
+        return result
+
+    def refund(self, transaction_id, amount, request_key=None):
         self.calls.append(("refund", transaction_id, amount))
+        params = ("refund", transaction_id, amount)
+        return self._replay(request_key, params) or self._remember(
+            request_key, params, self._refund(transaction_id, amount)
+        )
+
+    def _refund(self, transaction_id, amount):
         t = self.txns.get(transaction_id)
         if t is None:
             return RailResult(False, error="91504 Transaction not found.")
@@ -113,8 +141,12 @@ class FakeRail:
         t.refund_ids.append(rid)
         return RailResult(True, rid, "submitted_for_settlement")
 
-    def void(self, transaction_id):
+    def void(self, transaction_id, request_key=None):
         self.calls.append(("void", transaction_id))
+        params = ("void", transaction_id)
+        return self._replay(request_key, params) or self._remember(request_key, params, self._void(transaction_id))
+
+    def _void(self, transaction_id):
         t = self.txns.get(transaction_id)
         if t is None or t.status not in ("authorized", "submitted_for_settlement"):
             return RailResult(
@@ -184,11 +216,17 @@ class BraintreeRail:
         errors = "; ".join(f"{e.code} {e.message}" for e in r.errors.deep_errors) or r.message
         return RailResult(False, error=errors)
 
-    def refund(self, transaction_id, amount):
-        return self._result(self.gw.transaction.refund(transaction_id, str(amount)))
+    def refund(self, transaction_id, amount, request_key=None):
+        if request_key is None:
+            return self._result(self.gw.transaction.refund(transaction_id, str(amount)))
+        return self._result(
+            self.gw.transaction.refund(transaction_id, {"amount": str(amount), "api_request_key": request_key})
+        )
 
-    def void(self, transaction_id):
-        return self._result(self.gw.transaction.void(transaction_id))
+    def void(self, transaction_id, request_key=None):
+        if request_key is None:
+            return self._result(self.gw.transaction.void(transaction_id))
+        return self._result(self.gw.transaction.void(transaction_id, {"api_request_key": request_key}))
 
     def charge(self, payment_method_token, amount, order_id):
         return self._result(
@@ -289,15 +327,27 @@ class SandboxRail(BraintreeRail):
     def money_calls(self) -> list[tuple]:
         return [c for c in self.calls if c[0] in ("refund", "void", "charge")]
 
-    def refund(self, transaction_id, amount):
+    def _key(self, request_key):
+        """Keys are per merchant account and outlive a run: scope them to this run's sandbox transactions."""
+        return None if request_key is None else f"{request_key}-{self.tag}"[:255]
+
+    def refund(self, transaction_id, amount, request_key=None):
         real = self._txn(transaction_id)
-        out = RailResult(False, error="91504 Transaction not found.") if real is None else super().refund(real, amount)
+        out = (
+            RailResult(False, error="91504 Transaction not found.")
+            if real is None
+            else super().refund(real, amount, self._key(request_key))
+        )
         self.calls.append(("refund", transaction_id, amount, real, out.id))
         return out
 
-    def void(self, transaction_id):
+    def void(self, transaction_id, request_key=None):
         real = self._txn(transaction_id)
-        out = RailResult(False, error="91504 Transaction not found.") if real is None else super().void(real)
+        out = (
+            RailResult(False, error="91504 Transaction not found.")
+            if real is None
+            else super().void(real, self._key(request_key))
+        )
         self.calls.append(("void", transaction_id, real))
         return out
 

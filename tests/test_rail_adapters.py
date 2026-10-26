@@ -42,13 +42,15 @@ class FakeSDK:
         class Transaction:
             def refund(self, tid, amount):
                 sdk.calls.append(("refund", tid, amount))
+                if isinstance(amount, dict):
+                    amount = amount["amount"]
                 parent = sdk.txns[tid]
                 rid = sdk._new(amount, "submitted_for_settlement")
                 parent.refund_ids.append(rid)
                 return ok(sdk.txns[rid])
 
-            def void(self, tid):
-                sdk.calls.append(("void", tid))
+            def void(self, tid, params=None):
+                sdk.calls.append(("void", tid, params) if params else ("void", tid))
                 return failed(("91504", "Transaction can only be voided if authorized"))
 
             def sale(self, params):
@@ -163,6 +165,33 @@ def test_find(sdk):
     sale = rail.charge("tok", Decimal("3.00"), "o")
     assert rail.find(sale.id)["payment_instrument_type"] == "paypal_account"
     assert rail.find("missing") is None
+
+
+def test_request_keys_go_out_as_api_request_key(sdk):
+    rail = BraintreeRail()
+    sale = rail.charge("tok", Decimal("25.00"), "o")
+    rail.refund(sale.id, Decimal("10.00"), "cf-refund-k")
+    assert sdk.calls[-1] == ("refund", sale.id, {"amount": "10.00", "api_request_key": "cf-refund-k"})
+    rail.void(sale.id, "cf-void-k")
+    assert sdk.calls[-1] == ("void", sale.id, {"api_request_key": "cf-void-k"})
+
+
+def test_sandbox_rail_scopes_request_keys_to_the_run(sdk):
+    rail = SandboxRail(Store(load_records()), "run-1")
+    rail.refund("fixture-txn-001", Decimal("5.00"), "cf-refund-k")
+    assert sdk.calls[-1][2] == {"amount": "5.00", "api_request_key": "cf-refund-k-run-1"}
+
+
+def test_fake_rail_answers_a_repeated_key_like_the_sandbox():
+    # spikes/braintree_request_key_spike.py, 26 Oct: same key → the first refund again; other parameters → 915232
+    rail = FakeRail({"t": FakeTxn(Decimal("50.00")), "u": FakeTxn(Decimal("50.00"), "submitted_for_settlement")})
+    first = rail.refund("t", Decimal("10.00"), "k")
+    assert rail.refund("t", Decimal("10.00"), "k") == first and rail.txns["t"].refunded == Decimal("10.00")
+    assert rail.refund("t", Decimal("12.00"), "k").error.startswith("915232")
+    assert rail.refund("t", Decimal("10.00"), "k2").id != first.id and rail.txns["t"].refunded == Decimal("20.00")
+    assert rail.refund("t", Decimal("10.00")).ok and rail.txns["t"].refunded == Decimal("30.00")  # no key, no memory
+    voided = rail.void("u", "v")
+    assert voided.ok and rail.void("u", "v") == voided and not rail.void("u").ok
 
 
 def test_line_items_are_read_back_as_decimals(sdk):
