@@ -25,6 +25,7 @@ export function CrewJourney() {
   const root = useRef<HTMLElement>(null);
   const [chapter, setChapter] = useState(0);
   const [readerProgress, setReaderProgress] = useState(0);
+  const [runnerProgress, setRunnerProgress] = useState(0);
   const [inspected, setInspected] = useState<number | null>(null);
   const [hovered, setHovered] = useState<number | null>(null);
   const [pinned, setPinned] = useState(false);
@@ -40,9 +41,10 @@ export function CrewJourney() {
       if (compact.matches || reduced.matches) return;
       const range=el.offsetHeight-(innerHeight-76);
       const progress=Math.max(0,Math.min(1,(76-el.getBoundingClientRect().top)/Math.max(1,range)));
-      const position=progress*9;
-      const next=position<1?0:position<4?1:Math.min(6,Math.floor(position)-2);
+      const position=progress*11;
+      const next=position<1?0:position<4?1:position<7?2:Math.min(6,Math.floor(position)-4);
       setReaderProgress(Math.max(0,Math.min(1,(position-1)/3)));
+      setRunnerProgress(Math.max(0,Math.min(1,(position-4)/3)));
       setChapter(prev => prev===next ? prev : next);
     };
     const schedule=()=>{if (!raf) raf=requestAnimationFrame(readScroll);};
@@ -53,10 +55,10 @@ export function CrewJourney() {
     return ()=>{cancelAnimationFrame(raf);window.removeEventListener('scroll',schedule);window.removeEventListener('resize',preferences);compact.removeEventListener('change',preferences);reduced.removeEventListener('change',preferences);};
   },[]);
   const go=(index:number)=>{
-    setInspected(null);setHovered(null);setChapter(index);setReaderProgress(pinned?0:1);
+    setInspected(null);setHovered(null);setChapter(index);setReaderProgress(0);setRunnerProgress(0);
     if (pinned && root.current) {
       const el=root.current,range=el.offsetHeight-(innerHeight-76);
-      window.scrollTo({top:scrollY+el.getBoundingClientRect().top-76+range*(index===0?0:((index===1?1:index+2)+.05)/9),behavior:calm?'auto':'smooth'});
+      window.scrollTo({top:scrollY+el.getBoundingClientRect().top-76+range*(index===0?0:((index===1?1:index===2?4:index+4)+.05)/11),behavior:calm?'auto':'smooth'});
     }
   };
   useEffect(()=>{setHovered(null);setInspected(null);},[chapter]);
@@ -64,9 +66,9 @@ export function CrewJourney() {
   const ensemble=step.actor===-1;
   const selected=hovered??inspected;
   const detail=selected===null||selected===5?null:CREW[selected];
-  return <section ref={root} className={`${styles.journey} ${ensemble?styles.ensemble:''} ${chapter===1?styles.readerChapter:''}`} id="crew" aria-label="Meet the return crew" data-chapter={chapter}>
+  return <section ref={root} className={`${styles.journey} ${ensemble?styles.ensemble:''} ${chapter===1||chapter===2?styles.readerChapter:''}`} id="crew" aria-label="Meet the return crew" data-chapter={chapter}>
     <div className={styles.stage}>
-      {chapter===1 && <ReaderSpotlight progress={pinned?readerProgress:1} calm={calm}/>} 
+      {(chapter===1||chapter===2) && <CharacterSpotlight key={chapter} character={chapter===1?'Reader':'Runner'} progress={chapter===1?readerProgress:runnerProgress} calm={calm} manual={!pinned}/>} 
       <div className={styles.heading}>
         <div><span className={styles.eyebrow}>HOMI / THE RETURN CREW</span><h2>{ensemble?(chapter===0?'Meet the crew.':'Better together.'):CREW[step.actor].name}<br/><em>{ensemble?'One firm boundary.':CREW[step.actor].role+'.'}</em></h2></div>
         <div className={styles.intro}><p>One crew. One firm boundary.</p><span>Scroll to meet each character.</span>
@@ -135,28 +137,45 @@ export function ProductIntro() {
 }
 
 
-function ReaderSpotlight({progress,calm}:{progress:number;calm:boolean}) {
-  const shift=calm?1:Math.max(0,Math.min(1,(progress-.18)/.28));
+function CharacterSpotlight({character,progress,calm,manual}:{character:'Reader'|'Runner';progress:number;calm:boolean;manual:boolean}) {
+  const [manualStep,setManualStep]=useState(0);
+  const [nellaOpen,setNellaOpen]=useState(false);
+  if(manual) progress=[0,.55,.72,.9][manualStep];
+  const runner=character==='Runner';
+  const shift=calm?(manualStep===0?0:1):Math.max(0,Math.min(1,(progress-.18)/.28));
   const task=progress<.64?0:progress<.82?1:2;
-  const tasks=[
+  const tasks=runner?[
+    ['I pick up the request.', 'Reader gives me the order, returned items and requested amount. I use those details to plan the next action.'],
+    ['I prepare the money call.', 'I can propose a refund, charge or void. A malicious note can mislead me: in this example, I ask for $60 even though only $40 is owed.'],
+    ['I wait for Counterfoil.', 'My request is not permission to pay. Every money call must pass Counterfoil before it can reach Braintree.'],
+  ]:[
     ['I read the customer’s note.', 'I find the order and understand which items the customer wants to return.'],
     ['I pick out the useful details.', 'I pass the order, returned items and requested amount to Runner.'],
     ['I read. I don’t move money.', 'I have no payment tools. I treat customer text as input, not authority. Counterfoil checks the money call later.'],
   ];
-  return <div className={styles.readerSpotlight} style={{'--reader-shift':shift} as CSSProperties} data-reader-phase={shift===0?'hello':shift<1?'moving':'tasks'}>
+  return <div className={styles.readerSpotlight} style={{'--reader-shift':shift} as CSSProperties} data-character={character} data-reader-phase={shift===0?'hello':shift<1?'moving':'tasks'}>
     <div className={styles.readerFigure}>
       <div className={styles.readerImages}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="crew/reader-wave-v1.png" alt={shift<.5?'Reader waving hello':''} style={{opacity:1-shift}} width="1127" height="1400"/>
+        <img src={`crew/${runner?'runner':'reader'}-wave-v1.png`} alt={shift<.5?`${character} waving hello`:''} style={{opacity:1-shift}} width="1127" height="1400"/>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        {['reader-look-right-v1','reader-extract-v1','reader-no-payment-v1'].map((pose,i)=><img key={pose} src={`crew/${pose}.png`} alt={shift>=.5&&task===i?['Reader introducing the customer note','Reader pointing out details on the note','Reader opening both hands to explain that it cannot move money'][i]:''} style={{opacity:task===i?shift:0}} width="1127" height="1400"/>)}
+        {(runner?['runner-receive-v1','runner-prepare-v1','runner-wait-v1']:['reader-look-right-v1','reader-extract-v1','reader-no-payment-v1']).map((pose,i)=><img key={pose} src={`crew/${pose}.png`} alt={shift>=.5&&task===i?(runner?['Runner receiving the request','Runner preparing a proposed money call','Runner waiting for Counterfoil']:['Reader introducing the customer note','Reader pointing out details on the note','Reader opening both hands to explain that it cannot move money'])[i]:''} style={{opacity:task===i?shift:0}} width="1127" height="1400"/>)}
       </div>
-      <h2>Hi, I’m Reader.</h2>
+      <h2>Hi, I’m {character}.</h2>
     </div>
     <div className={styles.readerTasks} style={{opacity:shift}} aria-hidden={shift<1}>
-      <span className={styles.eyebrow}>READER / {String(task+1).padStart(2,'0')}</span>
+      <span className={styles.eyebrow}>{character.toUpperCase()} / {String(task+1).padStart(2,'0')}</span>
       <div key={task} className={styles.readerTask}><h3>{tasks[task][0]}</h3><p>{tasks[task][1]}</p></div>
+      {runner&&task===1&&shift===1&&<div className={styles.runnerIntruder}>
+        <button type="button" onClick={()=>setNellaOpen(!nellaOpen)} aria-expanded={nellaOpen}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="crew/nella.png" alt="Nella, the attacker" width="60" height="80"/>
+          <span>Nella slipped in a false instruction. <u>Meet the attacker</u></span>
+        </button>
+        {nellaOpen&&<p>“I hide instructions in the customer’s note to trick the agents into requesting an extra refund.”</p>}
+      </div>}
       <div className={styles.readerDots} aria-label={`Task ${task+1} of 3`}>{tasks.map((_,i)=><span key={i} data-active={i===task}/>)}</div>
     </div>
+    {manual&&<nav className={styles.poseControls} aria-label={`${character} introduction steps`}>{['Hello','Request','Details','Boundary'].map((label,i)=><button key={label} onClick={()=>setManualStep(i)} aria-current={manualStep===i?'step':undefined}>{label}</button>)}</nav>}
   </div>;
 }

@@ -259,3 +259,15 @@
 
 .readerImages img { transition: opacity .3s ease; }
 @media (prefers-reduced-motion:reduce) { .readerImages img { transition:none; } }
+
+.journey { height: 1100svh; }
+.runnerIntruder { margin-top: 18px; }
+.runnerIntruder button { display:flex; align-items:center; gap:12px; background:none; border:0; padding:0; text-align:left; color:#803c61; font:11px/1.5 var(--cf-font); cursor:pointer; }
+.runnerIntruder img { width:45px; height:60px; object-fit:contain; mix-blend-mode:multiply; }
+.runnerIntruder span { max-width:230px; }
+.runnerIntruder p { font-size:11px; line-height:1.5; color:var(--crew-muted); }
+.poseControls { position:absolute; bottom:0; display:flex; gap:12px; right:0; }
+.poseControls button { border:0; border-bottom:1px solid transparent; background:none; color:var(--crew-ink); padding:6px; cursor:pointer; }
+.poseControls button[aria-current] { border-color:#803c61; }
+@media (max-width:760px) { .runnerIntruder { margin-top:8px; } .runnerIntruder button { gap:6px; font-size:10px; } .runnerIntruder img { width:32px; height:44px; } }
+@media (max-height:580px),(prefers-reduced-motion:reduce) { .journey { height:auto; } }
