@@ -69,6 +69,25 @@ The trusted source is the store's record, not the customer's text. Counterfoil (
 
 Approvals are single-use, expire after 30 minutes and are bound to the exact arguments the human saw. Counterfoil does not look for "injection-looking" text; it checks what the call would do against the record. The reasoning behind each choice is in [`docs/adr/`](docs/adr/README.md).
 
+## Why PayPal and Braintree
+
+**The money is real sandbox money.** Every sale, refund and void in the Braintree results below is a real Braintree sandbox transaction, paid with a mocked PayPal account. Take the rail away and there is nothing to protect and nothing to measure.
+
+**Counterfoil is built around the rail's own checks, not on top of them.** On card transactions Braintree already refuses a refund larger than the sale (`91521`), a refund on a fully refunded transaction (`91512`) and a refund before settlement (`91506`) ([our test](docs/arastirma/2026-10-23-braintree-deneme.md)). Counterfoil does not repeat any of that. It checks what the rail cannot know: whether the items actually came back (the RMA), who owns the order, and whether a charge equals catalog price × quantity.
+
+| | Braintree | Counterfoil |
+|---|---|---|
+| Refund larger than the sale, on a fully refunded or unsettled transaction | refuses it | leaves it to Braintree |
+| Refund under the sale total, but more than the return record allows | pays it | holds or blocks it |
+| Refund requested by someone who doesn't own the order | pays it | holds it for a human |
+| Charge that doesn't match catalog price × quantity | takes it | holds it for a human |
+
+Each scenario records whether the rail's own rules would have stopped it (`rail_would_block`, in [`docs/senaryolar/scenarios.json`](docs/senaryolar/scenarios.json)). For 13 of the 14 attacks they would not. The exception, holdout P4-02, refunds an unsettled transaction, and is reported as "the payment service would block it", not as a Counterfoil catch.
+
+**One gap in the sandbox, and how we handle it.** A mocked PayPal account does not enforce the refund total: five refunds totalling USD 186.54 on a USD 40.54 sale all went through. Real PayPal refunds are limited, so the evaluation's in-memory rail applies the card limits, and no stop that only this gap explains is counted for Counterfoil ([ADR 0007](docs/adr/0007-braintree-sandbox-with-mocked-paypal.md)).
+
+**PayPal Agent Toolkit.** The Toolkit gives an agent a `create_refund` tool. [`counterfoil/toolkit.py`](counterfoil/toolkit.py) takes the Toolkit's own parameters (`capture_id`, `amount`) and sends the call through the gate first; only a pass or a human approval reaches the PayPal REST rail ([`counterfoil/paypal.py`](counterfoil/paypal.py)). The agent never holds PayPal keys. This path is tested with a faked HTTP layer and has **not** run against a real PayPal REST sandbox, because PayPal accounts can't be opened from Türkiye ([ADR 0008](docs/adr/0008-paypal-rest-rail-in-front-of-agent-toolkit.md)).
+
 ## Results
 
 All numbers below come from runs with the **latest gate** only. Sources: [`docs/arastirma/2026-10-25-guncel-gecit-olcumu.md`](docs/arastirma/2026-10-25-guncel-gecit-olcumu.md), [`docs/arastirma/2026-10-26-bulut-ve-hermes-olcumu.md`](docs/arastirma/2026-10-26-bulut-ve-hermes-olcumu.md), and every run row in [`dashboard/public/counterfoil-data.json`](dashboard/public/counterfoil-data.json), which the dashboard reads.
