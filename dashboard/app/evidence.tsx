@@ -17,6 +17,10 @@ const GATE_CLASS: Record<Gate, string> = { 'No gate': 'none', '$200 cap': 'cap',
 // every model the evaluation has used, in the order Codex's design lists them
 const MODELS = ['Claude Haiku 4.5', 'Claude Opus 5.5', 'Claude Sonnet 5', 'GPT-5.6 Sol', 'GPT-5.6 Terra', 'Hermes 3', 'Llama 3.1', 'Qwen 2.5', 'Qwen 3'];
 
+// Codex's model-name felt patches (docs/gorseller/site-tasarim/model-patches-v1/, tools/felt_patches.py): cream when
+// idle, the model's own colour when picked; no vendor logos (Devpost brand rule)
+const slug = (m: string) => m.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
 const sandbox = (r: Run) => String(r.source).includes('braintree');
 const split = (r: Run) => (String(r.source).includes('holdout') ? 'holdout' : 'dev');
 const count = (runs: Run[], field: string) => runs.reduce((n, r) => n + (r[field] === 1 ? 1 : 0), 0);
@@ -78,6 +82,8 @@ function Panel({ title, runs, models }: { title: string; runs: Run[]; models: st
 export function EvidenceBoard({ data }: { data: CounterfoilData }) {
   const [gate, setGate] = useState<Gate>('Counterfoil');
   const [model, setModel] = useState('All');
+  // a model whose patch image is missing falls back to the plain text pill
+  const [noPatch, setNoPatch] = useState<Set<string>>(new Set());
 
   const runs = useMemo(() => data.runs.filter((r) => !sandbox(r)), [data]);
   const ran = useMemo(() => new Set(runs.map((r) => modelName(r.model))), [runs]);
@@ -123,16 +129,23 @@ export function EvidenceBoard({ data }: { data: CounterfoilData }) {
         <div className="ev-filter felt" role="group" aria-label="Model">
           <h3>Model</h3>
           <div className="ev-pills">
-            {['All', ...MODELS].map((m) => (
-              <button
-                key={m}
-                className={`${m === model ? 'on' : ''} ${pending.includes(m) ? 'later' : ''}`}
-                aria-pressed={m === model}
-                onClick={() => setModel(m)}
-              >
-                {m}
-              </button>
-            ))}
+            {['All', ...MODELS].map((m) => {
+              const patch = m !== 'All' && !noPatch.has(m);
+              return (
+                <button
+                  key={m}
+                  className={`${m === model ? 'on' : ''} ${pending.includes(m) ? 'later' : ''} ${patch ? 'patch' : ''}`}
+                  aria-pressed={m === model}
+                  onClick={() => setModel(m)}
+                >
+                  {patch ? (
+                    <img src={`/models/${slug(m)}${m === model ? '-on' : ''}.webp`} alt={m} onError={() => setNoPatch((s) => new Set(s).add(m))} />
+                  ) : (
+                    m
+                  )}
+                </button>
+              );
+            })}
           </div>
           {pending.length > 0 && <p className="ev-foot">{pending.join(', ')}: latest-gate runs pending</p>}
         </div>
