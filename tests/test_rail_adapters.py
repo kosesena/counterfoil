@@ -4,6 +4,7 @@ is replaced by a small fake that answers like the sandbox did (docs/arastirma/20
 import json
 import sys
 import types
+from datetime import UTC, datetime
 from decimal import Decimal
 from types import SimpleNamespace as NS
 
@@ -27,6 +28,21 @@ def failed(*errors, message="failed"):
     return NS(is_success=False, errors=NS(deep_errors=[NS(code=c, message=m) for c, m in errors]), message=message)
 
 
+class Field:
+    """A search field: `field == x` and `field >= x` become ('name', op, x), so a test can read the criteria."""
+
+    def __init__(self, name):
+        self.name = name
+
+    def __eq__(self, other):
+        return (self.name, "==", other)
+
+    def __ge__(self, other):
+        return (self.name, ">=", other)
+
+    __hash__ = None
+
+
 class FakeSDK:
     """Just the parts of the braintree SDK the adapters touch."""
 
@@ -46,6 +62,7 @@ class FakeSDK:
                     amount = amount["amount"]
                 parent = sdk.txns[tid]
                 rid = sdk._new(amount, "submitted_for_settlement")
+                sdk.txns[rid].type, sdk.txns[rid].refunded_transaction_id = "credit", tid
                 parent.refund_ids.append(rid)
                 return ok(sdk.txns[rid])
 
@@ -65,6 +82,10 @@ class FakeSDK:
                 if tid not in sdk.txns:
                     raise NotFoundError(tid)
                 return sdk.txns[tid]
+
+            def search(self, *criteria):
+                sdk.calls.append(("search", criteria))
+                return NS(items=[t for t in sdk.txns.values() if t.type == "credit"])
 
         class Customer:
             def create(self, params):
@@ -86,6 +107,7 @@ class FakeSDK:
         )
         self.module.Configuration = lambda **kw: kw
         self.module.Environment = NS(Sandbox="sandbox-env")
+        self.module.TransactionSearch = NS(type=Field("type"), created_at=Field("created_at"))
         self.module.exceptions = NS(NotFoundError=NotFoundError)
 
     def _new(self, amount, status):
@@ -98,6 +120,8 @@ class FakeSDK:
             refund_ids=[],
             disputes=[],
             payment_instrument_type="paypal_account",
+            type="sale",
+            refunded_transaction_id=None,
         )
         return tid
 
@@ -170,6 +194,24 @@ def test_find(sdk):
     sale = rail.charge("tok", Decimal("3.00"), "o")
     assert rail.find(sale.id)["payment_instrument_type"] == "paypal_account"
     assert rail.find("missing") is None
+
+
+def test_refunds_come_from_one_search_for_credits(sdk):
+    rail = BraintreeRail()
+    sale = rail.charge("tok", Decimal("50.00"), "o")
+    good = rail.refund(sale.id, Decimal("10.00"))
+    bad = rail.refund(sale.id, Decimal("5.00"))
+    sdk.txns[bad.id].status = "failed"
+    since = datetime(2026, 10, 26, tzinfo=UTC)
+    assert rail.refunds(since) == [
+        {
+            "id": good.id,
+            "refunded_transaction_id": sale.id,
+            "amount": Decimal("10.00"),
+            "status": "submitted_for_settlement",
+        }
+    ]
+    assert sdk.calls[-1] == ("search", (("type", "==", "credit"), ("created_at", ">=", since)))
 
 
 def test_disputes_are_read_from_the_transaction(sdk):
@@ -250,6 +292,21 @@ def test_sandbox_sales_carry_the_order_lines(sdk):
     assert sum(Decimal(ln["total_amount"]) for ln in sale["line_items"]) == Decimal(sale["amount"])
     assert [(ln["product_code"], ln["quantity"]) for ln in lines] == [("TRAY", 1), ("BOWL", 1), ("VASE", 1)]
     assert rail.line_items("nope") is None
+
+
+def test_sandbox_rail_lists_only_this_run_s_refunds_under_fixture_ids(sdk):
+    rail = SandboxRail(Store(load_records()), "run-1")
+    rail.refund("fixture-txn-001", Decimal("5.00"))
+    other = sdk._new("9.00", "settled")  # a refund from another run on the shared sandbox account
+    sdk.txns[other].type, sdk.txns[other].refunded_transaction_id = "credit", "bt-elsewhere"
+    credit = sdk._new("3.00", "settled")  # a standalone credit: kept wherever it comes from
+    sdk.txns[credit].type = "credit"
+    found = rail.refunds(datetime(2026, 10, 26, tzinfo=UTC))
+    assert [(r["refunded_transaction_id"], r["amount"]) for r in found] == [
+        ("fixture-txn-001", Decimal("5.00")),
+        (None, Decimal("3.00")),
+    ]
+    assert found[0]["braintree_parent_id"] == rail.real["fixture-txn-001"]
 
 
 def test_sandbox_rail_creates_real_counterparts_once_and_replays_history(sdk):
