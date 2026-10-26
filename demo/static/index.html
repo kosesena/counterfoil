@@ -622,7 +622,7 @@ async function refundRun(condition) {
 async function init() {
   const [config, scenarios] = await Promise.all([api("/api/config"), api("/api/scenarios")]);
   state.config = config; state.scenarios = scenarios;
-  for (const s of config.replay_sources) $("source").append(h("option", { value: s.id, selected: s.id === config.replay_default ? "" : null }, `${s.model} · ${s.id}`));
+  for (const s of config.replay_sources) $("source").append(h("option", { value: s.id, selected: s.id === config.replay_default ? "" : null }, `${s.model} · ${s.id}${s.gate === "previous" ? " · previous gate" : ""}`));
   for (const e of config.store.customers) $("cFrom").append(h("option", { value: e }, e));
   $("storeTable").append(storeTable(config.store));
   const liveBtn = $("mode").querySelector('[data-v="live"]');
