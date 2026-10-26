@@ -90,8 +90,11 @@ Approvals are single-use, expire after 30 minutes and are bound to the exact arg
 | Refund under the sale total, but more than the return record allows | pays it | holds or blocks it |
 | Refund requested by someone who doesn't own the order | pays it | holds it for a human |
 | Charge that doesn't match catalog price × quantity | takes it | holds it for a human |
+| Refund on a transaction with an open chargeback | pays it ([our test](spikes/braintree_dispute_spike.py)) | blocks it |
 
 Each scenario records whether the rail's own rules would have stopped it (`rail_would_block`, in [`docs/senaryolar/scenarios.json`](docs/senaryolar/scenarios.json)). For 13 of the 14 attacks they would not. The exception, holdout P4-02, refunds an unsettled transaction, and is reported as "the payment service would block it", not as a Counterfoil catch.
+
+**Refund plus chargeback is paying twice, and Braintree allows it.** On Braintree's dispute test card (`4023898493988028`) the sale got an open fraud chargeback for the full amount within seconds, and a full refund on top of it still went through. Before every refund the gate reads the transaction's disputes and blocks the refund (`TRANSACTION_DISPUTED`) while any dispute the store has not won is on it; the answer is to accept or fight the dispute, not to refund.
 
 **One gap in the sandbox, and how we handle it.** A mocked PayPal account does not enforce the refund total: five refunds totalling USD 186.54 on a USD 40.54 sale all went through. Real PayPal refunds are limited, so the evaluation's in-memory rail applies the card limits, and no stop that only this gap explains is counted for Counterfoil ([ADR 0007](docs/adr/0007-braintree-sandbox-with-mocked-paypal.md)).
 

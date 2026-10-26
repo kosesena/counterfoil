@@ -569,3 +569,44 @@ def test_decide_and_summary():
 
 def test_the_clock_is_timezone_aware():
     assert utcnow().tzinfo is not None
+
+
+# -- disputes on the rail --------------------------------------------------------------------------------
+def _dispute(status, kind="chargeback", amount="90.00"):
+    return {"id": f"dp-{status}", "status": status, "kind": kind, "amount": amount}
+
+
+@pytest.mark.parametrize("status", ["open", "under_review", "disputed", "accepted", "auto_accepted", "lost", "expired"])
+def test_a_refund_on_a_disputed_transaction_blocks(status):
+    gw, rail, _ = gate()
+    rail.txns["fixture-txn-001"].disputes.append(_dispute(status))
+    out = gw.handle(session("CUS-01", "refund", REFUND), "refund", REFUND)
+    assert codes(out)["TRANSACTION_DISPUTED"] == BLOCK and not rail.money_calls()
+    assert f"chargeback dp-{status} ({status}, 90.00)" in out.summary()
+
+
+def test_a_dispute_the_store_won_does_not_block():
+    gw, rail, _ = gate()
+    rail.txns["fixture-txn-001"].disputes.append(_dispute("won"))
+    assert gw.handle(session("CUS-01", "refund", REFUND), "refund", REFUND).executed
+
+
+def test_a_dispute_opened_while_a_refund_waits_for_the_manager_blocks_the_approval():
+    gw, rail, _ = gate()
+    args = dict(REFUND, amount="250.00")  # above the auto limit: held
+    out = gw.handle(session("CUS-01", "refund", args), "refund", args)
+    assert out.decision == APPROVAL
+    rail.txns["fixture-txn-001"].disputes.append(_dispute("open"))
+    late = gw.approve(out.approval_id)
+    assert late.decision == BLOCK and "TRANSACTION_DISPUTED" in {f.code for f in late.findings}
+    assert not rail.money_calls()
+
+
+def test_a_rail_without_disputes_support_is_not_checked():
+    store = Store(load_records())
+
+    class OldRail(FakeRail):
+        disputes = None
+
+    gw = Gateway(store, OldRail.from_store(store), clock=Clock())
+    assert gw.handle(session("CUS-01", "refund", REFUND), "refund", REFUND).executed

@@ -5,6 +5,10 @@ refunds above the remaining transaction total fail with 91521, refunds on a full
 refunds before settlement with 91506, and an identical sale (same payment method and amount) soon after another one
 with "Gateway Rejected: duplicate". Mocked PayPal in the sandbox does NOT enforce the refund total; the fake does,
 because production would.
+
+Disputes: the sandbox does NOT refuse a refund on a transaction with an open chargeback (26 Oct,
+spikes/braintree_dispute_spike.py: a full refund went through on top of the open dispute). `disputes()` lets the gate
+refuse it instead.
 """
 
 from __future__ import annotations
@@ -30,6 +34,7 @@ class Rail(Protocol):
     def void(self, transaction_id: str) -> RailResult: ...
     def charge(self, payment_method_token: str, amount: Decimal, order_id: str) -> RailResult: ...
     def find(self, transaction_id: str) -> dict | None: ...
+    def disputes(self, transaction_id: str) -> list[dict] | None: ...
 
 
 @dataclass
@@ -38,6 +43,7 @@ class FakeTxn:
     status: str = "settled"
     refunded: Decimal = Decimal("0.00")
     refund_ids: list[str] = field(default_factory=list)
+    disputes: list[dict] = field(default_factory=list)  # {"id", "status", "kind", "amount"}
 
 
 class FakeRail:
@@ -114,6 +120,11 @@ class FakeRail:
             "refund_ids": list(t.refund_ids),
         }
 
+    def disputes(self, transaction_id):
+        self.calls.append(("disputes", transaction_id))
+        t = self.txns.get(transaction_id)
+        return None if t is None else [dict(d) for d in t.disputes]
+
 
 class BraintreeRail:
     """Braintree sandbox. Sandbox only; production keys are refused."""
@@ -184,6 +195,16 @@ class BraintreeRail:
             "refund_ids": list(t.refund_ids),
             "payment_instrument_type": t.payment_instrument_type,
         }
+
+    def disputes(self, transaction_id):
+        """Disputes (chargebacks, retrievals) Braintree holds on this transaction; None if the transaction is unknown."""
+        try:
+            t = self.gw.transaction.find(transaction_id)
+        except self.bt.exceptions.NotFoundError:
+            return None
+        return [
+            {"id": d.id, "status": d.status, "kind": d.kind, "amount": str(d.amount_disputed)} for d in t.disputes or []
+        ]
 
 
 class SandboxRail(BraintreeRail):
@@ -263,3 +284,8 @@ class SandboxRail(BraintreeRail):
         self.calls.append(("find", transaction_id, real))
         data = None if real is None else super().find(real)
         return None if data is None else {**data, "id": transaction_id, "braintree_id": real}
+
+    def disputes(self, transaction_id):
+        real = self._txn(transaction_id)
+        self.calls.append(("disputes", transaction_id, real))
+        return None if real is None else super().disputes(real)

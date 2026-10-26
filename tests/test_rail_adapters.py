@@ -78,7 +78,12 @@ class FakeSDK:
         self.next_id += 1
         tid = f"bt-{self.next_id}"
         self.txns[tid] = NS(
-            id=tid, amount=Decimal(str(amount)), status=status, refund_ids=[], payment_instrument_type="paypal_account"
+            id=tid,
+            amount=Decimal(str(amount)),
+            status=status,
+            refund_ids=[],
+            disputes=[],
+            payment_instrument_type="paypal_account",
         )
         return tid
 
@@ -151,6 +156,22 @@ def test_find(sdk):
     sale = rail.charge("tok", Decimal("3.00"), "o")
     assert rail.find(sale.id)["payment_instrument_type"] == "paypal_account"
     assert rail.find("missing") is None
+
+
+def test_disputes_are_read_from_the_transaction(sdk):
+    rail = BraintreeRail()
+    sale = rail.charge("tok", Decimal("60.77"), "o")
+    assert rail.disputes(sale.id) == []
+    sdk.txns[sale.id].disputes = [
+        NS(id="h8f7", status="open", kind="chargeback", amount_disputed=Decimal("60.77"))  # as the spike saw it
+    ]
+    assert rail.disputes(sale.id) == [{"id": "h8f7", "status": "open", "kind": "chargeback", "amount": "60.77"}]
+    assert rail.disputes("missing") is None
+
+
+def test_sandbox_rail_reads_disputes_of_the_real_transaction(sdk):
+    rail = SandboxRail(Store(load_records()), "run-1")
+    assert rail.disputes("fixture-txn-001") == [] and rail.disputes("nope") is None
 
 
 # -- SandboxRail ---------------------------------------------------------------------------------------

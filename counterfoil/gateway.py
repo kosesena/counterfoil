@@ -251,6 +251,9 @@ class Gateway:
         drift = self._rail_drift(order)
         if drift:
             findings.append(drift)
+        disputed = self._disputed(order)
+        if disputed:
+            findings.append(disputed)
 
         rma = self.store.rma(order_no, rma_id)
         if rma_id is None:
@@ -305,6 +308,21 @@ class Gateway:
                 f"rail shows {rail_total} refunded on {order['order_no']}, store knows {local}",
             )
         return None
+
+    def _disputed(self, order) -> Finding | None:
+        """A refund on a transaction with a dispute the store has not won pays the customer twice: once through the
+        chargeback, once through the refund. Braintree does not refuse it (spikes/braintree_dispute_spike.py)."""
+        disputes = getattr(self.rail, "disputes", None)
+        found = disputes(order["braintree_transaction_id"]) if disputes else None
+        live = [d for d in found or [] if d["status"] != "won"]
+        if not live:
+            return None
+        listed = ", ".join(f"{d['kind']} {d['id']} ({d['status']}, {d['amount']})" for d in live)
+        return Finding(
+            BLOCK,
+            "TRANSACTION_DISPUTED",
+            f"{order['order_no']} has {listed}; answer the dispute instead of refunding",
+        )
 
     def _check_charge(self, ctx, args):
         try:

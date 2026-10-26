@@ -8,6 +8,7 @@ Two research passes over developer.paypal.com (PayPal REST, Braintree docs, Agen
 |---|---|
 | `transaction.sale` (mocked PayPal nonce, vaulted method), `refund`, `void`, `find` | `counterfoil/rail.py` (`BraintreeRail`) |
 | `order_id` on every sale | `rail.py` |
+| Disputes on the transaction (`transaction.find(id).disputes`); the gate blocks a refund while a dispute the store has not won is on it (`TRANSACTION_DISPUTED`). Sandbox-checked 26 Oct with card `4023898493988028`: an `open` fraud chargeback for the full amount was on the sale within seconds (also found by `dispute.search(transaction_id)`), and Braintree still accepted a full refund on top of it | `rail.py`, `gateway.py` (`_disputed`), `spikes/braintree_dispute_spike.py` |
 | Rail-side refund total per transaction: sum of `find(rid).amount` over `refund_ids`, skipping failed/rejected/declined/voided | `BraintreeRail.refunded_total` |
 | `PayPal-Request-Id` on every PayPal REST money call; real `REFUND_AMOUNT_EXCEEDED` error shape | `counterfoil/paypal.py` |
 | Gate in front of Agent Toolkit `create_refund` (Toolkit parameters) | `counterfoil/toolkit.py` |
