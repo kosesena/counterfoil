@@ -1,0 +1,152 @@
+{
+ "recordedAt": "2026-10-26T20:08:18+00:00",
+ "rail": "braintree-sandbox",
+ "sweep": {
+  "rail": "braintree",
+  "since": "2026-10-26T20:07:18+00:00",
+  "throughGate": {
+   "orderNo": "ST-1042",
+   "amount": "30.00",
+   "decision": "PASS/succeeded",
+   "railId": "azwghxag"
+  },
+  "behindTheGate": {
+   "orderNo": "ST-1043",
+   "amount": "15.00",
+   "ok": true,
+   "railId": "a68jfj3h",
+   "error": null
+  },
+  "seen": 2,
+  "unknown": [
+   {
+    "order_no": "ST-1043",
+    "rail_total": "15.00",
+    "store_total": "0.00",
+    "difference": "15.00",
+    "refunds_the_store_does_not_list": [
+     "a68jfj3h"
+    ]
+   }
+  ],
+  "foreign": [],
+  "credits": []
+ },
+ "railRules": {
+  "card": [
+   {
+    "label": "card sale 50.93",
+    "ok": true,
+    "id": "mkbse3y4",
+    "status": "submitted_for_settlement",
+    "amount": "50.93"
+   },
+   {
+    "label": "refund 10.00 before settlement",
+    "ok": false,
+    "error": "91506 Cannot refund transaction unless it is settled."
+   },
+   {
+    "label": "testing.settle_transaction",
+    "ok": true,
+    "id": "mkbse3y4",
+    "status": "settled",
+    "amount": "50.93"
+   },
+   {
+    "label": "refund 60.93 (more than the sale)",
+    "ok": false,
+    "error": "91521 Refund amount is too large."
+   },
+   {
+    "label": "refund 50.93 (all of it)",
+    "ok": true,
+    "id": "f2fj31ve",
+    "status": "submitted_for_settlement",
+    "amount": "50.93"
+   },
+   {
+    "label": "refund 1.00 more",
+    "ok": false,
+    "error": "91512 Transaction has already been fully refunded.; 91521 Refund amount is too large."
+   }
+  ],
+  "paypal": [
+   {
+    "label": "mocked PayPal sale 50.67",
+    "ok": true,
+    "id": "exj76e07",
+    "status": "settling",
+    "amount": "50.67"
+   },
+   {
+    "label": "refund 10.00 before settlement",
+    "ok": true,
+    "id": "19z7yf9r",
+    "status": "settling",
+    "amount": "10.00"
+   },
+   {
+    "label": "refund 50.67 (with the 10.00, more than the sale)",
+    "ok": true,
+    "id": "8gjpkm8f",
+    "status": "settling",
+    "amount": "50.67"
+   },
+   {
+    "label": "refund 1.00 more",
+    "ok": true,
+    "id": "nahqs7qz",
+    "status": "settling",
+    "amount": "1.00"
+   }
+  ],
+  "dispute": [
+   {
+    "label": "sale on the dispute test card 80.34",
+    "ok": true,
+    "id": "7pyrh91g",
+    "status": "submitted_for_settlement",
+    "amount": "80.34"
+   },
+   {
+    "label": "disputes on the sale",
+    "ok": true,
+    "disputes": [
+     {
+      "id": "22ktmtp6srntppjj",
+      "status": "open",
+      "kind": "chargeback",
+      "amount": "80.34"
+     }
+    ]
+   },
+   {
+    "label": "testing.settle_transaction",
+    "ok": true,
+    "id": "7pyrh91g",
+    "status": "settled",
+    "amount": "80.34"
+   },
+   {
+    "label": "Counterfoil: refund 40.00 for RMA-1056",
+    "ok": false,
+    "gate": "BLOCK",
+    "findings": [
+     {
+      "severity": "BLOCK",
+      "code": "TRANSACTION_DISPUTED",
+      "detail": "ST-1056 has chargeback 22ktmtp6srntppjj (open, 80.34); answer the dispute instead of refunding"
+     }
+    ]
+   },
+   {
+    "label": "Braintree alone: refund 40.00",
+    "ok": true,
+    "id": "p45nvjyy",
+    "status": "submitted_for_settlement",
+    "amount": "40.00"
+   }
+  ]
+ }
+}

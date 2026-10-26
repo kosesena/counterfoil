@@ -505,3 +505,31 @@ main .ag-root-wrapper { border-radius: 12px; }
   .ev-sandbox small { margin-left: 0; }
 }
 main.studio-off { height: 0 !important; min-height: 0; padding: 0; margin: 0; overflow: hidden; }
+
+/* Rail-side checks on the Overview (app/rail-checks.tsx): the refund sweep and what Braintree refuses on its own */
+.rc { padding: 0 calc(var(--cf-gutter) + 24px) 40px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+.rc h3 { margin: 0 0 6px; font-family: var(--cf-display); font-size: 24px; }
+.rc-lead { margin: 0 0 14px; color: var(--cf-muted); line-height: 1.5; max-width: 820px; }
+.rc code { font-family: var(--cf-mono); font-size: 13px; background: var(--cf-highlight); padding: 1px 6px; border-radius: 6px; }
+.rc-sweep { padding: 24px 28px 22px; }
+.rc-flow { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.rc-flow li { display: grid; gap: 6px; align-content: start; padding: 14px 16px; border-radius: 14px; outline: 2px dashed var(--cf-stitch); outline-offset: -6px; }
+.rc-flow li b { font-family: var(--cf-display); font-size: 17px; }
+.rc-flow li span { font-size: 14px; }
+.rc-flow li code { justify-self: start; }
+.rc-flow li.found { background: var(--cf-harm-tint); outline-color: var(--cf-harm); }
+.rc-flow li.found strong { color: var(--cf-harm-deep); }
+.rc-foot { margin: 12px 0 0; font-size: 13px; color: var(--cf-muted); }
+.rc-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.rc-col { padding: 20px 22px; }
+.rc-col h4 { margin: 0; font-family: var(--cf-display); font-size: 19px; }
+.rc-sub { margin: 2px 0 12px; font-size: 13px; color: var(--cf-muted); }
+.rc-col ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.rc-col li { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 10px; row-gap: 2px; align-items: baseline; font-size: 14px; }
+.rc-col li small { grid-column: 2; font-size: 12px; color: var(--cf-muted); overflow-wrap: anywhere; }
+.rc-tag { font: 800 11px/1 var(--cf-display); letter-spacing: .05em; padding: 4px 8px; border-radius: 999px; }
+.rc-tag.ok { background: var(--cf-green-tint); color: var(--cf-green-deep); }
+.rc-tag.no { background: var(--cf-harm-tint); color: var(--cf-harm-deep); }
+.rc-tag.hold { background: var(--cf-amber-tint); color: var(--cf-amber-deep); }
+@media (max-width: 1000px) { .rc-flow, .rc-cols { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 760px) { .rc { padding: 0 18px 30px; } .rc-sweep, .rc-col { padding: 18px; } }

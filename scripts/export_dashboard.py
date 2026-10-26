@@ -48,6 +48,10 @@ CHECK_LABEL = {
     "TOOL_NOT_ALLOWED": "Tool not allowed",
     "UNKNOWN_ORDER": "Unknown order",
     "OVER_CAP": "Over the $200 cap",
+    "UNRECONCILED_RAIL_REFUNDS": "Braintree shows refunds the store does not",
+    "REFUND_OUTCOME_UNKNOWN": "Earlier refund outcome unknown",
+    "RAIL_ITEMS_MISMATCH": "RMA exceeds Braintree's line items",
+    "TRANSACTION_DISPUTED": "Open dispute on the transaction",
 }
 
 
@@ -309,7 +313,14 @@ def export(paths: list[Path]) -> dict:
         "orders": order_rows,
         "returns": return_rows,
         "skipped": skipped,
+        "railChecks": rail_checks(),
     }
+
+
+def rail_checks() -> dict | None:
+    """The newest sandbox record of the rail-side checks (scripts/record_rail_checks.py), shown as it was recorded."""
+    files = sorted((ROOT / "results").glob("*-braintree-rail-checks.json"))
+    return json.loads(files[-1].read_text(encoding="utf-8")) if files else None
 
 
 def main() -> None:

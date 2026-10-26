@@ -1,5 +1,6 @@
 """The store-wide refund sweep (counterfoil/reconcile.py) against the in-memory rail."""
 
+import json
 from datetime import UTC, datetime
 from decimal import Decimal
 
@@ -63,3 +64,13 @@ def test_refunds_on_other_transactions_and_standalone_credits_are_listed():
     report = sweep(store, rail, SINCE)
     assert [r["id"] for r in report.foreign] == ["x1"] and [r["id"] for r in report.credits] == ["c1"]
     assert not report.clean and not report.unknown
+
+
+def test_the_sweep_script_reports_the_refund_made_behind_the_gate():
+    from scripts.sweep_refunds import run
+
+    r = run("fake")
+    assert r["throughGate"]["decision"] == "PASS/succeeded" and r["behindTheGate"]["ok"]
+    assert [u["order_no"] for u in r["unknown"]] == ["ST-1043"]
+    assert r["unknown"][0]["refunds_the_store_does_not_list"] == [r["behindTheGate"]["railId"]]
+    json.dumps(r)  # what record_rail_checks.py writes for the dashboard

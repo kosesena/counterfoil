@@ -3,6 +3,8 @@
 
 import type { AgDataSourcesDefinition, AgFieldDefinition, AgFormat, AgRelationDefinition } from 'ag-studio';
 
+import type { RailChecks } from './rail-checks';
+
 export type CounterfoilData = {
   asOf: string;
   runs: Record<string, unknown>[];
@@ -13,6 +15,7 @@ export type CounterfoilData = {
   orders: Record<string, unknown>[];
   returns: Record<string, unknown>[];
   skipped?: Record<string, unknown>[]; // runs the model never finished (timeouts): listed, not scored
+  railChecks?: RailChecks | null; // sandbox record of the rail-side checks (scripts/record_rail_checks.py)
 };
 
 // [id, name, format, hide?]
