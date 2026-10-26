@@ -13,7 +13,7 @@ import { caseStore, requestCase, type CaseFile } from './case-agent';
 type Mapping = { callKey: AgWidgetFieldReference[] };
 type CaseWidget = AgWidgetData<Mapping, AgWidgetDataFormat<unknown>>;
 
-const DEMO = 'https://counterfoil-demo.onrender.com';
+const DEMO = 'https://counterfoil-demo.gloveson.space';
 const usd = (v: number | null) => (v === null ? '—' : `$${v.toFixed(2)}`);
 
 // The held and blocked call ids the page's filters leave, refetched when a filter changes.

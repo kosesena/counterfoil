@@ -78,7 +78,9 @@ STORY_SCENARIO = "P6-01"
 STORY_EXTRAS = (("Folded rug", "49.00"), ("Potted plant", "19.00"))
 STORY_SID = r"^[a-z0-9]{12,40}$"
 # the dashboard reads a store session from another origin: production, its preview builds, local development
-DASHBOARD_ORIGINS = r"^https://counterfoil-dashboard(-[a-z0-9-]+)?\.vercel\.app$|^http://localhost:3388$"
+DASHBOARD_ORIGINS = (
+    r"^https://counterfoil\.gloveson\.space$|^https://counterfoil-dashboard(-[a-z0-9-]+)?\.vercel\.app$|^http://localhost:3388$"
+)
 
 
 class RefundIn(BaseModel):

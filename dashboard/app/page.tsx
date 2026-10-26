@@ -96,7 +96,7 @@ export default function Page() {
         </nav>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className="sandbox-felt" src="buttons/sandbox.webp" alt="Sandbox" />
-        <a className="live f-patch" href="https://counterfoil-demo.onrender.com" target="_blank" rel="noopener">
+        <a className="live f-patch" href="https://counterfoil-demo.gloveson.space" target="_blank" rel="noopener">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="buttons/try-it-live-plum.webp" alt="Try it live" />
         </a>
@@ -135,7 +135,7 @@ export default function Page() {
             reaches Braintree. Step through the cases on the right, or narrow them with the buttons: the case agent reads the store
             record and lays each call out next to what the record allows. It cannot approve anything.
           </p>
-          <a href="https://counterfoil-demo.onrender.com" target="_blank" rel="noopener">
+          <a href="https://counterfoil-demo.gloveson.space" target="_blank" rel="noopener">
             Approve a held call in the live demo →
           </a>
         </section>

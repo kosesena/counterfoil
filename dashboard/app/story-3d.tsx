@@ -22,7 +22,7 @@ const STILLS = [1, 1, 1, 2, 3, 3, 4, 5];            // the exported stills per s
 const STILL = (n: number) => `3d/story/step-${STILLS[n]}.jpg`;
 const LAST = 7;
 // The live demo (demo/app.py): its /pay page takes the till's receipt on a phone; /api/story/<sid> tells us it is paid.
-const DEMO = process.env.NEXT_PUBLIC_DEMO_URL || 'https://counterfoil-demo.onrender.com';
+const DEMO = process.env.NEXT_PUBLIC_DEMO_URL || 'https://counterfoil-demo.gloveson.space';
 
 const STEPS = [
   { title: 'A return at HOMI', text: 'Attack P6-01 from the shop floor: what a customer types into a returns kiosk reaches HOMI’s AI agent, which can move money. Seven steps, one button each.' },

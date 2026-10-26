@@ -6,7 +6,7 @@
 
 import { useEffect, useRef } from 'react';
 
-const DEMO = 'https://counterfoil-demo.onrender.com';
+const DEMO = 'https://counterfoil-demo.gloveson.space';
 
 // Counterfoil leans towards the pointer on desktop: a turn, a tilt and a small step, eased by CSS. Nothing moves on
 // touch screens or with reduced motion.
