@@ -13,7 +13,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { FollowingFoil } from './felt';
 
-const MODEL = '3d/counterfoil-claude.glb?v=20261026b';
+const MODEL = '3d/counterfoil-claude.glb?v=20261026d';
 const BODY = { yaw: 0.5, up: 0.12, down: 0.2 };      // radians the upper half may turn / nod
 const EYES = { yaw: 0.22, up: 0.1, down: 0.12 };     // extra roll of the bead eyes on top of that
 const DEPTH = 650;                                   // px: how far in front of the screen he imagines the pointer

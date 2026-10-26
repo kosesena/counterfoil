@@ -207,10 +207,10 @@ def counterfoil(col):
     place(rim, col, beret, rust, local=True)
     tube('CF_BeretStalk', [(0.0, 0, 0.13), (0.02, 0, 0.21), (0.08, 0, 0.24)], 0.035, rust, col, beret, local=True)
 
-    # arms: his right hand on the hip, his left up at the moustache, fingers curled round it
-    tube('CF_Arm_Hip', [(-0.36, 0.02, 0.84), (-0.50, 0.0, 0.76), (-0.53, -0.02, 0.63), (-0.42, -0.06, 0.57)],
-         0.06, plum, col, upper, radii=[1.0, 1.0, 0.95, 0.9])
-    sphere('CF_Hand_Hip', (-0.41, -0.07, 0.575), (0.07, 0.06, 0.06), plum, col, upper)
+    # arms: his right hand tucked behind his back, his left up at the moustache, fingers curled round it
+    tube('CF_Arm_Hip', [(-0.36, 0.03, 0.82), (-0.53, 0.01, 0.72), (-0.58, 0.10, 0.61), (-0.40, 0.25, 0.57), (-0.29, 0.29, 0.58)],
+         0.06, plum, col, upper, radii=[1.0, 1.0, 0.95, 0.9, 0.85])
+    sphere('CF_Hand_Hip', (-0.25, 0.30, 0.58), (0.06, 0.07, 0.065), plum, col, upper)
     tube('CF_Arm_Twirl', [(0.36, -0.10, 0.74), (0.50, -0.22, 0.66), (0.58, -0.30, 0.72), (0.56, -0.33, 0.80)],
          0.06, plum, col, upper, radii=[1.0, 1.0, 0.95, 0.9])
     sphere('CF_Hand_Twirl', (0.55, -0.34, 0.86), (0.08, 0.07, 0.085), plum, col, upper)
