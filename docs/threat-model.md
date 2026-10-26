@@ -81,6 +81,10 @@ Cross-cutting guarantees, each with tests in `tests/test_gateway_mechanics.py` a
   refused (`parse_amount` in [`money.py`](../counterfoil/money.py)).
 - An exception from the rail is recorded as outcome *unknown* and keeps the money counted, so a retry cannot double-pay
   (`Gateway._call`, `_execute_refund`).
+- Every refund and void carries a rail idempotency key (Braintree `api_request_key`, PayPal `PayPal-Request-Id`)
+  derived from the transaction, order, RMA, amount and what the RMA had already refunded. Two gate processes that both
+  passed the check before either refund landed send the same key and the rail pays once (`request_key`; sandbox
+  behaviour in `spikes/braintree_request_key_spike.py`).
 
 ## What the gate cannot stop
 
@@ -103,7 +107,10 @@ These are limits of the design, not bugs. They are listed so nobody reads the me
    that the mail system accepts (no SPF/DKIM/DMARC enforcement) is a different customer as far as the gate knows.
    The demo has no real mailbox; this is an assumption about the deployment.
 5. **The store records are trusted.** Anyone who can write orders, return records, the catalog or the refund ledger
-   controls the gate's decisions. Protecting that database is outside the gate.
+   controls the gate's decisions. Protecting that database is outside the gate. Two checks read Braintree instead:
+   refunds the rail holds but the store does not know of (`UNRECONCILED_RAIL_REFUNDS`), and a return record asking
+   for more items, or more money, than the line items Braintree recorded on the sale (`RAIL_ITEMS_MISMATCH`). An RMA
+   edited within what was really sold still passes.
 6. **What the agents *say* is not gated.** The gate checks tool calls. A misled agent can still write a misleading reply
    e-mail; it cannot attach other customers' data to it because reads are scoped, but tone and promises are unchecked.
 7. **Approvals live in memory.** Pending approvals are lost on restart (fail closed: the manager has to re-request).

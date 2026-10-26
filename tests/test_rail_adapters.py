@@ -36,25 +36,30 @@ class FakeSDK:
         self.next_id = 0
         self.sale_result = None
         self.customer_result = None
+        self.lines: dict[str, list[dict]] = {}
         sdk = self
 
         class Transaction:
             def refund(self, tid, amount):
                 sdk.calls.append(("refund", tid, amount))
+                if isinstance(amount, dict):
+                    amount = amount["amount"]
                 parent = sdk.txns[tid]
                 rid = sdk._new(amount, "submitted_for_settlement")
                 parent.refund_ids.append(rid)
                 return ok(sdk.txns[rid])
 
-            def void(self, tid):
-                sdk.calls.append(("void", tid))
+            def void(self, tid, params=None):
+                sdk.calls.append(("void", tid, params) if params else ("void", tid))
                 return failed(("91504", "Transaction can only be voided if authorized"))
 
             def sale(self, params):
                 sdk.calls.append(("sale", params))
                 if sdk.sale_result is not None:
                     return sdk.sale_result
-                return ok(sdk.txns[sdk._new(params["amount"], "submitted_for_settlement")])
+                tid = sdk._new(params["amount"], "submitted_for_settlement")
+                sdk.lines[tid] = params.get("line_items", [])
+                return ok(sdk.txns[tid])
 
             def find(self, tid):
                 if tid not in sdk.txns:
@@ -69,7 +74,16 @@ class FakeSDK:
                 return NS(is_success=True, customer=NS(payment_methods=[NS(token="real-vault-1")]))
 
         self.module = types.ModuleType("braintree")
-        self.module.BraintreeGateway = lambda config: NS(transaction=Transaction(), customer=Customer(), config=config)
+
+        class TransactionLineItem:
+            def find_all(self, tid):
+                if tid not in sdk.txns:
+                    raise NotFoundError(tid)
+                return [NS(**ln) for ln in sdk.lines.get(tid, [])]  # the SDK returns objects, not dicts
+
+        self.module.BraintreeGateway = lambda config: NS(
+            transaction=Transaction(), customer=Customer(), transaction_line_item=TransactionLineItem(), config=config
+        )
         self.module.Configuration = lambda **kw: kw
         self.module.Environment = NS(Sandbox="sandbox-env")
         self.module.exceptions = NS(NotFoundError=NotFoundError)
@@ -174,7 +188,70 @@ def test_sandbox_rail_reads_disputes_of_the_real_transaction(sdk):
     assert rail.disputes("fixture-txn-001") == [] and rail.disputes("nope") is None
 
 
+def test_request_keys_go_out_as_api_request_key(sdk):
+    rail = BraintreeRail()
+    sale = rail.charge("tok", Decimal("25.00"), "o")
+    rail.refund(sale.id, Decimal("10.00"), "cf-refund-k")
+    assert sdk.calls[-1] == ("refund", sale.id, {"amount": "10.00", "api_request_key": "cf-refund-k"})
+    rail.void(sale.id, "cf-void-k")
+    assert sdk.calls[-1] == ("void", sale.id, {"api_request_key": "cf-void-k"})
+
+
+def test_sandbox_rail_scopes_request_keys_to_the_run(sdk):
+    rail = SandboxRail(Store(load_records()), "run-1")
+    rail.refund("fixture-txn-001", Decimal("5.00"), "cf-refund-k")
+    assert sdk.calls[-1][2] == {"amount": "5.00", "api_request_key": "cf-refund-k-run-1"}
+
+
+def test_fake_rail_answers_a_repeated_key_like_the_sandbox():
+    # spikes/braintree_request_key_spike.py, 26 Oct: same key → the first refund again; other parameters → 915232
+    rail = FakeRail({"t": FakeTxn(Decimal("50.00")), "u": FakeTxn(Decimal("50.00"), "submitted_for_settlement")})
+    first = rail.refund("t", Decimal("10.00"), "k")
+    assert rail.refund("t", Decimal("10.00"), "k") == first and rail.txns["t"].refunded == Decimal("10.00")
+    assert rail.refund("t", Decimal("12.00"), "k").error.startswith("915232")
+    assert rail.refund("t", Decimal("10.00"), "k2").id != first.id and rail.txns["t"].refunded == Decimal("20.00")
+    assert rail.refund("t", Decimal("10.00")).ok and rail.txns["t"].refunded == Decimal("30.00")  # no key, no memory
+    voided = rail.void("u", "v")
+    assert voided.ok and rail.void("u", "v") == voided and not rail.void("u").ok
+
+
+def test_line_items_are_read_back_as_decimals(sdk):
+    rail = BraintreeRail()
+    sale = rail.charge("tok", Decimal("3.00"), "o")
+    assert rail.line_items(sale.id) == []  # a sale without lines
+    sdk.lines[sale.id] = [
+        {
+            "product_code": "CUP",
+            "name": "Cloudstone cup",
+            "quantity": "2.0000",
+            "unit_amount": "1.50",
+            "total_amount": "3.00",
+        }
+    ]
+    assert rail.line_items(sale.id) == [
+        {
+            "product_code": "CUP",
+            "name": "Cloudstone cup",
+            "quantity": Decimal(2),
+            "unit_amount": Decimal("1.50"),
+            "total_amount": Decimal("3.00"),
+        }
+    ]
+    assert rail.line_items("missing") is None
+
+
 # -- SandboxRail ---------------------------------------------------------------------------------------
+def test_sandbox_sales_carry_the_order_lines(sdk):
+    rail = SandboxRail(Store(load_records()), "run-1")
+    lines = rail.line_items("fixture-txn-001")  # ST-1042: tray, bowl, vase at 30.00 each
+    sale = [c[1] for c in sdk.calls if c[0] == "sale"][0]
+    assert [ln["product_code"] for ln in sale["line_items"]] == ["TRAY", "BOWL", "VASE"]
+    assert all(ln["kind"] == "debit" and len(ln["name"]) <= 35 for ln in sale["line_items"])
+    assert sum(Decimal(ln["total_amount"]) for ln in sale["line_items"]) == Decimal(sale["amount"])
+    assert [(ln["product_code"], ln["quantity"]) for ln in lines] == [("TRAY", 1), ("BOWL", 1), ("VASE", 1)]
+    assert rail.line_items("nope") is None
+
+
 def test_sandbox_rail_creates_real_counterparts_once_and_replays_history(sdk):
     store = Store(load_records())
     rail = SandboxRail(store, "run-1")
