@@ -13,9 +13,9 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { FollowingFoil } from './felt';
 
-const MODEL = '3d/counterfoil-claude.glb?v=20261026d';
+const MODEL = '3d/counterfoil-claude.glb?v=20261026f';
 const BODY = { yaw: 0.5, up: 0.12, down: 0.2 };      // radians the upper half may turn / nod
-const EYES = { yaw: 0.22, up: 0.1, down: 0.12 };     // extra roll of the bead eyes on top of that
+const EYES = { yaw: 0.22, up: 0.1, down: 0.03 };     // extra roll of the bead eyes on top of that (barely down: the moustache is right below)
 const DEPTH = 650;                                   // px: how far in front of the screen he imagines the pointer
 
 // Needle felt: a tile of curly wool fibres drawn once on a canvas, laid over every part triplanar (the GLB has no UVs,
@@ -146,8 +146,8 @@ export function Counterfoil3D() {
     scene.add(shadow);
 
     const camera = new THREE.PerspectiveCamera(24, el.clientWidth / el.clientHeight, 0.1, 50);
-    camera.position.set(0.35, 1.05, 5.4);
-    camera.lookAt(0, 0.86, 0);
+    camera.position.set(0.3, 1.6, 5.4);
+    camera.lookAt(0, 0.74, 0);
 
     let upper: THREE.Object3D | undefined, eyes: THREE.Object3D | undefined;
     const rest = { upper: new THREE.Euler(), eyes: new THREE.Euler() };

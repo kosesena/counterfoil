@@ -1,7 +1,7 @@
 """Counterfoil (the approved plum design, docs/gorseller/karakterler/codex/counterfoil-approved/00-character.png) as a
 needle-felt 3D figure for the Overview hero, where he turns towards the pointer.
 Run: blender -b --python tools/counterfoil_claude_3d.py -- [render] [--fibres]
-  -> docs/gorseller/karakterler/counterfoil-claude-3d.blend (+ counterfoil-claude-3d-v*.png with 'render')
+  -> docs/gorseller/karakterler/counterfoil-claude-3d.blend (+ counterfoil-claude-3d-v*.png with 'render'; the latest is kept as counterfoil-claude-3d.png)
 Rig for the web (tools/export_counterfoil_glb.py): 'Counterfoil' at the feet; 'CF_Upper' (body, beret, brows, moustache,
 arms) pivots above the legs; 'CF_Eyes' sits in the middle of the body, so turning it slides both bead eyes over the face.
 """
@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'docs/gorseller/karakterler'
 FIBRES = '--fibres' in sys.argv              # hair particles: off by default, the web cannot show them
 
-BODY_C, BODY_R = Vector((0, 0, 0.96)), Vector((0.42, 0.38, 0.56))   # the egg: centre and half-sizes
+BODY_C, BODY_R = Vector((0, 0, 0.98)), Vector((0.45, 0.41, 0.62))   # the egg: centre and half-sizes
 
 
 def srgb(h):
@@ -151,7 +151,7 @@ def counterfoil(col):
     body = bpy.context.object
     body.name = 'CF_Body'
     for v in body.data.vertices:
-        f = 1 + 0.09 * -v.co.z
+        f = 1 + 0.13 * -v.co.z
         v.co = Vector((v.co.x * BODY_R.x * f, v.co.y * BODY_R.y * f, v.co.z * BODY_R.z)) + BODY_C
     body.data.update()
     lumpy(body, 0.012, 5.0)
@@ -167,39 +167,40 @@ def counterfoil(col):
     eyes.parent = upper
     eyes.matrix_parent_inverse = upper.matrix_world.inverted()
     bpy.context.view_layer.update()
-    for side, x in (('L', -0.105), ('R', 0.105)):
-        z = 1.10
+    for side, x in (('L', -0.097), ('R', 0.097)):
+        z = 1.14
         y = surface_y(body, x, z)
-        sphere(f'CF_Eye_{side}', (x, y + 0.012, z), (0.06, 0.05, 0.064), black, col, eyes, 32)
-        # brows: thick lilac sausages, inner ends lower, the stern look of the sheet
+        sphere(f'CF_Eye_{side}', (x, y + 0.012, z), (0.068, 0.056, 0.072), black, col, eyes, 32)
+        # brows: thick fluffy lilac arches over the eyes
         sx = 1 if x > 0 else -1
-        bz = [(0.05, 1.215), (0.14, 1.255), (0.24, 1.235)]
+        bz = [(0.04, 1.30), (0.14, 1.315), (0.255, 1.235)]
         pts = [(sx * bx, surface_y(body, sx * bx, b) - 0.015, b) for bx, b in bz]
-        tube(f'CF_Brow_{side}', pts, 0.042, lilac, col, upper, radii=[0.75, 1.0, 0.7])
+        tube(f'CF_Brow_{side}', pts, 0.066, lilac, col, upper, radii=[0.85, 1.0, 0.7])
 
     # the handlebar moustache: two cream ropes from under the eyes, sweeping out past the body and curling up
-    half = [(-0.04, 0.975, 0.85), (0.13, 0.95, 1.2), (0.30, 0.88, 1.15), (0.47, 0.83, 0.95),
-            (0.63, 0.86, 0.66), (0.71, 0.97, 0.46), (0.67, 1.07, 0.34), (0.59, 1.05, 0.26), (0.60, 0.99, 0.18)]
+    # (x, z, radius): fat by the nose, hanging low, then the tip rises and rolls inwards (the approved photo)
+    half = [(-0.04, 0.97, 0.9), (0.12, 0.945, 1.3), (0.28, 0.88, 1.25), (0.44, 0.81, 0.95), (0.58, 0.80, 0.7),
+            (0.68, 0.88, 0.5), (0.71, 0.99, 0.38), (0.66, 1.07, 0.3), (0.59, 1.06, 0.24), (0.59, 1.00, 0.17)]
     for side, sx in (('L', -1), ('R', 1)):
         pts, radii = [], []
         for x, z, r in half:
-            y = surface_y(body, sx * x, z) - 0.04 if x < 0.36 else -0.30 + (x - 0.36) * 0.25
+            y = surface_y(body, sx * x, z) - 0.05 if x < 0.38 else -0.30 + (x - 0.38) * 0.25
             pts.append((sx * x, y, z))
             radii.append(r)
-        tube(f'CF_Moustache_{side}', pts, 0.1, cream, col, upper, radii=radii)
+        tube(f'CF_Moustache_{side}', pts, 0.135, cream, col, upper, radii=radii)
 
     # beret: a soft disc tipped down to his right (the viewer's left), a rolled rim and a little stalk
     beret = bpy.data.objects.new('CF_Beret', None)
     col.objects.link(beret)
-    beret.location = (-0.06, 0.02, 1.44)
-    beret.rotation_euler = (math.radians(-8), math.radians(-18), 0)
+    beret.location = (-0.11, 0.03, 1.50)
+    beret.rotation_euler = (math.radians(-10), math.radians(-26), 0)
     beret.parent = upper
     beret.matrix_parent_inverse = upper.matrix_world.inverted()
     bpy.context.view_layer.update()
-    top = sphere('CF_BeretTop', (0, 0, 0.03), (0.50, 0.47, 0.14), rust, col, beret, 56, local=True)
+    top = sphere('CF_BeretTop', (0, 0, 0.03), (0.40, 0.38, 0.19), rust, col, beret, 56, local=True)
     lumpy(top, 0.01, 8)
     fuzz(top, 0.01, 12000)
-    bpy.ops.mesh.primitive_torus_add(major_radius=0.36, minor_radius=0.065, major_segments=64, minor_segments=20,
+    bpy.ops.mesh.primitive_torus_add(major_radius=0.29, minor_radius=0.065, major_segments=64, minor_segments=20,
                                      location=(0, 0, -0.04))
     rim = bpy.context.object
     rim.name = 'CF_BeretRim'
@@ -208,28 +209,30 @@ def counterfoil(col):
     tube('CF_BeretStalk', [(0.0, 0, 0.13), (0.02, 0, 0.21), (0.08, 0, 0.24)], 0.035, rust, col, beret, local=True)
 
     # arms: his right hand tucked behind his back, his left up at the moustache, fingers curled round it
-    tube('CF_Arm_Hip', [(-0.36, 0.03, 0.82), (-0.53, 0.01, 0.72), (-0.58, 0.10, 0.61), (-0.40, 0.25, 0.57), (-0.29, 0.29, 0.58)],
-         0.06, plum, col, upper, radii=[1.0, 1.0, 0.95, 0.9, 0.85])
-    sphere('CF_Hand_Hip', (-0.25, 0.30, 0.58), (0.06, 0.07, 0.065), plum, col, upper)
-    tube('CF_Arm_Twirl', [(0.36, -0.10, 0.74), (0.50, -0.22, 0.66), (0.58, -0.30, 0.72), (0.56, -0.33, 0.80)],
-         0.06, plum, col, upper, radii=[1.0, 1.0, 0.95, 0.9])
-    sphere('CF_Hand_Twirl', (0.55, -0.34, 0.86), (0.08, 0.07, 0.085), plum, col, upper)
-    for i, (dz, dx) in enumerate(((0.06, -0.03), (0.02, -0.05), (-0.02, -0.04))):
-        sphere(f'CF_Finger{i}', (0.55 + dx, -0.40, 0.84 + dz), (0.035, 0.035, 0.03), plum, col, upper, 20)
-    sphere('CF_Thumb', (0.61, -0.36, 0.88), (0.03, 0.03, 0.045), plum, col, upper, 20)
+    tube('CF_Arm_Hip', [(-0.38, 0.02, 0.74), (-0.57, 0.0, 0.64), (-0.61, 0.10, 0.51), (-0.46, 0.25, 0.46), (-0.33, 0.30, 0.48)],
+         0.07, plum, col, upper, radii=[1.0, 1.0, 0.95, 0.9, 0.85])
+    sphere('CF_Hand_Hip', (-0.29, 0.31, 0.48), (0.07, 0.08, 0.075), plum, col, upper)
+    tube('CF_Arm_Twirl', [(0.40, -0.08, 0.66), (0.58, -0.18, 0.58), (0.60, -0.32, 0.66), (0.52, -0.38, 0.74)],
+         0.07, plum, col, upper, radii=[1.0, 1.0, 0.95, 0.9])
+    sphere('CF_Hand_Twirl', (0.49, -0.41, 0.80), (0.1, 0.085, 0.1), plum, col, upper)
+    for i, (dz, dx) in enumerate(((0.07, -0.05), (0.025, -0.075), (-0.02, -0.065))):
+        sphere(f'CF_Finger{i}', (0.49 + dx, -0.47, 0.80 + dz), (0.042, 0.042, 0.036), plum, col, upper, 20)
+    sphere('CF_Thumb', (0.56, -0.44, 0.85), (0.035, 0.035, 0.05), plum, col, upper, 20)
 
     # legs and the rust slippers stay put; only the upper half turns
     for side, x in (('L', -0.14), ('R', 0.14)):
-        tube(f'CF_Leg_{side}', [(x, 0, 0.48), (x * 1.02, -0.01, 0.30), (x * 1.08, -0.02, 0.15)], 0.055, plum, col, root)
-        shoe = sphere(f'CF_Shoe_{side}', (x * 1.3, -0.09, 0.10), (0.19, 0.25, 0.10), rust, col, root)
+        tube(f'CF_Leg_{side}', [(x, 0, 0.36), (x * 1.02, -0.01, 0.30), (x * 1.08, -0.02, 0.15)], 0.055, plum, col, root)
+        shoe = sphere(f'CF_Shoe_{side}', (x * 1.45, -0.09, 0.11), (0.23, 0.27, 0.11), rust, col, root)
         lumpy(shoe, 0.006, 12)
         fuzz(shoe, 0.008, 6000)
-        bpy.ops.mesh.primitive_torus_add(major_radius=0.08, minor_radius=0.05, major_segments=40, minor_segments=16,
-                                         location=(x * 1.12, -0.04, 0.21))
+        bpy.ops.mesh.primitive_torus_add(major_radius=0.095, minor_radius=0.055, major_segments=40, minor_segments=16,
+                                         location=(x * 1.2, -0.04, 0.22))
         cuff = bpy.context.object
         cuff.name = f'CF_Cuff_{side}'
         bpy.ops.object.shade_smooth()
         place(cuff, col, root, rust)
+    # he sits low on his slippers, legs barely showing: drop the whole upper half
+    upper.location.z -= 0.1
     return root
 
 
@@ -252,7 +255,7 @@ def stage(col):
     cam = bpy.data.objects.new('CF_Cam', bpy.data.cameras.new('CF_Cam'))
     col.objects.link(cam)
     cam.location = (0.9, -5.6, 1.35)
-    cam.rotation_euler = (Vector((0, 0, 0.82)) - cam.location).to_track_quat('-Z', 'Y').to_euler()
+    cam.rotation_euler = (Vector((0, 0, 0.76)) - cam.location).to_track_quat('-Z', 'Y').to_euler()
     cam.data.lens = 62
     bpy.context.scene.camera = cam
 
