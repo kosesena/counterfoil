@@ -8,6 +8,17 @@ because production would.
 
 `refunds(since)` lists every refund and credit the rail sent out since a moment, for the store-wide sweep in
 reconcile.py (Braintree: one transaction.search for credits; spikes/braintree_refund_search_spike.py).
+
+Disputes: the sandbox does NOT refuse a refund on a transaction with an open chargeback (26 Oct,
+spikes/braintree_dispute_spike.py: a full refund went through on top of the open dispute). `disputes()` lets the gate
+refuse it instead.
+
+Idempotency: refund and void take a `request_key` (Braintree `api_request_key`). The sandbox honours it (26 Oct,
+spikes/braintree_request_key_spike.py): a repeated key returns the first refund or void and moves no money; the same
+key with other parameters fails with 915232. The fake does the same.
+
+Line items: the sandbox sales carry the order's lines (`line_items` on transaction.sale) and `line_items()` reads them
+back with transaction_line_item.find_all, so the gate can check a return record against what the rail says was sold.
 """
 
 from __future__ import annotations
@@ -29,15 +40,48 @@ class RailResult:
 
 
 class Rail(Protocol):
-    def refund(self, transaction_id: str, amount: Decimal) -> RailResult: ...
+    def refund(self, transaction_id: str, amount: Decimal, request_key: str | None = None) -> RailResult: ...
     def refunded_total(self, transaction_id: str) -> Decimal | None: ...
-    def void(self, transaction_id: str) -> RailResult: ...
+    def void(self, transaction_id: str, request_key: str | None = None) -> RailResult: ...
     def charge(self, payment_method_token: str, amount: Decimal, order_id: str) -> RailResult: ...
     def find(self, transaction_id: str) -> dict | None: ...
     def refunds(self, since: datetime) -> list[dict]: ...
+    def disputes(self, transaction_id: str) -> list[dict] | None: ...
+    def line_items(self, transaction_id: str) -> list[dict] | None: ...
 
 
 DEAD = ("failed", "gateway_rejected", "processor_declined", "voided")  # refunds that moved no money
+
+
+def sale_line_items(store, order: dict) -> list[dict]:
+    """The order's lines in Braintree's line_items shape (name is required, at most 35 characters)."""
+    out = []
+    for it in order["items"]:
+        unit = Decimal(it["unit_price"])
+        name = store.catalog.get(it["sku"], {}).get("name", it["sku"])[:35]
+        out.append(
+            {
+                "kind": "debit",
+                "name": name,
+                "product_code": it["sku"],
+                "quantity": str(it["qty"]),
+                "unit_amount": str(unit),
+                "total_amount": str(unit * it["qty"]),
+            }
+        )
+    return out
+
+
+def _line(item) -> dict:
+    """An SDK TransactionLineItem (or the dict we sent) → the fields the gate compares."""
+    get = item.get if isinstance(item, dict) else lambda k: getattr(item, k, None)
+    return {
+        "product_code": get("product_code"),
+        "name": get("name"),
+        "quantity": Decimal(str(get("quantity"))),
+        "unit_amount": Decimal(str(get("unit_amount"))),
+        "total_amount": Decimal(str(get("total_amount"))),
+    }
 
 
 @dataclass
@@ -46,6 +90,9 @@ class FakeTxn:
     status: str = "settled"
     refunded: Decimal = Decimal("0.00")
     refund_ids: list[str] = field(default_factory=list)
+    disputes: list[dict] = field(default_factory=list)  # {"id", "status", "kind", "amount"}
+
+    line_items: list[dict] | None = None
 
 
 class FakeRail:
@@ -58,6 +105,7 @@ class FakeRail:
         self._sales: set[tuple[str, Decimal]] = set()
         # money that went back out: {"id", "refunded_transaction_id" (None for a standalone credit), "amount", "status"}
         self.refund_log: list[dict] = []
+        self._keys: dict[str, tuple[tuple, RailResult]] = {}  # request key -> (parameters, first result)
 
     @classmethod
     def from_store(cls, store) -> FakeRail:
@@ -66,7 +114,9 @@ class FakeRail:
             refunded = sum(
                 (Decimal(r["amount"]) for r in o.get("refunds", []) if r["status"] == "completed"), Decimal("0.00")
             )
-            txns[o["braintree_transaction_id"]] = FakeTxn(Decimal(o["total"]), o.get("status", "settled"), refunded)
+            txns[o["braintree_transaction_id"]] = FakeTxn(
+                Decimal(o["total"]), o.get("status", "settled"), refunded, line_items=sale_line_items(store, o)
+            )
         rail = cls(txns)
         for o in store.orders.values():
             for r in o.get("refunds", []):
@@ -81,8 +131,31 @@ class FakeRail:
                     )
         return rail
 
-    def refund(self, transaction_id, amount):
+    def _replay(self, request_key, params) -> RailResult | None:
+        """A request key seen before: the first answer again, or 915232 if the parameters differ."""
+        if request_key is None or request_key not in self._keys:
+            return None
+        seen, result = self._keys[request_key]
+        if seen != params:
+            return RailResult(
+                False,
+                error="915232 An Api Request Key may only be reused with parameters identical to original request.",
+            )
+        return result
+
+    def _remember(self, request_key, params, result: RailResult) -> RailResult:
+        if request_key is not None and result.ok:
+            self._keys[request_key] = (params, result)
+        return result
+
+    def refund(self, transaction_id, amount, request_key=None):
         self.calls.append(("refund", transaction_id, amount))
+        params = ("refund", transaction_id, amount)
+        return self._replay(request_key, params) or self._remember(
+            request_key, params, self._refund(transaction_id, amount)
+        )
+
+    def _refund(self, transaction_id, amount):
         t = self.txns.get(transaction_id)
         if t is None:
             return RailResult(False, error="91504 Transaction not found.")
@@ -105,8 +178,12 @@ class FakeRail:
         )
         return RailResult(True, rid, "submitted_for_settlement")
 
-    def void(self, transaction_id):
+    def void(self, transaction_id, request_key=None):
         self.calls.append(("void", transaction_id))
+        params = ("void", transaction_id)
+        return self._replay(request_key, params) or self._remember(request_key, params, self._void(transaction_id))
+
+    def _void(self, transaction_id):
         t = self.txns.get(transaction_id)
         if t is None or t.status not in ("authorized", "submitted_for_settlement"):
             return RailResult(
@@ -148,6 +225,16 @@ class FakeRail:
         self.calls.append(("refunds", since))
         return [dict(r) for r in self.refund_log if r["status"] not in DEAD]
 
+    def disputes(self, transaction_id):
+        self.calls.append(("disputes", transaction_id))
+        t = self.txns.get(transaction_id)
+        return None if t is None else [dict(d) for d in t.disputes]
+
+    def line_items(self, transaction_id):
+        self.calls.append(("line_items", transaction_id))
+        t = self.txns.get(transaction_id)
+        return None if t is None or t.line_items is None else [_line(i) for i in t.line_items]
+
 
 class BraintreeRail:
     """Braintree sandbox. Sandbox only; production keys are refused."""
@@ -175,11 +262,17 @@ class BraintreeRail:
         errors = "; ".join(f"{e.code} {e.message}" for e in r.errors.deep_errors) or r.message
         return RailResult(False, error=errors)
 
-    def refund(self, transaction_id, amount):
-        return self._result(self.gw.transaction.refund(transaction_id, str(amount)))
+    def refund(self, transaction_id, amount, request_key=None):
+        if request_key is None:
+            return self._result(self.gw.transaction.refund(transaction_id, str(amount)))
+        return self._result(
+            self.gw.transaction.refund(transaction_id, {"amount": str(amount), "api_request_key": request_key})
+        )
 
-    def void(self, transaction_id):
-        return self._result(self.gw.transaction.void(transaction_id))
+    def void(self, transaction_id, request_key=None):
+        if request_key is None:
+            return self._result(self.gw.transaction.void(transaction_id))
+        return self._result(self.gw.transaction.void(transaction_id, {"api_request_key": request_key}))
 
     def charge(self, payment_method_token, amount, order_id):
         return self._result(
@@ -233,13 +326,31 @@ class BraintreeRail:
             if t.status not in DEAD
         ]
 
+    def disputes(self, transaction_id):
+        """Disputes (chargebacks, retrievals) Braintree holds on this transaction; None if the transaction is unknown."""
+        try:
+            t = self.gw.transaction.find(transaction_id)
+        except self.bt.exceptions.NotFoundError:
+            return None
+        return [
+            {"id": d.id, "status": d.status, "kind": d.kind, "amount": str(d.amount_disputed)} for d in t.disputes or []
+        ]
+
+    def line_items(self, transaction_id):
+        """What the rail recorded as sold on this sale; None if the transaction is unknown. [] = sale had no lines."""
+        try:
+            items = self.gw.transaction_line_item.find_all(transaction_id)
+        except self.bt.exceptions.NotFoundError:
+            return None
+        return [_line(i) for i in items]
+
 
 class SandboxRail(BraintreeRail):
     """Braintree sandbox behind the store's fixture ids, for end-to-end evaluation runs.
 
     The scenarios name fixture transactions (fixture-txn-001) and vaulted methods (fixture-vault-02). The first time a
-    run touches one, a real sandbox counterpart is created: a mocked-PayPal sale for the order total (plus any refunds
-    the store already completed), or a vaulted mocked-PayPal customer. Everything after that hits Braintree for real,
+    run touches one, a real sandbox counterpart is created: a mocked-PayPal sale for the order total with the order's
+    line items (plus any refunds the store already completed), or a vaulted mocked-PayPal customer. Everything after that hits Braintree for real,
     so a run leaves real sandbox transactions behind; `money_calls()` reports them next to the fixture id.
     """
 
@@ -259,6 +370,7 @@ class SandboxRail(BraintreeRail):
                 "amount": str(o["total"]),
                 "payment_method_nonce": "fake-paypal-one-time-nonce",
                 "order_id": f"{self.tag}:{o['order_no']}",
+                "line_items": sale_line_items(self.store, o),
                 "options": {"submit_for_settlement": True},
             }
             if os.environ.get("BRAINTREE_MERCHANT_ACCOUNT_ID"):
@@ -285,15 +397,27 @@ class SandboxRail(BraintreeRail):
     def money_calls(self) -> list[tuple]:
         return [c for c in self.calls if c[0] in ("refund", "void", "charge")]
 
-    def refund(self, transaction_id, amount):
+    def _key(self, request_key):
+        """Keys are per merchant account and outlive a run: scope them to this run's sandbox transactions."""
+        return None if request_key is None else f"{request_key}-{self.tag}"[:255]
+
+    def refund(self, transaction_id, amount, request_key=None):
         real = self._txn(transaction_id)
-        out = RailResult(False, error="91504 Transaction not found.") if real is None else super().refund(real, amount)
+        out = (
+            RailResult(False, error="91504 Transaction not found.")
+            if real is None
+            else super().refund(real, amount, self._key(request_key))
+        )
         self.calls.append(("refund", transaction_id, amount, real, out.id))
         return out
 
-    def void(self, transaction_id):
+    def void(self, transaction_id, request_key=None):
         real = self._txn(transaction_id)
-        out = RailResult(False, error="91504 Transaction not found.") if real is None else super().void(real)
+        out = (
+            RailResult(False, error="91504 Transaction not found.")
+            if real is None
+            else super().void(real, self._key(request_key))
+        )
         self.calls.append(("void", transaction_id, real))
         return out
 
@@ -322,3 +446,13 @@ class SandboxRail(BraintreeRail):
             if parent is None or parent in fixture:
                 out.append({**r, "refunded_transaction_id": fixture.get(parent), "braintree_parent_id": parent})
         return out
+
+    def disputes(self, transaction_id):
+        real = self._txn(transaction_id)
+        self.calls.append(("disputes", transaction_id, real))
+        return None if real is None else super().disputes(real)
+
+    def line_items(self, transaction_id):
+        real = self._txn(transaction_id)
+        self.calls.append(("line_items", transaction_id, real))
+        return None if real is None else super().line_items(real)

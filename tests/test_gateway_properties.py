@@ -75,14 +75,14 @@ class FlakyRail(FakeRail):
             raise TimeoutError("rail timed out after acting")
         return res
 
-    def refund(self, transaction_id, amount):
-        return self._maybe(super().refund, transaction_id, amount)
+    def refund(self, transaction_id, amount, request_key=None):
+        return self._maybe(super().refund, transaction_id, amount, request_key)
 
     def charge(self, payment_method_token, amount, order_id):
         return self._maybe(super().charge, payment_method_token, amount, order_id)
 
-    def void(self, transaction_id):
-        return self._maybe(super().void, transaction_id)
+    def void(self, transaction_id, request_key=None):
+        return self._maybe(super().void, transaction_id, request_key)
 
 
 class Clock:
