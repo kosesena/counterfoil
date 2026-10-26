@@ -351,6 +351,7 @@ class FakeBraintree:
             payment_instrument_type="paypal_account",
             paypal_details=SimpleNamespace(payer_email="buyer@example.com"),
             refund_ids=[],
+            disputes=[],
             kind=kind,
         )
         self.txns[t.id] = t

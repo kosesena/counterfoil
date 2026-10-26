@@ -93,10 +93,13 @@ Approvals are single-use, expire after 30 minutes and are bound to the exact arg
 | Refund requested by someone who doesn't own the order | pays it | holds it for a human |
 | Charge that doesn't match catalog price × quantity | takes it | holds it for a human |
 | Return record for more items, or more money, than the sale's line items | pays it | blocks it |
+| Refund on a transaction with an open chargeback | pays it ([our test](spikes/braintree_dispute_spike.py)) | blocks it |
 
 Each scenario records whether the rail's own rules would have stopped it (`rail_would_block`, in [`docs/senaryolar/scenarios.json`](docs/senaryolar/scenarios.json)). For 13 of the 14 attacks they would not. The exception, holdout P4-02, refunds an unsettled transaction, and is reported as "the payment service would block it", not as a Counterfoil catch.
 
 **A retried refund pays once.** Every refund and void the gate sends carries a Braintree `api_request_key` derived from the money movement itself (transaction, order, RMA, amount, and what the RMA had already refunded), not from the session. Two gate processes racing on the same refund, or a gate that lost its ledger, send the same key, and Braintree answers with the first refund. We checked in the sandbox that it does: the same key returned the same refund id and moved no money, and the same key with another amount failed with `915232` ([spike](spikes/braintree_request_key_spike.py)). A second, genuine partial refund of the same amount gets a new key.
+
+**Refund plus chargeback is paying twice, and Braintree allows it.** On Braintree's dispute test card (`4023898493988028`) the sale got an open fraud chargeback for the full amount within seconds, and a full refund on top of it still went through. Before every refund the gate reads the transaction's disputes and blocks the refund (`TRANSACTION_DISPUTED`) while any dispute the store has not won is on it; the answer is to accept or fight the dispute, not to refund.
 
 **One gap in the sandbox, and how we handle it.** A mocked PayPal account does not enforce the refund total: five refunds totalling USD 186.54 on a USD 40.54 sale all went through. Real PayPal refunds are limited, so the evaluation's in-memory rail applies the card limits, and no stop that only this gap explains is counted for Counterfoil ([ADR 0007](docs/adr/0007-braintree-sandbox-with-mocked-paypal.md)).
 
