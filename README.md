@@ -166,6 +166,17 @@ Security: [`docs/threat-model.md`](docs/threat-model.md) (assets, trust boundari
 
 ## Tools used
 
+<p>
+  <img src="docs/brand/paypal-powered-by-braintree-on-white.png" alt="PayPal powered by Braintree" height="56">
+  &nbsp;&nbsp;
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/ag-grid-logo-dark.svg">
+    <img src="docs/brand/ag-grid-logo-light.svg" alt="AG Grid" height="40">
+  </picture>
+</p>
+
+<sub>Logos as published by their owners: PayPal powered by Braintree from Braintree's partner branding assets, AG Grid from AG Grid's branding assets page (<a href="docs/brand/README.md">sources</a>). Used here only to name the sponsor tools this project is built on; no endorsement implied.</sub>
+
 - **Braintree sandbox** with mocked PayPal accounts. PayPal accounts can't be opened from Türkiye; PayPal's team confirmed Braintree for the hackathon ([ADR 0007](docs/adr/0007-braintree-sandbox-with-mocked-paypal.md)).
 - **Astropods** and its **Astro AI Gateway** for the cloud models (GPT-5.6 Terra, Claude Sonnet 5, Claude Opus 5.5).
 - **Ollama** for the local models (qwen2.5, qwen3, llama3.1, hermes3, each with an 8k context).
