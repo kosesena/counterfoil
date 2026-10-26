@@ -91,6 +91,15 @@ export function EvidenceBoard({ data }: { data: CounterfoilData }) {
   const none = attacks.length === 0;
   const sets = [...new Set(picked.map(split))].sort().join(' + ') || 'no runs yet';
 
+  // runs a model never finished are not scored; the board says which, so the denominators can be checked
+  const unfinished = Object.entries(
+    (data.skipped ?? []).reduce<Record<string, number>>((acc, r) => {
+      const key = `${modelName(r.model)} ${split(r)} ${r.scenarioId}`;
+      acc[key] = (acc[key] ?? 0) + 1;
+      return acc;
+    }, {}),
+  );
+
   const box = data.runs.filter(sandbox);
   const boxModel = box.length ? modelName(box[0].model) : '';
   const day = new Date(data.asOf).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -143,6 +152,12 @@ export function EvidenceBoard({ data }: { data: CounterfoilData }) {
         <Panel title="Dev · wrong-money cases" runs={runs.filter((r) => split(r) === 'dev')} models={shown} />
         <Panel title="Holdout · wrong-money cases" runs={runs.filter((r) => split(r) === 'holdout')} models={shown} />
       </div>
+
+      {unfinished.length > 0 && (
+        <p className="ev-foot ev-skipped">
+          Not counted, the model never finished (timeout): {unfinished.map(([k, n]) => `${k} ×${n}`).join(', ')}. Attack and genuine totals exclude them.
+        </p>
+      )}
 
       {box.length > 0 && (
         <p className="ev-sandbox felt">
