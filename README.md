@@ -18,6 +18,13 @@ A gate between an AI returns agent and Braintree. Every refund or charge the age
 
 > The live demo runs on Render's free tier, so the first load can take about a minute.
 
+> ### Judge this in 90 seconds
+>
+> 1. **No setup:** open the [live dashboard](https://counterfoil-dashboard.vercel.app). Step through the story (one button per step, nothing plays on its own), then the evidence board: wrong money moved **0/270** with Counterfoil, **99/270** with no gate, **100/270** with a $200 cap.
+> 2. **One attack, three conditions side by side:** open the [live demo](https://counterfoil-demo.onrender.com) and pick **P6-01** (split refund). You see what the Reader extracted, every call the agent made, the gate's PASS / APPROVAL / BLOCK with its reason, and whether money reached the rail. This is a replay of a measured run: no model call, no cost.
+> 3. **In a terminal, no model and no keys:** after the [quick start](#quick-start), `.venv/bin/python scripts/run_eval.py --model worst-case --split all` puts a Reader and an agent fully on the attacker's side across all 14 attacks. Wrong money moved: Counterfoil **0/14**, no gate **11/14**, the cap **11/14**.
+> 4. **Where it stops:** [What these results show, and what they don't](#what-these-results-show-and-what-they-dont).
+
 ## The return crew
 
 Two AI agents and one gate. Different skills, a safer outcome.
@@ -87,6 +94,20 @@ Each scenario records whether the rail's own rules would have stopped it (`rail_
 **One gap in the sandbox, and how we handle it.** A mocked PayPal account does not enforce the refund total: five refunds totalling USD 186.54 on a USD 40.54 sale all went through. Real PayPal refunds are limited, so the evaluation's in-memory rail applies the card limits, and no stop that only this gap explains is counted for Counterfoil ([ADR 0007](docs/adr/0007-braintree-sandbox-with-mocked-paypal.md)).
 
 **PayPal Agent Toolkit.** The Toolkit gives an agent a `create_refund` tool. [`counterfoil/toolkit.py`](counterfoil/toolkit.py) takes the Toolkit's own parameters (`capture_id`, `amount`) and sends the call through the gate first; only a pass or a human approval reaches the PayPal REST rail ([`counterfoil/paypal.py`](counterfoil/paypal.py)). The agent never holds PayPal keys. This path is tested with a faked HTTP layer and has **not** run against a real PayPal REST sandbox, because PayPal accounts can't be opened from Türkiye ([ADR 0008](docs/adr/0008-paypal-rest-rail-in-front-of-agent-toolkit.md)).
+
+## What else guards agent payments, and where it stops
+
+The guards we found for agent payments sit on the **buyer's** side: an agent spends on a customer's behalf, and the guard limits how much and where. A returns agent works on the **seller's** side, giving the store's money back, and the question there is different: *does this refund match what this store's record says is owed?*
+
+| | Side | What it checks | The record of this order and its return |
+|---|---|---|---|
+| Spend caps, allowlists, kill switches (agent-payment SDKs and guard projects) | buyer | how much, to whom | no |
+| Signed intent ([IntentGuard](https://hackquest.io/projects/IntentBinding)) | buyer | the payment matches what the user signed | no |
+| Human approval over a cap ([Countersign](https://lablab.ai/submissions/p4iic6ylqcqd0hw5utigsqiz)) | buyer | amount above a threshold | no |
+| [n8n refund gateway](https://community.n8n.io/t/deterministic-human-in-the-loop-gateway-for-ai-agent-refunds/315643) | seller | nothing: every refund goes to a manager | no |
+| **Counterfoil** | **seller** | owner, return record, refunds already made, catalog price × quantity | **yes** |
+
+A cap can't tell a USD 60 refund that is owed from one that isn't, so it lets through what Counterfoil holds: the $200 cap moved wrong money in 100 of 270 attack runs. Sending every refund to a person stops the harm but does no work: Counterfoil completes the same genuine requests as no gate (102 of 183) and sends to a person only what its record checks or the store's rules flag. This is what we found in October 2026, not a full survey ([our scan](docs/arastirma/2026-10-23-rakipler.md)).
 
 ## Results
 
