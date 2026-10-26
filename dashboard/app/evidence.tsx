@@ -2,7 +2,7 @@
 
 // The Overview's evidence board (Codex's felt palette v3, docs/gorseller/site-tasarim/evidence-palette-v3/): a gate and
 // a model filter, three tiles for the chosen gate, and the wrong-money count of every model on the dev and holdout sets,
-// one felt bar per gate. Everything is counted from counterfoil-data.json, which holds the latest-gate runs only; the
+// one felt bar per gate (Codex's strips, docs/gorseller/site-tasarim/bar-strips-v1, as border-images in globals.css). Everything is counted from counterfoil-data.json, which holds the latest-gate runs only; the
 // Braintree sandbox run is shown on its own line, not mixed into the dev bars.
 
 import { useMemo, useState } from 'react';
@@ -57,11 +57,13 @@ function Panel({ title, runs, models }: { title: string; runs: Run[]; models: st
               const harm = count(attacks, 'harm');
               return (
                 <div className="ev-bar" key={g} role="img" aria-label={`${m}, ${g}: ${harm} of ${attacks.length}`}>
-                  <span className="ev-track">
+                  <span className="ev-lane">
+                    <span className="ev-track" />
                     {harm > 0 && <span className={`ev-fill ${GATE_CLASS[g]}`} style={{ width: `${(100 * harm) / (attacks.length || 1)}%` }} />}
                   </span>
                   <em>
                     {harm} / {attacks.length}
+                    <small>{pct(harm, attacks.length)}</small>
                   </em>
                 </div>
               );
