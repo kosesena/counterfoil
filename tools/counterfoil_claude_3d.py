@@ -135,7 +135,7 @@ def surface_y(body, x, z):
 
 
 def counterfoil(col):
-    plum, rust, cream = felt('Felt_Plum', '#4F1B48'), felt('Felt_Rust', '#7C2014'), felt('Felt_Cream', '#F2E6CF', 0.8)
+    plum, rust, cream = felt('Felt_Plum', '#5E1F56'), felt('Felt_Rust', '#7C2014'), felt('Felt_Cream', '#E8D3AE', 0.8)
     lilac, black = felt('Felt_Lilac', '#C3A6E4', 0.8), bead('Bead_Black', '#0B0A0C')
 
     root = bpy.data.objects.new('Counterfoil', None)

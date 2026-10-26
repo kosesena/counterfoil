@@ -13,41 +13,89 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { FollowingFoil } from './felt';
 
-const MODEL = '3d/counterfoil-claude.glb?v=20261026';
+const MODEL = '3d/counterfoil-claude.glb?v=20261026b';
 const BODY = { yaw: 0.5, up: 0.12, down: 0.2 };      // radians the upper half may turn / nod
 const EYES = { yaw: 0.22, up: 0.1, down: 0.12 };     // extra roll of the bead eyes on top of that
 const DEPTH = 650;                                   // px: how far in front of the screen he imagines the pointer
 
-// Needle felt without textures (the GLB has no UVs): a fine 3D noise in the model's own space breaks up the normal
-// and the colour, and sheen gives the soft fuzzy rim. Beads stay glossy.
+// Needle felt: a tile of curly wool fibres drawn once on a canvas, laid over every part triplanar (the GLB has no UVs,
+// so the tile is projected along the three axes of the part's own space and blended by the surface normal). It lightens
+// and darkens the colour fibre by fibre and bumps the surface along them; sheen gives the soft fuzzy rim. Beads stay
+// glossy.
+let fibreTile: THREE.CanvasTexture | null = null;
+function fibres(): THREE.CanvasTexture {
+  if (fibreTile) return fibreTile;
+  const N = 512, c = document.createElement('canvas');
+  c.width = c.height = N;
+  const g = c.getContext('2d')!;
+  g.fillStyle = '#808080';
+  g.fillRect(0, 0, N, N);
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  g.lineCap = 'round';
+  for (let i = 0; i < 1500; i++) {
+    // one fibre: a short curling stroke, light or dark, drawn nine times so the tile wraps without a seam
+    const pts: [number, number][] = [];
+    let x = rnd() * N, y = rnd() * N, a = rnd() * Math.PI * 2;
+    const curl = (rnd() - 0.5) * 0.5, steps = 8 + Math.floor(rnd() * 22);
+    for (let k = 0; k < steps; k++) {
+      pts.push([x, y]);
+      a += curl + (rnd() - 0.5) * 0.35;
+      x += Math.cos(a) * 4.5;
+      y += Math.sin(a) * 4.5;
+    }
+    const light = rnd() < 0.55;
+    g.strokeStyle = light ? `rgba(255,255,255,${0.16 + rnd() * 0.2})` : `rgba(0,0,0,${0.14 + rnd() * 0.18})`;
+    g.lineWidth = 1.6 + rnd() * 2.2;
+    for (const ox of [-N, 0, N]) for (const oy of [-N, 0, N]) {
+      g.beginPath();
+      pts.forEach(([px, py], k) => (k ? g.lineTo(px + ox, py + oy) : g.moveTo(px + ox, py + oy)));
+      g.stroke();
+    }
+  }
+  fibreTile = new THREE.CanvasTexture(c);
+  fibreTile.wrapS = fibreTile.wrapT = THREE.RepeatWrapping;
+  fibreTile.colorSpace = THREE.NoColorSpace;
+  fibreTile.anisotropy = 4;
+  return fibreTile;
+}
+
 function feltify(src: THREE.MeshStandardMaterial): THREE.Material {
   if (src.name.startsWith('Bead')) {
     return new THREE.MeshPhysicalMaterial({ color: src.color, roughness: 0.08, clearcoat: 1, clearcoatRoughness: 0.05 });
   }
   const m = new THREE.MeshPhysicalMaterial({
-    color: src.color, roughness: 0.92, sheen: 0.6, sheenRoughness: 0.55,
-    sheenColor: new THREE.Color(src.color).lerp(new THREE.Color(0xffffff), 0.2),
+    color: src.color, roughness: 1, sheen: 0.45, sheenRoughness: 0.5,
+    sheenColor: new THREE.Color(src.color).lerp(new THREE.Color(0xffffff), 0.15),
   });
   m.onBeforeCompile = (sh) => {
+    sh.uniforms.feltMap = { value: fibres() };
     sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nvarying vec3 vFeltPos;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvFeltPos = position;');
+      .replace('#include <common>', '#include <common>\nvarying vec3 vFeltPos;\nvarying vec3 vFeltN;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvFeltPos = position;\nvFeltN = normal;');
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', `#include <common>
+uniform sampler2D feltMap;
 varying vec3 vFeltPos;
-float fh(vec3 p) { return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
-float fn(vec3 p) {
-  vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
-  return mix(mix(mix(fh(i), fh(i + vec3(1,0,0)), f.x), mix(fh(i + vec3(0,1,0)), fh(i + vec3(1,1,0)), f.x), f.y),
-             mix(mix(fh(i + vec3(0,0,1)), fh(i + vec3(1,0,1)), f.x), mix(fh(i + vec3(0,1,1)), fh(i + vec3(1,1,1)), f.x), f.y), f.z);
-}
-float felt(vec3 p) { return fn(p * 140.0) * 0.55 + fn(p * 320.0 + 7.0) * 0.3 + fn(p * 38.0 + 3.0) * 0.15; }`)
-      .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb *= 0.9 + 0.16 * felt(vFeltPos);')
+varying vec3 vFeltN;
+float feltH;
+float tri(vec3 p, vec3 w, float s) {
+  return texture2D(feltMap, p.yz * s).r * w.x + texture2D(feltMap, p.xz * s + 0.37).r * w.y + texture2D(feltMap, p.xy * s + 0.71).r * w.z;
+}`)
+      .replace('#include <color_fragment>', `#include <color_fragment>
+{
+  vec3 w = pow(abs(normalize(vFeltN)), vec3(4.0));
+  w /= w.x + w.y + w.z;
+  feltH = tri(vFeltPos, w, 2.3) * 0.7 + tri(vFeltPos * 0.55 + 0.13, w, 2.3) * 0.3;
+  diffuseColor.rgb *= 1.0 + (feltH - 0.5) * 1.0;
+}`)
       .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
 {
-  vec3 q = vFeltPos;
-  vec3 g = vec3(felt(q + vec3(0.002, 0, 0)), felt(q + vec3(0, 0.002, 0)), felt(q + vec3(0, 0, 0.002))) - felt(q);
-  normal = normalize(normal - mat3(viewMatrix) * g * 7.0);
+  vec3 sx = dFdx(-vViewPosition), sy = dFdy(-vViewPosition);
+  vec3 r1 = cross(sy, normal), r2 = cross(normal, sx);
+  float det = dot(sx, r1);
+  vec2 dh = vec2(dFdx(feltH), dFdy(feltH)) * 0.04;
+  normal = normalize(abs(det) * normal - sign(det) * (dh.x * r1 + dh.y * r2));
 }`);
   };
   return m;
@@ -67,16 +115,16 @@ export function Counterfoil3D() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(el.clientWidth, el.clientHeight);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 0.92;
+    renderer.toneMappingExposure = 1.0;
     el.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
     const pmrem = new THREE.PMREMGenerator(renderer);
     scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-    scene.environmentIntensity = 0.55;
-    scene.add(new THREE.HemisphereLight(0xfff4e6, 0xcdb9a5, 0.7));
-    const key = new THREE.DirectionalLight(0xfff1e0, 2.2);
-    key.position.set(-2.5, 3.5, 4);
+    scene.environmentIntensity = 0.3;
+    scene.add(new THREE.HemisphereLight(0xfff4e6, 0x8f7a6a, 0.45));
+    const key = new THREE.DirectionalLight(0xfff1e0, 3.0);
+    key.position.set(-4, 3.2, 2.6);
     scene.add(key);
     const rim = new THREE.DirectionalLight(0xffffff, 1.1);
     rim.position.set(3, 2.5, -3);
