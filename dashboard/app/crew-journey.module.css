@@ -338,3 +338,13 @@
  .readerChapter .stage { min-height:860px; }
  .readerSpotlight[data-attack=true] .readerTasks { top:42%; }
 }
+
+/* Keep every character and example, with less travel between them. */
+.journey { height:1300svh; }
+.skip { display:block; padding:7px 10px; font-size:11px; text-decoration:underline; text-underline-offset:3px; }
+@media (max-width:760px) {
+ .ensemble .stage { grid-template-rows:auto minmax(0,1fr) auto auto auto; }
+ .skip { grid-column:1 / 3; grid-row:5; }
+ .readerSpotlight { bottom:125px; }
+}
+@media (max-height:580px),(prefers-reduced-motion:reduce) { .journey { height:auto; } .readerSpotlight { bottom:175px; } }

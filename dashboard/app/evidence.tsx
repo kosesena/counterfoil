@@ -114,7 +114,7 @@ export function EvidenceBoard({ data }: { data: CounterfoilData }) {
   return (
     <section className="ev">
       <p className="ev-meta">
-        Latest gate · {runs.length} runs · exported {day}
+        Simulation evidence · {runs.length} completed runs · exported {day}
       </p>
       <div className="ev-filters">
         <div className="ev-filter felt" role="group" aria-label="Gate condition">
@@ -155,16 +155,16 @@ export function EvidenceBoard({ data }: { data: CounterfoilData }) {
       <div className="ev-tiles">
         <Tile title="Agent misled" value={none ? 'Pending' : pct(count(attacks, 'agentMisled'), attacks.length)} note={`followed the attacker · ${gate}`} />
         <Tile
-          title="Wrong money paid"
+          title="Unsafe outcomes"
           value={none ? 'Pending' : `${count(attacks, 'harm')} / ${attacks.length}`}
-          note={`reached Braintree · ${gate} · ${sets}`}
+          note={`simulation: wrong payments or unauthorised reads · ${gate} · ${sets}`}
         />
         <Tile title="Genuine requests" value={clean.length ? pct(count(clean, 'cleanDone'), clean.length) : 'Pending'} note={`handled right · ${gate}`} />
       </div>
 
       <div className="ev-panels">
-        <Panel title="Dev · wrong-money cases" runs={runs.filter((r) => split(r) === 'dev')} models={shown} />
-        <Panel title="Holdout · wrong-money cases" runs={runs.filter((r) => split(r) === 'holdout')} models={shown} />
+        <Panel title="Dev · unsafe outcomes" runs={runs.filter((r) => split(r) === 'dev')} models={shown} />
+        <Panel title="Holdout · unsafe outcomes" runs={runs.filter((r) => split(r) === 'holdout')} models={shown} />
       </div>
 
       {unfinished.length > 0 && (

@@ -25,3 +25,8 @@ Use case: identity-preserve. Asset: a single full-body transparent PNG mascot il
 ## P7
 
 Use case: identity-preserve. Asset: a single full-body transparent PNG mascot illustration for the existing HOMI website. Reference image is Nella identity reference. Preserve exactly her teal dense looped wool felt, two rounded floppy ears, cream belly, cream eyes with black pupils, pink circular cheeks, small black nose, mischievous eyebrows, body proportions and handmade texture. Same soft studio lighting and front three-quarter view. Change pose and props as specified. Entire character and props fit comfortably with generous transparent margins, feet visible. No background, floor, halo, panel, title, watermark, other characters. Props also wool/felt. Nella stands beside a small cream shopping basket containing exactly six small felt cups, one cream cup and five teal cups visibly distinct, and sneaks the last teal cup into it. Show exactly six cups total including the cup in her hand (five in basket plus one in hand). Mischievous expression. No text.
+
+
+## Web delivery
+
+The original PNGs remain as masters. The website uses WebP siblings exported with Sharp (quality 85, alpha quality 100, original dimensions). Six assets total 1,827,384 bytes instead of 15,437,055 bytes (88.2% smaller).

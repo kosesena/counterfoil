@@ -249,7 +249,7 @@ export function buildStudioData(data: CounterfoilData): AgDataSourcesDefinition 
     ],
     expressions: [
       total('misledRuns', 'Agent misled', 'runs.agentMisled'),
-      total('harmRuns', 'Wrong money paid', 'runs.harm'),
+      total('harmRuns', 'Unsafe outcomes', 'runs.harm'),
       total('stoppedRuns', 'Stopped by gate', 'runs.stoppedByGate'),
       total('moneyCalls', 'Money calls', 'calls.moneyCall'),
       total('harmNoGate', 'No gate', 'runs.harmNoGate'),

@@ -90,7 +90,7 @@ function overview(compact: boolean): AgPageState {
       condition: filter('runs.condition', 'Condition'),
       model: filter('runs.model', 'Model', compact ? 150 : undefined),
       'kpi-misled': kpi('Agent misled', { id: 'misledRate' }, 'followed the attacker', 'amber'),
-      'kpi-harm': kpi('Wrong money paid', { id: 'harmRate' }, 'reached Braintree', 'harm'),
+      'kpi-harm': kpi('Unsafe outcomes', { id: 'harmRate' }, 'wrong payments or unauthorised reads', 'harm'),
       'kpi-legit': kpi('Genuine requests', { id: 'legitRate' }, 'handled right', 'green'),
       'harm-by-condition': {
         type: 'soft-bars' as 'column-chart-grouped',
@@ -115,7 +115,7 @@ function overview(compact: boolean): AgPageState {
           columns: [],
           values: [measure('harmNoGate'), measure('harmCap'), measure('harmCounterfoil')],
         },
-        format: title('Wrong money paid, by model'),
+        format: title('Unsafe outcomes, by model'),
       },
     },
     widgetLayout: compact
@@ -208,14 +208,14 @@ function review(compact: boolean): AgPageState {
         'tally-attack',
         'Attack e-mails: what happened to the money calls',
         ['attackBlocked', 'attackHeld', 'attackMoneyCalls'],
-        'The rest matched the store record and passed: no wrong money reached Braintree.',
+        'Other calls may pass when they match the store record. See each call’s decision and payment result below.',
         'harm',
       ),
       'tally-genuine': tally(
         'tally-genuine',
         'Genuine e-mails',
         ['genuineCompleted', 'genuineToReview', 'genuineRuns'],
-        'Sent to review: the $300 return above the $200 auto-refund limit, as store policy requires.',
+        'Expected review includes the $300 return above the automatic limit, new charges requiring basket confirmation, and returns needing a store return record.',
         'green',
       ),
       pending: {

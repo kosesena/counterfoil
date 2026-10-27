@@ -53,6 +53,7 @@ function harmByCondition(data: CounterfoilData) {
 export default function Page() {
   const [data, setData] = useState<CounterfoilData | null>(null);
   const [error, setError] = useState('');
+  const [storyOpen, setStoryOpen] = useState(false);
   const [compact, setCompact] = useState<boolean | null>(null);
   const [pageId, setPageId] = useState('overview');
   useFeltConditions();
@@ -104,9 +105,12 @@ export default function Page() {
           <div id="crew-results" className="crew-results">
             <span className="crew-results-kicker">THE RESULTS</span>
             <h2>The boundary, measured.</h2>
-            <ResultBand compare={compare} runs={data.runs.length} models={models.length} />
+            <ResultBand compare={compare} runs={offSandbox(data).runs.length} models={models.length} />
+            <p className="result-scope">{data.runs.length} completed runs in total: {offSandbox(data).runs.length} simulations and {data.runs.length-offSandbox(data).runs.length} Braintree sandbox runs. Each fraction above counts attack runs within one condition, not distinct attacks. The suite contains 14 attack scenarios across 7 families.</p>
           </div>
-          <section className="f-story felt" id="story">
+          <details className="story-disclosure" onToggle={e=>setStoryOpen(e.currentTarget.open)}>
+            <summary>See a return in the store <span>Optional · seven-step walkthrough</span></summary>
+          {storyOpen && <section className="f-story felt" id="story">
             <h2>One receipt. Seven moments.</h2>
             <p className="f-sub">Follow attack P6-01 from checkout to resolution, one button at a time.</p>
             <div className="f-story-grid">
@@ -117,7 +121,8 @@ export default function Page() {
             </div>
             <StoryStrip />
             <p className="f-note">The blocked $60 and the new, valid $40 are separate requests · Braintree sandbox, mocked PayPal</p>
-          </section>
+          </section>}
+          </details>
           <section className="f-evidence-head">
             <h2>The evidence, without the guesswork.</h2>
           </section>

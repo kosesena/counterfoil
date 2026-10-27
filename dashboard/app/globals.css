@@ -556,3 +556,20 @@ main.studio-off { height: 0 !important; min-height: 0; padding: 0; margin: 0; ov
   .crew-sandbox { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+/* Carry the quiet crew-page typography into evidence and optional detail. */
+:root { --cf-display:var(--cf-font); --cf-canvas:#f3eae5; --cf-surface:#faf5f1; --cf-ink:#392432; --cf-muted:#796773; --cf-border:#d9c7cd; }
+.felt { border:1px solid var(--cf-border); border-radius:12px; box-shadow:none; }
+.felt::after { display:none; }
+.f-story h2,.f-evidence-head h2 { font-family:var(--cf-serif); font-weight:500; letter-spacing:-.035em; }
+.story3d-card,.story3d-till { outline:none; border:1px solid var(--cf-border); }
+main .ag-studio-layout-widget-container { outline:none !important; box-shadow:none !important; border-radius:12px; }
+main .ag-studio-layout-widget-title { font-family:var(--cf-font) !important; font-weight:600 !important; font-size:18px !important; }
+.result-scope { max-width:760px; margin:0 auto; padding:0 24px 28px; font-size:12px; line-height:1.7; color:var(--cf-muted); text-align:center; }
+.story-disclosure { margin:24px clamp(18px,5vw,80px); border-top:1px solid var(--cf-border); border-bottom:1px solid var(--cf-border); }
+.story-disclosure summary { cursor:pointer; padding:22px 0; font-size:18px; color:var(--cf-ink); }
+.story-disclosure summary span { display:block; margin:8px 0 0 20px; font-size:12px; color:var(--cf-muted); }
+.story-disclosure summary:focus-visible { outline:2px solid var(--cf-plum); outline-offset:4px; }
+.story-disclosure .f-story { margin:0 0 24px; }
+.ev-meta { font-size:13px; font-weight:400; line-height:1.6; }
+#crew-results { scroll-margin-top:90px; }

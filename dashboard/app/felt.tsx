@@ -89,7 +89,7 @@ export function ResultBand({ compare, runs, models }: { compare: { label: string
           <strong>{c.harm}<small>/{c.total}</small></strong>
         </div>
       ))}
-      <p>Attack runs where wrong money reached Braintree · {runs} runs, {models} models</p>
+      <p>Unsafe outcomes in simulation: wrong payments or unauthorised data access. {runs} simulation runs · {models} models</p>
     </section>
   );
 }

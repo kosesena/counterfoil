@@ -132,7 +132,7 @@ export function CrewJourney() {
           <img src="brand/paypal-braintree.png" alt="PayPal powered by Braintree" width={160} height={50}/><small>Sandbox · mocked PayPal · no real funds</small>
         </div>
       </div>
-      <a className={styles.skip} href="#crew-results">{pinned?'Scroll to follow the return ↓':'Continue to the results ↓'}</a>
+      <a className={styles.skip} href="#crew-results">Skip to the results ↓</a>
     </div>
   </section>;
 }
@@ -199,7 +199,7 @@ function CharacterSpotlight({character,progress,calm,manual}:{character:'Reader'
         <img src={`crew/${character.toLowerCase()}-wave-v1.png`} alt={shift<.5?`${character} waving hello`:''} style={{opacity:1-shift}} width="1127" height="1400"/>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         {(payment?['paypal-receive-v1','paypal-process-v1','paypal-complete-v1']:manager?['manager-review-v1','manager-decline-v1','manager-record-v1']:foil?['counterfoil-check-v1','counterfoil-hold-v1','counterfoil-allow-v1']:runner?['runner-receive-v1','nella-runner-handoff-v1','runner-prepare-v1','runner-wait-v1']:['reader-look-right-v1','reader-extract-v1','reader-no-payment-v1']).map((pose,i)=><img key={pose} src={`crew/${pose}.png`} alt={shift>=.5&&!attack&&poseTask===i?(payment?['Payment mascot receiving the allowed call','Payment mascot processing a refund','Payment mascot presenting the successful result']:manager?['Store manager reviewing the held request','Store manager refusing the extra refund','Store manager recording a decision on the tablet']:foil?['Counterfoil comparing store records','Counterfoil raising a hand to hold the call','Counterfoil giving a thumbs-up for a valid call']:runner?['Runner receiving the request','Nella passing a manipulated note to Runner','Runner preparing a proposed money call','Runner waiting for Counterfoil']:['Reader introducing the customer note','Reader pointing out details on the note','Reader opening both hands to explain that it cannot move money'])[i]:''} style={{opacity:!attack&&poseTask===i?shift:0}} width="1127" height="1400"/>)}
-        {runner&&NELLA_ATTEMPTS.map(attempt=><img key={attempt.family} src={`crew/${attempt.image}.png`} alt={attack===attempt?attempt.alt:''} style={{opacity:attack===attempt?1:0}} width="1024" height="1536"/>)}
+        {runner&&NELLA_ATTEMPTS.map(attempt=><img key={attempt.family} src={`crew/${attempt.image}.webp`} alt={attack===attempt?attempt.alt:''} style={{opacity:attack===attempt?1:0}} width="1024" height="1536"/>)}
       </div>
       <h2>{shift<.5?`Hi, I’m ${manager?'the store manager':payment?'the payment rail':character}.`:intrusion?'Nella & Runner':attack?'Nella':manager?'Store manager':payment?'PayPal / Braintree':character}</h2>
     </div>
