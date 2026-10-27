@@ -41,12 +41,12 @@ function Amounts({ file }: { file: CaseFile }) {
   const cells = [
     { label: 'Store record allows', value: file.allows, note: file.tool === 'charge' ? 'catalog price × Reader items' : `left on ${file.rmaId ?? 'the RMA'}` },
     { label: 'Reader handed off', value: file.handedOff, note: file.handedOff === null ? 'no amount in the hand-off' : 'from the e-mail, no tools' },
-    { label: 'Agent asked', value: file.asked, note: over ? `${usd(file.asked! - file.allows!)} over the record` : 'within the record' },
+    { label: 'Agent asked', value: file.asked, note: file.allows === null || file.asked === null ? 'amount comparison unavailable' : over ? `${usd(file.asked! - file.allows!)} over the record` : 'amount only; other checks still apply' },
   ];
   return (
     <div className="case-amounts">
       {cells.map((c, i) => (
-        <div key={c.label} className={i === 2 ? (over ? 'over' : 'within') : ''}>
+        <div key={c.label} className={i === 2 && over ? 'over' : ''}>
           <small>{c.label}</small>
           <strong>{usd(c.value)}</strong>
           <span>{c.note}</span>
@@ -98,6 +98,11 @@ function Case({ file }: { file: CaseFile }) {
   ];
   return (
     <>
+      <div className={`case-next ${file.decision==='BLOCK'?'block':'hold'}`}>
+        <strong>{file.decision==='BLOCK'?'Blocked · cannot be approved':'Held · needs a person’s review'}</strong>
+        <p>{file.decision==='BLOCK'?'This call cannot be released. Resolve the failed checks, then submit a new request for a fresh evaluation.':'Compare the exact request with the store records and checks below. Resolve missing or invalid records first. A reviewer may approve or reject the exact call; approval cannot bypass payment-provider rules.'}</p>
+        <small>Recorded test outcome · no live approval is pending on this page</small>
+      </div>
       <h3>{file.headline}</h3>
       <p className="case-why">{file.explanation}</p>
       <Amounts file={file} />
@@ -117,7 +122,7 @@ function Case({ file }: { file: CaseFile }) {
           </span>
         ))}
       </div>
-      <div className="case-trace">
+      <details className="case-diagnostics"><summary>How this explanation was built</summary><div className="case-trace">
         <span>Case agent</span>
         {file.trace.map((s, i) => (
           <code key={i} className={s.ok ? '' : 'failed'}>
@@ -125,7 +130,7 @@ function Case({ file }: { file: CaseFile }) {
           </code>
         ))}
         <em>Read-only store tools · no approve tool · never reads the e-mail</em>
-      </div>
+      </div></details>
     </>
   );
 }
@@ -134,6 +139,8 @@ export function CaseFileWidget(params: AgWidgetParams<CaseWidget>) {
   const ids = useCallIds(params);
   const [index, setIndex] = useState(0);
   const count = ids?.length ?? 0;
+  const selectionKey=ids?.join('|');
+  useEffect(()=>setIndex(0),[selectionKey]);
   const callId = ids && count ? ids[Math.min(index, count - 1)] : null;
   const state = useSyncExternalStore(
     caseStore.subscribe,
@@ -160,13 +167,19 @@ export function CaseFileWidget(params: AgWidgetParams<CaseWidget>) {
         </button>
         {decision && <b className={decision === 'BLOCK' ? 'block' : 'hold'}>{decision}</b>}
       </div>
+      {count>1&&<label className="case-jump">Jump to a case
+        <select aria-label="Jump to a case" value={Math.min(index,count-1)} onChange={e=>setIndex(Number(e.target.value))}>
+          {ids?.map((id,i)=><option key={id} value={i}>Case {i+1} of {count}</option>)}
+        </select>
+      </label>}
       <div className="case-body">
+        {ids!==null&&count===0&&<div className="case-empty"><h3>No cases match these filters.</h3><p>Choose another condition, model or decision to inspect a recorded held or blocked call.</p></div>}
         {state?.status === 'working' && <p className="case-wait">The case agent is reading the store record…</p>}
         {state?.status === 'failed' && <p className="case-wait">Could not build this case: {state.error}</p>}
         {state?.status === 'done' && <Case file={state.file} />}
       </div>
       <a className="case-demo" href={DEMO} target="_blank" rel="noopener">
-        Approve or reject a held call yourself in the live demo →
+        Try a separate approval flow in the sandbox →
       </a>
     </div>
   );

@@ -237,7 +237,7 @@ function review(compact: boolean): AgPageState {
           ],
         },
         format: {
-          ...title('Pending approvals and blocked calls: the store record, the Reader and the agent side by side'),
+          ...title('Recorded held and blocked calls'),
           // one row per call; a total would add the same refund up once per model and repeat
           style: { columnAutoSize: false, columnWidth: 140, grandTotalRow: { enabled: false } },
         },
@@ -245,7 +245,7 @@ function review(compact: boolean): AgPageState {
       case: {
         type: 'case-file' as 'value',
         dataMapping: { callKey: [{ id: 'calls.id' }] } as never,
-        format: title('Why held, why blocked'),
+        format: title('Inspect a case'),
       },
       checks: {
         type: 'soft-rank' as 'bar-chart-grouped',
@@ -266,27 +266,22 @@ function review(compact: boolean): AgPageState {
     widgetLayout: compact
       ? rows([
           [['condition'], [24], 8],
-          [['model'], [24], 8],
-          [['tally-attack'], [24], 10],
-          [['tally-genuine'], [24], 10],
           [['decision'], [24], 8],
-          [['case'], [24], 46],
+          [['model'], [24], 8],
+          [['case'], [24], 55],
           [['pending'], [24], 30],
+          [['tally-attack'], [24], 11],
+          [['tally-genuine'], [24], 12],
           [['checks'], [24], 20],
           [['mix'], [24], 20],
         ])
-      : {
-          ...rows([
-            [['condition'], [24], 8],
-            [['model'], [24], 8],
-            [['tally-attack', 'tally-genuine'], [12, 12], 9],
-          ]),
-          decision: at([0, 25, 13, 8]),
-          pending: at([0, 33, 13, 38]),
-          case: at([13, 25, 11, 46]),
-          checks: at([0, 71, 15, 20]),
-          mix: at([15, 71, 9, 20]),
-        },
+      : rows([
+          [['condition', 'decision'], [12, 12], 8],
+          [['model'], [24], 8],
+          [['case', 'pending'], [14, 10], 53],
+          [['tally-attack', 'tally-genuine'], [12, 12], 11],
+          [['checks', 'mix'], [15, 9], 20],
+        ]),
   };
 }
 

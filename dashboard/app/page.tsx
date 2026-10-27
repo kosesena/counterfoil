@@ -17,6 +17,7 @@ import { ClosingBand, Crew, Hero, ResultBand, StoryAside, useFeltConditions } fr
 import { CrewJourney, ProductIntro } from './crew-journey';
 import { EvidenceBoard } from './evidence';
 import { RailChecksBoard } from './rail-checks';
+import { ReviewIntro } from './review-intro';
 import { canvasPadding, counterfoilTheme } from './theme';
 
 if (process.env.NODE_ENV !== 'production') {
@@ -151,23 +152,10 @@ export default function Page() {
         </>
       )}
 
-      {pageId === 'review' && (
-        <section className="intro felt">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="intro-foil" src="crew/counterfoil-block.webp" alt="" />
-          <p>
-            Every refund or charge Counterfoil did not let straight through. <b>APPROVAL</b> waits for the merchant; <b>BLOCK</b> never
-            reaches Braintree. Step through the cases on the right, or narrow them with the buttons: the case agent reads the store
-            record and lays each call out next to what the record allows. It cannot approve anything.
-          </p>
-          <a href="https://counterfoil-demo.onrender.com" target="_blank" rel="noopener">
-            Approve a held call in the live demo →
-          </a>
-        </section>
-      )}
+      {pageId === 'review' && data && <ReviewIntro data={data} />}
 
       {/* On the Overview the board above replaces Studio's page; Studio stays mounted so the other two tabs keep their state. */}
-      <main className={pageId === 'overview' ? 'studio-off' : ''} style={studioHeight ? { height: studioHeight } : undefined}>
+      <main id="review-workspace" className={pageId === 'overview' ? 'studio-off' : ''} style={studioHeight ? { height: studioHeight } : undefined}>
         {error && <p className="message">Could not load counterfoil-data.json ({error}). Run scripts/export_dashboard.py first.</p>}
         {!error && !studioData && <p className="message">Loading…</p>}
         {studioData && report && (

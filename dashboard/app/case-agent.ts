@@ -109,21 +109,8 @@ function projector(api: AgStudioApi): Query {
 }
 
 const CALL_FIELDS = [
-  'calls.id',
-  'calls.tool',
-  'calls.decision',
-  'calls.orderNo',
-  'calls.rmaId',
-  'calls.amount',
-  'calls.readerAmount',
-  'calls.storeAllows',
-  'calls.detail',
-  'orders.customerEmail',
-  'orders.paymentMethod',
-  'returns.approvedAmount',
-  'runs.model',
-  'runs.scenarioId',
-  'runs.condition',
+  'calls.id', 'calls.runId', 'calls.tool', 'calls.decision', 'calls.orderNo',
+  'calls.rmaId', 'calls.amount', 'calls.readerAmount', 'calls.storeAllows', 'calls.detail',
 ];
 
 const byCall = (s: AgAiParamsBuilder) => s.object({ callId: s.string() });
@@ -139,7 +126,15 @@ function caseTools(api: AgStudioApi): AgAiTool[] {
         const [row] = await project(CALL_FIELDS, ['calls.id', callId], ctx);
         if (!row) return ctx.error(`no call ${callId}`);
         if (row['calls.decision'] === 'PASS') return ctx.error('this call passed the gate; only held or blocked calls get a case file');
-        return ctx.success(JSON.stringify(row), row);
+        // Missing order/RMA references are themselves reasons to hold a call.
+        // Joining all sources in one projection silently drops those cases.
+        const [runs, orders, returns] = await Promise.all([
+          project(['runs.model', 'runs.scenarioId', 'runs.condition'], ['runs.id', String(row['calls.runId'])], ctx),
+          row['calls.orderNo'] ? project(['orders.customerEmail', 'orders.paymentMethod'], ['orders.orderNo', String(row['calls.orderNo'])], ctx) : Promise.resolve([]),
+          row['calls.rmaId'] ? project(['returns.approvedAmount'], ['returns.rmaId', String(row['calls.rmaId'])], ctx) : Promise.resolve([]),
+        ]);
+        const record = { ...row, ...runs[0], ...orders[0], ...returns[0] };
+        return ctx.success(JSON.stringify(record), record);
       },
     }),
     api.defineAiTool({
@@ -272,7 +267,7 @@ async function* round(input: AgAiRunInput): AsyncGenerator<AgAiEvent> {
     } else if (m.role === 'tool' && t) {
       const name = t.names.get(m.toolCallId) ?? '?';
       // the tool message carries the tool's whole result: { success, response, data }
-      let result: { success?: boolean; data?: unknown } = {};
+      let result: { success?: boolean; data?: unknown; issues?: {message:string}[] } = {};
       try {
         result = JSON.parse(m.content);
       } catch {
@@ -280,6 +275,10 @@ async function* round(input: AgAiRunInput): AsyncGenerator<AgAiEvent> {
       }
       const ok = !m.error && result.success === true;
       const value = result.data ?? null;
+      if (!ok) {
+        publish(t.callId, {status:'failed', error: `${name}: ${result.issues?.map(issue=>issue.message).join('; ') || m.content}`});
+        return;
+      }
       t.trace.push({ tool: name, ok });
       if (ok) t.results.set(name, value);
     }
