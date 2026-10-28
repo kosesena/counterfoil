@@ -4,7 +4,7 @@ export function StoryContinuation({ view, onContinue }: Props) {
   const review = view === 'review';
   const steps = review ? [
     { image: 'manager-record-v1.png', name: 'Compare the records', title: '$30 owed, $80 requested', text: 'The manager checks the customer, the original order and earlier refunds. The store record allows only $30.' },
-    { image: 'manager-decline-v1.png', name: 'Reject the wrong request', title: 'Do not send the $80', text: 'The manager rejects the extra amount. The original request stays unsent; reviewing it does not move money.' },
+    { image: 'manager-decline-v1.png', name: 'Reject the wrong request', title: 'Do not send the $80', text: 'In this example, the manager chooses to reject the extra amount. The original request stays unsent; reviewing it does not move money.' },
     { image: 'runner-wait-v1.png', name: 'Prepare a new request', title: 'Ask for $30 instead', text: 'Runner prepares a separate $30 refund request. Counterfoil must check it again before it can reach PayPal.' },
   ] : [
     { image: 'runner-wait-v1.png', name: 'Runner requests', title: 'A new $30 refund', text: 'This is a separate request after human review. The original $80 request was rejected and is never sent.' },
@@ -21,7 +21,7 @@ export function StoryContinuation({ view, onContinue }: Props) {
       <h3>{step.title}</h3><p>{step.text}</p>
     </li>)}</ol>
     <div className="continuation-outcomes"><div><small>ORIGINAL REQUEST</small><strong>$80 · never sent</strong><span>{review?'Rejected after review':'No Braintree API call for this request'}</span></div><div><small>NEW, SEPARATE REQUEST</small><strong>{review?'$30 · needs a new check':'$30 · refunded in this example'}</strong><span>{review?'Next: Counterfoil checks, then payment can be attempted':'Braintree returns the payment result'}</span></div></div>
-    <p className="continuation-note">{review?'This walkthrough illustrates a review decision. It does not approve, reject or change any recorded call below.':'Passing Counterfoil’s checks is not a guarantee of payment success. Braintree may also return a failure; only its result confirms the outcome. This walkthrough makes no payment.'}</p>
+    <p className="continuation-note">{review?'This is an invented review decision, not a recorded manager action. A held call may be approved or rejected after review; a blocked call cannot be overridden. This walkthrough changes no recorded call.':'Passing Counterfoil’s checks is not a guarantee of payment success. Braintree may also return a failure; only its result confirms the outcome. The $30 result is illustrated, not a recorded transaction or live API response. This walkthrough makes no payment.'}</p>
     <button className="continuation-next" onClick={onContinue}>{review?'Follow the new $30 request →':'Back to the full story →'}</button>
   </section>;
 }

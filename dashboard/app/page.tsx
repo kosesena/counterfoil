@@ -106,11 +106,11 @@ export default function Page() {
           <ProductIntro />
           <SimpleStory />
           <div className="story-next-wrap"><button className="continuation-next" onClick={() => { openPage('review'); window.scrollTo({ top: 0 }); }}>Next: see how the manager reviews $80 →</button></div>
-          <details className="simple-disclosure"><summary>Meet the crew and explore Nella’s other tricks</summary><CrewJourney /></details>
+          <details className="simple-disclosure"><summary>Meet the crew and explore Nella’s other tricks</summary><p className="evidence-context">A separate teaching story using $60 and $40, plus examples of other attacks. These scenes are illustrations, not transaction replays.</p><CrewJourney /></details>
           <details id="crew-results" className="simple-disclosure"><summary>Technical details · test results and evidence</summary>
           <div className="crew-results">
             <span className="crew-results-kicker">THE RESULTS</span>
-            <h2>The boundary, measured.</h2>
+            <h2>The boundary, measured.</h2><p className="evidence-context">Recorded evaluation snapshot · exported {data.asOf.slice(0,16).replace('T',' ')} UTC. The figures below come from the test data, not the illustrated story. Zero observed unsafe outcomes in this suite is not a guarantee for every future request.</p>
             <ResultBand compare={compare} runs={offSandbox(data).runs.length} models={models.length} />
             <p className="result-scope">{data.runs.length} completed runs in total: {offSandbox(data).runs.length} simulations and {data.runs.length-offSandbox(data).runs.length} Braintree sandbox runs. Each fraction above counts attack runs within one condition, not distinct attacks. The suite contains 14 attack scenarios across 7 families.</p>
           </div>
@@ -118,7 +118,7 @@ export default function Page() {
             <summary>See a return in the store <span>Optional · seven-step walkthrough</span></summary>
           {storyOpen && <section className="f-story felt" id="story">
             <h2>One receipt. Seven moments.</h2>
-            <p className="f-sub">Follow attack P6-01 from checkout to resolution, one button at a time.</p>
+            <p className="f-sub">An illustrative walkthrough based on attack P6-01, not a replay of one recorded test run.</p>
             <div className="f-story-grid">
               <div className="station">
                 <Story3D />
@@ -160,7 +160,7 @@ export default function Page() {
       {pageId === 'calls' && data && <CallsWorkspace data={data} onContinue={() => { openPage('overview'); window.scrollTo({ top: 0 }); }} />}
 
       {/* Keep Studio mounted to preserve review state inside the optional records view. */}
-      <details hidden={pageId !== 'review'} className="simple-disclosure"><summary>Technical details · inspect recorded review cases</summary>
+      <details hidden={pageId !== 'review'} className="simple-disclosure"><summary>Technical details · inspect recorded review cases</summary>{data && <p className="evidence-context">Recorded evaluation snapshot · exported {data.asOf.slice(0,16).replace('T',' ')} UTC. Cases below come from test calls; they are not a live approval queue or the illustrated $80 story.</p>}
       <main id="review-workspace" aria-hidden={pageId !== 'review'} inert={pageId !== 'review'} className={pageId !== 'review' ? 'studio-off' : ''} style={studioHeight ? { height: studioHeight } : undefined}>
         {error && <p className="message">Could not load counterfoil-data.json ({error}). Run scripts/export_dashboard.py first.</p>}
         {!error && !studioData && <p className="message">Loading…</p>}

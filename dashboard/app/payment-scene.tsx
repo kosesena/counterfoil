@@ -9,7 +9,7 @@ function HoldBadge() {
 export function PaymentScene() {
   const [corrected, setCorrected] = useState(false);
   return <section className="payment-scene" aria-label="From customer message to payment">
-    <div className="payment-scene-heading"><span className="review-eyebrow">HOMI RETURNS DESK · ILLUSTRATED EXAMPLE</span><h2>AI asks. Counterfoil checks.<br/><em>PayPal moves the money.</em></h2><p>Follow two separate requests. The original $80 request never reaches the payment service.</p></div>
+    <div className="payment-scene-heading"><span className="review-eyebrow">HOMI RETURNS DESK · ILLUSTRATED EXAMPLE</span><h2>AI asks. Counterfoil checks.<br/><em>PayPal moves the money.</em></h2><p>An invented teaching example, not a replay of a recorded transaction. Follow two separate requests; the original $80 request never reaches the payment service.</p></div>
     <div className="payment-scene-controls" role="group" aria-label="Choose an example request">
       <button aria-pressed={!corrected} onClick={()=>setCorrected(false)}>A · $80 request held</button>
       <button aria-pressed={corrected} onClick={()=>setCorrected(true)}>B · New $30 request passes</button>
@@ -32,7 +32,7 @@ export function PaymentScene() {
         <div className="scene-down-arrow" aria-hidden="true">↓</div><div className="scene-request" aria-live="polite"><span>PROPOSED REQUEST →</span><strong>Refund {corrected?'$30':'$80'}</strong><small>{corrected?'A new, corrected request. The original $80 request stays unsent.':'An agent request is not permission to pay.'}</small></div>
       </div>
       <div className="scene-gate"><span className="scene-column-arrow" aria-hidden="true">→</span>
-        <div className="scene-record"><span>REFERENCE FOR STEP 4 ↓</span><b>$30 owed</b><small>Order, return and refund history</small></div>
+        <div className="scene-record"><span>REFERENCE FOR STEP 4 ↓</span><b>$30 owed</b><small>Open return · no earlier refund or reservation in this example</small></div>
         <figure><img src={corrected?'crew/counterfoil-allow-v1.png':'crew/counterfoil-hold-v1.png'} width="200" height="250" alt={corrected?'Counterfoil allows the new request':'Counterfoil holds the request'} loading="lazy"/><figcaption><b><span className="scene-step-number">4</span> Counterfoil</b><span>Rule &amp; authorisation checks</span></figcaption></figure>
         <div className="scene-gate-result" aria-live="polite"><strong>{corrected?'PASS · New $30 request':'HOLD · $80 is not sent'}</strong><span>{corrected?'The corrected request passes the checks.':'The amount does not match the store record.'}</span></div>
         <div className="scene-review"><img src="crew/manager-review-v1.png" width="70" height="90" alt="Store manager reviewing a request" loading="lazy"/><div><b>↓ Review branch from step 4</b><span>{corrected?'Reject $80 → back to Runner (step 3) for a new $30 request.':'The manager checks the mismatch. This path does not lead directly to payment.'}</span><small>Technical equivalent: review screen</small></div></div>
@@ -45,6 +45,6 @@ export function PaymentScene() {
         <div className="scene-receipt" aria-live="polite"><small>ILLUSTRATED OUTCOME</small><strong>{corrected?'$30 refunded':'$0 sent'}</strong><span>{corrected?'The payment service reports success. The customer gets the valid refund.':'The $80 request is held before payment. No refund is executed.'}</span></div>
       </div>
     </div>
-    <p className="scene-caption">{corrected?'This shows a successful payment outcome. In practice, an allowed API request can still fail; the payment service returns the result.':'Counterfoil checks the request before Braintree is called. Human review does not send money by itself.'} Illustration only · no API call or real payment is made by these buttons.</p>
+    <p className="scene-caption">{corrected?'This shows a successful payment outcome. In practice, an allowed API request can still fail; the payment service returns the result.':'Counterfoil holds this first amount mismatch for review. If earlier refunds or reservations cause the total to exceed the return allowance, it blocks the request instead.'} Illustration only · no API call or real payment is made by these buttons.</p>
   </section>;
 }

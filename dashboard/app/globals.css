@@ -862,3 +862,4 @@ main .ag-studio-layout-widget-title { font-family:var(--cf-font) !important; fon
  .crew-header nav { gap: 10px; }
  .crew-header nav button { white-space: nowrap; }
 }
+.evidence-context { font-size: 13px; line-height: 1.7; color: #6d5d67; padding: 14px 0; max-width: 850px; }

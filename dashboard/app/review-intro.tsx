@@ -19,6 +19,6 @@ export function ReviewIntro({ data, onContinue }: { data: CounterfoilData; onCon
       <figcaption><strong>“I check before I decide.”</strong><span>The store manager · human review</span></figcaption>
     </figure>
     <div className="review-simple"><StoryContinuation view="review" onContinue={onContinue} /></div>
-    <details className="review-simple simple-disclosure"><summary>Snapshot counts · {held} held, {blocked} blocked</summary><p>Recorded evaluation calls across models, simulation and sandbox. This is not a live queue.</p></details>
+    <details className="review-simple simple-disclosure"><summary>Snapshot counts · {held} held, {blocked} blocked</summary><p>Recorded evaluation calls across models, simulation and sandbox. These count calls, not distinct customers or test runs. This is not a live queue.</p></details>
   </section>;
 }

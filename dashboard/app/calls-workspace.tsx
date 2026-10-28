@@ -46,7 +46,7 @@ export function CallsWorkspace({data,onContinue}:{data:CounterfoilData;onContinu
   return <section className="calls-workspace" aria-labelledby="calls-title">
     <div className="calls-hero"><div><span className="review-eyebrow">COUNTERFOIL / THE CALL LOG</span><h1 id="calls-title">Did the payment<br/><em>go through?</em></h1><p>Runner asks to move money. Counterfoil checks the request. The payment service reports what happened.</p><small>Illustrated story · recorded calls in Technical details</small></div><figure><img src="crew/paypal-wave-v1.png" alt="PayPal and Braintree payment mascot" width="1127" height="1400"/><figcaption>“I process the allowed payment.”</figcaption></figure></div>
     <StoryContinuation view="calls" onContinue={onContinue} />
-    <details className="simple-disclosure"><summary>Technical details · search all recorded calls</summary>
+    <details className="simple-disclosure"><summary>Technical details · search all recorded calls</summary><p className="evidence-context">Recorded evaluation snapshot · exported {data.asOf.slice(0,16).replace('T',' ')} UTC. Each entry is one attempted money call; a test run can contain several calls. These records are separate from the illustrated $80 / $30 story.</p>
     <div className="calls-legend"><p><b>PASS</b> Eligible to execute. The payment can still fail.</p><p><b>APPROVAL</b> Held for human review.</p><p><b>BLOCK</b> Refused before execution.</p></div>
     <div id="calls-records" className="calls-records">
       <div className="calls-filter-heading"><div><h2>Explore recorded calls</h2><p>One entry per call, including repeated attempts. Simulation and sandbox results are labelled separately.</p></div><button onClick={reset}>Reset filters</button></div>
