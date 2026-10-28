@@ -92,7 +92,7 @@ export default function Page() {
   return (
     <>
       <header className="top crew-header">
-        <button className="crew-wordmark" onClick={() => openPage('overview')} aria-label="HOMI home">HOMI</button>
+        <button className="crew-wordmark" onClick={() => openPage('overview')} aria-label="HOMI home"><img className="wordmark-felt" src="buttons/homi-wordmark.webp" alt="HOMI" /></button>
         <nav aria-label="Main navigation">
           {Object.entries(PAGE_TITLES).map(([id, text]) => (
             <button key={id} className={id === pageId ? 'active' : ''} aria-current={id === pageId ? 'page' : undefined} onClick={() => openPage(id)}>{text}</button>
