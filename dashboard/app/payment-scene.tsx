@@ -2,6 +2,10 @@
 
 import { useState } from 'react';
 
+function HoldBadge() {
+  return <span className="scene-hold-badge"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8"/><path d="M12 6.5V12l3.5 2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>On hold</span>;
+}
+
 export function PaymentScene() {
   const [corrected, setCorrected] = useState(false);
   return <section className="payment-scene" aria-label="From customer message to payment">
@@ -14,7 +18,7 @@ export function PaymentScene() {
       <li><b>1</b><span>Message arrives</span></li>
       <li><b>2</b><span>Reader reads</span></li>
       <li><b>3</b><span>Runner requests</span></li>
-      <li className={corrected?'sequence-pass':'sequence-hold'}><b>4</b><span>Counterfoil checks<small>{corrected?'Passed':'Stops here · review needed'}</small></span></li>
+      <li className={corrected?'sequence-pass':'sequence-hold'}><b>4</b><span>Counterfoil checks<small>{corrected?'Passed':<><HoldBadge /> Review needed</>}</small></span></li>
       <li className={corrected?'sequence-pass':'sequence-pending'}><b>5</b><span>PayPal processes<small>{corrected?'$30 refunded':'Not reached · $0 sent'}</small></span></li>
     </ol>
     <p className="scene-reading-guide">{corrected?'After review, Runner creates a NEW $30 request at step 3. It passes step 4, then reaches PayPal at step 5.':'Follow steps 1 → 4. The $80 request stops at Counterfoil and goes to human review, not to PayPal.'}</p>
@@ -33,7 +37,7 @@ export function PaymentScene() {
         <div className="scene-gate-result" aria-live="polite"><strong>{corrected?'PASS · New $30 request':'HOLD · $80 is not sent'}</strong><span>{corrected?'The corrected request passes the checks.':'The amount does not match the store record.'}</span></div>
         <div className="scene-review"><img src="crew/manager-review-v1.png" width="70" height="90" alt="Store manager reviewing a request" loading="lazy"/><div><b>↓ Review branch from step 4</b><span>{corrected?'Reject $80 → back to Runner (step 3) for a new $30 request.':'The manager checks the mismatch. This path does not lead directly to payment.'}</span><small>Technical equivalent: review screen</small></div></div>
       </div>
-      <div className="scene-payment"><span className={`scene-column-arrow ${corrected?'':'scene-stop'}`} aria-hidden="true">{corrected?'→':'Ⅱ'}</span>
+      <div className="scene-payment"><span className="scene-payment-status">{corrected?<span className="scene-column-arrow" aria-hidden="true">→</span>:<HoldBadge />}</span>
         <span className="scene-label"><span className="scene-step-number">5</span> PAYMENT EXECUTION</span><h3>PayPal <span>/ Braintree</span></h3>
         <p>Where an allowed request becomes a payment.</p>
         <img className="scene-payment-mascot" src="crew/paypal-wave-v1.png" width="280" height="300" alt="PayPal and Braintree payment mascot" loading="lazy"/>

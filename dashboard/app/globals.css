@@ -804,7 +804,7 @@ main .ag-studio-layout-widget-title { font-family:var(--cf-font) !important; fon
 .scene-sequence small { display: block; font-size: 10px; margin-top: 4px; }
 .scene-sequence .sequence-hold { color: #87521b; }
 .scene-sequence .sequence-hold b { background: #87521b; }
-.scene-sequence .sequence-hold::after { content: 'Ⅱ' !important; color: #87521b !important; }
+.scene-sequence .sequence-hold::after { content: none !important; }
 .scene-sequence .sequence-pass { color: #27623d; }
 .scene-sequence .sequence-pass b { background: #27623d; }
 .scene-sequence .sequence-pending { color: #706b73; }
@@ -826,3 +826,9 @@ main .ag-studio-layout-widget-title { font-family:var(--cf-font) !important; fon
   .scene-sequence small { margin-top: 2px; }
   .scene-column-arrow { top: -33px; left: calc(50% - 9px); transform: rotate(90deg); }
 }
+
+.scene-hold-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border: 1px solid #c9a577; border-radius: 20px; background: #fff3df; color: #80501a; font: 600 11px/1.2 sans-serif; white-space: nowrap; }
+.scene-hold-badge svg { flex-shrink: 0; }
+.scene-payment-status > .scene-hold-badge { margin: 0 auto 16px; }
+.scene-sequence small .scene-hold-badge { display: inline-flex; margin: 0 3px 4px 0; padding: 3px 6px; font-size: 10px; }
+.scene-sequence small .scene-hold-badge svg { width: 14px; height: 14px; }
