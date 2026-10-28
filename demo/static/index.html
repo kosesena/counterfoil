@@ -156,16 +156,34 @@ button { border-radius:24px; padding:12px 20px; } button:focus-visible,a:focus-v
 #railBox { background:transparent; } footer { border-top:1px solid var(--line); margin-top:32px; line-height:1.7; }
 @media(max-width:700px) { header,main,footer { padding-left:18px; padding-right:18px; } .topbar { flex-wrap:wrap; gap:12px; } .topbar img { width:110px; height:42px; } .sandbox-label { display:none; } .intro { grid-template-columns:1fr; gap:24px; padding:32px 0; } .intro-crew img { height:140px; } .guide { flex-direction:column; gap:12px; } .panel { padding:18px; } .scenarios { grid-template-columns:1fr; } .sc.featured { display:grid; grid-template-columns:80px 1fr; column-gap:14px; } .sc.featured img { grid-row:1 / 4; height:110px; margin:0; } .sc.featured .tag { justify-self:start; } .sc b { margin-top:6px; } .seg { max-width:100%; } .seg button { padding:9px 12px; } #sourceBox { min-width:0; } }
 @media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } * { transition:none!important; } }
+
+.world-panel { margin:30px 0; }
+.world-heading,.world-toolbar { display:flex; align-items:center; justify-content:space-between; gap:18px; }
+.world-heading { margin-bottom:18px; } .world-heading h2 { font-family:Georgia,serif; font-size:32px; font-weight:400; margin-top:8px; }
+.world-stage { position:relative; aspect-ratio:13/8; border:1px solid var(--line); border-radius:20px; overflow:hidden; background:#e9e3da; }
+.world-stage > img,.world-stage canvas { display:block; width:100%; height:100%; object-fit:cover; }
+.world-stage canvas { position:absolute; inset:0; touch-action:none; }
+.world-stage.is-ready > img { visibility:hidden; }
+.world-toolbar { padding:16px 0; } .world-toolbar p { color:var(--muted);font-size:13px;margin:0; }
+.world-result { padding:12px 16px; border-left:3px solid var(--accent); background:#eadfe6; margin:0 0 10px; }
+@media(max-width:700px) { .world-heading h2 { font-size:27px; } .world-stage { aspect-ratio:1; } .world-stage > img { object-fit:contain; } .world-toolbar { align-items:flex-start;flex-direction:column; } }
 </style>
 </head>
 <body>
 <header>
   <nav class="topbar"><a href="https://counterfoil-dashboard.vercel.app" aria-label="HOMI home"><img src="/static/crew/homi-wordmark.webp" alt="HOMI" width="150" height="55"></a><a href="https://counterfoil-dashboard.vercel.app">← Back to the story</a><span class="sandbox-label">Sandbox · test money only</span></nav>
-  <div class="intro"><div><p class="eyebrow">THE HOMI SIMULATOR</p><h1>Your message.<br>One firm boundary.</h1><p class="lede">Try a refund request. See what the AI asks for, what Counterfoil allows, and whether a payment can follow.</p><a class="start-link" href="#try-request">Try a scenario ↓</a></div><div class="intro-crew"><img src="/static/crew/nella-p6-v1.webp" alt="Nella with a refund request"><img src="/static/crew/counterfoil-wave-v1.png" alt="Counterfoil checks the rules"><img src="/static/crew/paypal-wave-v1.png" alt="PayPal handles allowed payments"><p>A request → a check → a payment decision</p></div></div>
+  <div class="intro"><div><p class="eyebrow">THE HOMI SIMULATOR</p><h1>Your message.<br>One firm boundary.</h1><p class="lede">Try a refund request. See what the AI asks for, what Counterfoil allows, and whether a payment can follow.</p><a class="start-link" href="#world">Enter the 3D store ↓</a></div><div class="intro-crew"><img src="/static/crew/nella-p6-v1.webp" alt="Nella with a refund request"><img src="/static/crew/counterfoil-wave-v1.png" alt="Counterfoil checks the rules"><img src="/static/crew/paypal-wave-v1.png" alt="PayPal handles allowed payments"><p>A request → a check → a payment decision</p></div></div>
   <ol class="guide"><li><b>1</b> Choose a request</li><li><b>2</b> Compare the checks</li><li><b>3</b> Try PayPal sandbox</li></ol>
 </header>
 <main>
-  <details class="walkthrough"><summary>Optional · Walk through the illustrated store</summary>
+  <section class="world-panel" id="world" aria-labelledby="worldHeading">
+    <div class="world-heading"><div><p class="eyebrow">INSIDE THE HOMI STORE</p><h2 id="worldHeading">Step into the simulator.</h2></div><span class="sandbox-label">3D environment</span></div>
+    <div id="worldStage" class="world-stage"><img src="/static/world/preview.png" alt="The Blender HOMI store: Nella on the left, PayPal on the right, Counterfoil behind the checkout."></div>
+    <div class="world-toolbar"><p id="worldStatus" role="status">Explore the store with Nella, Counterfoil and PayPal.</p><div class="row"><button id="worldLoad">Explore in 3D</button><button id="worldReset" class="ghost" disabled>Reset view</button></div></div>
+    <p class="world-result" id="worldResult" aria-live="polite">Choose a request below to test what Counterfoil allows.</p>
+    <p class="note">The 3D scene illustrates the store. Test results appear below; the characters do not move money by themselves.</p>
+  </section>
+  <details class="walkthrough"><summary>Recorded example · Five-step refund walkthrough</summary>
   <section class="panel story" id="story" aria-label="HOMI story">
     <div class="story-stage" id="storyStage" data-state="loading">
       <div class="story-callout hidden" id="storyCallout"></div>
@@ -305,6 +323,7 @@ button { border-radius:24px; padding:12px 20px; } button:focus-visible,a:focus-v
                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }
 </script>
 <script type="module" src="/static/story.js"></script>
+<script type="module" src="/static/world.js"></script>
 <script>
 "use strict";
 const CONDITIONS = [
@@ -345,8 +364,15 @@ function seg(id, onChange) {
   });
 }
 
+function clearComparison() {
+  $("cols").replaceChildren();
+  $("resultNote").classList.add("hidden");
+  $("worldResult").textContent = "Choose a request below to test what Counterfoil allows.";
+}
+
 function setMode(v) {
   state.mode = v;
+  clearComparison();
   $("sourceBox").classList.toggle("hidden", v !== "replay");
   const c = state.config;
   $("modeNote").textContent = v === "replay"
@@ -357,6 +383,7 @@ function setMode(v) {
 
 function setInput(v) {
   state.input = v;
+  clearComparison();
   $("scenarioBox").classList.toggle("hidden", v !== "scenario");
   $("customBox").classList.toggle("hidden", v !== "custom");
   showEmail();
@@ -379,7 +406,7 @@ function renderScenarios() {
     const button = h("button", { class: "sc" + (feature ? " featured" : "") + (state.scenario === s ? " on" : ""), disabled: !ok,
       "aria-pressed": String(state.scenario === s),
       title: ok ? "" : "No recording available. Requires live AI.",
-      onclick: () => { state.scenario = s; renderScenarios(); showEmail(); } },
+      onclick: () => { clearComparison(); state.scenario = s; renderScenarios(); showEmail(); } },
       feature ? h("img", {src: "/static/crew/" + feature[2], alt: ""}) : null,
       h("span", {class: "tag " + s.kind}, s.kind === "attack" ? "Adversarial request" : "Everyday request"),
       h("b", {}, feature ? feature[0] : s.technique),
@@ -537,6 +564,7 @@ async function runAll() {
       if (!(row.steps || []).length && row.status === "ok") items.push(h("li", {}, h("span", { class: "note" }, "The agent made no tool call.")));
       if (row.agent_error) items.push(h("li", { class: "BLOCK" }, h("span", { class: "err" }, row.agent_error)));
       const verdict = verdictItem(row, kind);
+      if (c.key === "counterfoil") window.dispatchEvent(new CustomEvent("homi:comparison", {detail: "Counterfoil · " + verdict.querySelector(".verdict").firstChild.textContent}));
       const meta = h("li", {}, h("details", {}, h("summary", {}, "Raw row"), h("pre", {}, JSON.stringify(row, null, 2))));
       items.push(meta);
       for (const item of items) item.classList.add("shown");
@@ -544,7 +572,7 @@ async function runAll() {
     }
   } finally {
     $("runAll").disabled = false;
-    if (state.mode === "live") api("/api/config").then((c) => { state.config = c; setMode("live"); }).catch(() => {});
+    if (state.mode === "live") api("/api/config").then((c) => { state.config = c; }).catch(() => {});
   }
 }
 
@@ -721,7 +749,7 @@ async function init() {
   const liveBtn = $("mode").querySelector('[data-v="live"]');
   if (!config.live_enabled) { liveBtn.disabled = true; liveBtn.title = config.live_reason; liveBtn.textContent = "Live AI · not connected yet"; }
   seg("mode", setMode); seg("inputKind", setInput);
-  $("source").addEventListener("change", renderScenarios);
+  $("source").addEventListener("change", () => { clearComparison(); renderScenarios(); });
   for (const id of ["cFromOther", "cSubject", "cBody", "cHtml", "cAtt"]) $(id).addEventListener("input", countChars);
   $("runAll").addEventListener("click", runAll);
   if (config.paypal_checkout) {
