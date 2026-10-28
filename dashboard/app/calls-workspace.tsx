@@ -1,5 +1,6 @@
 'use client';
 
+import { SimpleStory } from './simple-story';
 import { useMemo, useState } from 'react';
 import { modelName, type CounterfoilData } from './studio-data';
 
@@ -43,7 +44,9 @@ export function CallsWorkspace({data}:{data:CounterfoilData}) {
     {label:'Model',value:model,set:setModel,options:['All',...new Set(rows.map(call=>modelName(call.run?.model)))]},
   ];
   return <section className="calls-workspace" aria-labelledby="calls-title">
-    <div className="calls-hero"><div><span className="review-eyebrow">COUNTERFOIL / THE CALL LOG</span><h1 id="calls-title">Every request.<br/><em>Every outcome.</em></h1><p>Follow Runner’s proposed action through the gate and see whether the payment rail was called.</p><a href="#calls-records">Explore the calls ↓</a><small>Recorded evaluation data · read-only · no real funds</small></div><figure><img src="crew/runner-prepare-v1.png" alt="Runner preparing a proposed payment call" width="1127" height="1400"/><figcaption>“I ask. Counterfoil checks.”</figcaption></figure></div>
+    <div className="calls-hero"><div><span className="review-eyebrow">COUNTERFOIL / THE CALL LOG</span><h1 id="calls-title">Did the payment<br/><em>go through?</em></h1><p>Runner asks to move money. Counterfoil checks the request. The payment service reports what happened.</p><small>Recorded evaluation data · read-only · no real funds</small></div><figure><img src="crew/runner-prepare-v1.png" alt="Runner preparing a proposed payment call" width="1127" height="1400"/><figcaption>“I ask. Counterfoil checks.”</figcaption></figure></div>
+    <SimpleStory view="calls" />
+    <details className="simple-disclosure"><summary>Technical details · search all recorded calls</summary>
     <div className="calls-legend"><p><b>PASS</b> Eligible to execute. The payment can still fail.</p><p><b>APPROVAL</b> Held for human review.</p><p><b>BLOCK</b> Refused before execution.</p></div>
     <div id="calls-records" className="calls-records">
       <div className="calls-filter-heading"><div><h2>Explore recorded calls</h2><p>One entry per call, including repeated attempts. Simulation and sandbox results are labelled separately.</p></div><button onClick={reset}>Reset filters</button></div>
@@ -62,5 +65,6 @@ export function CallsWorkspace({data}:{data:CounterfoilData}) {
         </article>
       </div>}
     </div>
+    </details>
   </section>;
 }

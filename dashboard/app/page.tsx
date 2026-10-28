@@ -18,6 +18,7 @@ import { CrewJourney, ProductIntro } from './crew-journey';
 import { EvidenceBoard } from './evidence';
 import { RailChecksBoard } from './rail-checks';
 import { ReviewIntro } from './review-intro';
+import { SimpleStory } from './simple-story';
 import { CallsWorkspace } from './calls-workspace';
 import { canvasPadding, counterfoilTheme } from './theme';
 
@@ -103,8 +104,10 @@ export default function Page() {
       {pageId === 'overview' && data && (
         <>
           <ProductIntro />
-          <CrewJourney />
-          <div id="crew-results" className="crew-results">
+          <SimpleStory />
+          <details className="simple-disclosure"><summary>Meet the crew and explore Nella’s other tricks</summary><CrewJourney /></details>
+          <details id="crew-results" className="simple-disclosure"><summary>Technical details · test results and evidence</summary>
+          <div className="crew-results">
             <span className="crew-results-kicker">THE RESULTS</span>
             <h2>The boundary, measured.</h2>
             <ResultBand compare={compare} runs={offSandbox(data).runs.length} models={models.length} />
@@ -138,12 +141,11 @@ export default function Page() {
               <RailChecksBoard data={data} />
             </>
           )}
+          </details>
           <section className="f-evidence-head f-studio-head">
             <h2>Every held call, one by one.</h2>
             <p className="f-sub">
-              Built on AG Studio. <b>Held for review</b> lists each call the gate held or blocked, with the store record, the
-              Reader&apos;s hand-off and the agent&apos;s request side by side, and a case agent on Studio&apos;s agent framework that
-              explains why. <b>Agent calls</b> lists every refund and charge the agent attempted, with the Braintree result.
+              <b>Held for review:</b> understand why a request needs attention. <b>Agent calls:</b> see what was requested and whether a payment happened.
             </p>
             <p className="f-studio-links">
               <button onClick={() => { openPage('review'); window.scrollTo({ top: 0 }); }}>Open Held for review →</button>
@@ -156,7 +158,8 @@ export default function Page() {
       {pageId === 'review' && data && <ReviewIntro data={data} />}
       {pageId === 'calls' && data && <CallsWorkspace data={data} />}
 
-      {/* On the Overview the board above replaces Studio's page; Studio stays mounted so the other two tabs keep their state. */}
+      {/* Keep Studio mounted to preserve review state inside the optional records view. */}
+      <details hidden={pageId !== 'review'} className="simple-disclosure"><summary>Technical details · inspect recorded review cases</summary>
       <main id="review-workspace" aria-hidden={pageId !== 'review'} inert={pageId !== 'review'} className={pageId !== 'review' ? 'studio-off' : ''} style={studioHeight ? { height: studioHeight } : undefined}>
         {error && <p className="message">Could not load counterfoil-data.json ({error}). Run scripts/export_dashboard.py first.</p>}
         {!error && !studioData && <p className="message">Loading…</p>}
@@ -180,6 +183,7 @@ export default function Page() {
           </AgStudioProvider>
         )}
       </main>
+      </details>
 
       {pageId === 'overview' && data && <ClosingBand />}
 
@@ -188,9 +192,7 @@ export default function Page() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img className="wordmark-felt small" src="buttons/homi-wordmark.webp" alt="HOMI" />
           <span>Fictional store · Braintree sandbox · No real funds</span>
-          <span>
-            {data.runs.length} runs · {models.join(', ')} · exported {data.asOf.slice(0, 16).replace('T', ' ')} UTC
-          </span>
+
         </footer>
       )}
     </>

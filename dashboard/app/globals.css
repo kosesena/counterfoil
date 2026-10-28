@@ -697,3 +697,28 @@ main .ag-studio-layout-widget-title { font-family:var(--cf-font) !important; fon
  .call-stages { gap:8px; }
  .call-stages b { font-size:12px; }
 }
+
+/* Start with one readable story; evidence stays available on request. */
+.simple-story { max-width: 1120px; margin: 0 auto; padding: 64px 28px; }
+.simple-story-heading { max-width: 670px; }
+.simple-story h2 { font: 500 clamp(28px, 4vw, 44px)/1.15 Georgia, serif; margin: 16px 0; }
+.simple-story p { line-height: 1.7; color: #6d5d67; }
+.simple-story-steps { list-style: none; padding: 0; margin: 32px 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.simple-story-steps li { border-top: 2px solid #b897a9; padding-top: 20px; }
+.simple-story-steps li > span { font-size: 12px; color: #786571; }
+.simple-story-steps h3 { font-size: 23px; margin: 16px 0 10px; }
+.simple-story-note { border-left: 3px solid #88647d; padding-left: 18px; }
+.simple-disclosure { max-width: 1200px; margin: 24px auto; padding: 0 28px; }
+.simple-disclosure > summary { cursor: pointer; border-top: 1px solid #d6c8ce; border-bottom: 1px solid #d6c8ce; padding: 22px 0; font-size: 16px; color: #65475e; }
+.simple-disclosure > summary:focus-visible { outline: 2px solid #88647d; outline-offset: 5px; }
+.simple-disclosure[open] > summary { margin-bottom: 28px; }
+.review-simple { grid-column: 1 / -1; width: 100%; }
+.review-simple .simple-story { padding: 28px 0; }
+.calls-workspace > .simple-story { padding-left: 0; padding-right: 0; }
+.calls-workspace > .simple-disclosure { padding: 0; }
+@media (max-width: 760px) {
+  .simple-story { padding: 40px 22px; }
+  .simple-story-steps { grid-template-columns: 1fr; gap: 16px; }
+  .simple-story-steps h3 { margin: 10px 0 6px; }
+  .simple-disclosure { padding: 0 20px; }
+}

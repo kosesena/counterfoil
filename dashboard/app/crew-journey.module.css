@@ -348,3 +348,6 @@
  .readerSpotlight { bottom:125px; }
 }
 @media (max-height:580px),(prefers-reduced-motion:reduce) { .journey { height:auto; } .readerSpotlight { bottom:175px; } }
+
+/* Ensemble portraits share one still-image treatment. */
+.ensemble .portrait > img, .ensemble .active .portrait > img, .ensemble .active:nth-child(even) .portrait > img { transform: none; transition: none; }

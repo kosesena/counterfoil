@@ -97,14 +97,14 @@ export function CrewJourney() {
       <div className={styles.lineup}>
         {CREW.map((member,i)=>{
           const active=ensemble||step.actor===i;
-          const img=i===3?'manager-wave-v1.png':i===4?(chapter>=5?'paypal-complete-v1.png':'paypal-wave-v1.png'):`${member.image}.webp`;
+          const img=i===2?'counterfoil-wave-v1.png':i===3?'manager-wave-v1.png':i===4?(chapter>=5?'paypal-complete-v1.png':'paypal-wave-v1.png'):`${member.image}.webp`;
           return <button key={member.name} type="button" className={`${styles.member} ${active?styles.active:''}`} aria-hidden={!active} tabIndex={active?0:-1} aria-label={`${member.name}: ${member.role}`} aria-expanded={selected===i} aria-controls="crew-detail"
             onPointerEnter={e=>{if(e.pointerType==='mouse')setHovered(i);}} onPointerLeave={e=>{setHovered(null);e.currentTarget.style.removeProperty('--look');}}
             onPointerMove={e=>{if(e.pointerType!=='mouse'||calm)return;const r=e.currentTarget.getBoundingClientRect();e.currentTarget.style.setProperty('--look',`${((e.clientX-r.left)/r.width-.5)*8}deg`);}}
             onFocus={()=>setHovered(i)} onBlur={()=>setHovered(null)} onClick={()=>{setHovered(null);setInspected(inspected===i?null:i);}} onKeyDown={e=>{if(e.key==='Escape'){setInspected(null);setHovered(null);}}}>
             <span className={styles.portrait}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              {i===2?<CounterfoilGaze/>:<img src={`crew/${img}`} alt="" width={440} height={600} draggable={false}/>}
+              {<img src={`crew/${img}`} alt="" width={440} height={600} draggable={false}/>}
             </span>
             <span className={styles.kind}>{member.type}</span><strong>{member.name}</strong><span className={styles.role}>{member.role}</span>
             <span className={styles.marker} aria-hidden="true"/>
@@ -146,12 +146,12 @@ export function ProductIntro() {
       <p>Let AI agents handle returns.<br/>Keep every payment within your rules.</p>
       <div className={styles.productActions}>
         <a href="https://counterfoil-demo.onrender.com" target="_blank" rel="noopener">Try it live <span aria-hidden="true">↗</span></a>
-        <a href="#crew">See how it works <span aria-hidden="true">↓</span></a>
+        <a href="#simple-example">See how it works <span aria-hidden="true">↓</span></a>
       </div>
       <span className={styles.productNote}>Braintree sandbox · No real funds</span>
     </div>
-    <div className={styles.productMascot}><CounterfoilGaze/><div className={styles.mascotIdentity}><strong>Meet Counterfoil.</strong><span>Your returns gatekeeper.</span><p>Checks every money call before it reaches the payment rail.</p></div></div>
-    <a className={styles.productScroll} href="#crew">Meet the team behind each return <span aria-hidden="true">↓</span></a>
+    <div className={styles.productMascot}><CounterfoilGaze/><div className={styles.mascotIdentity}><strong>Meet Counterfoil.</strong><span>Your returns gatekeeper.</span><p>Checks each payment request against the store’s rules.</p></div></div>
+    <a className={styles.productScroll} href="#simple-example">Understand it with one example <span aria-hidden="true">↓</span></a>
   </section>;
 }
 
