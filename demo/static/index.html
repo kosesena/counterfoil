@@ -219,19 +219,18 @@ footer { color: var(--muted); font-size: 13px; padding: 20px 16px 40px; max-widt
   <section class="cols" id="cols"></section>
 
   <section class="panel hidden" id="payBox">
-    <h2>3 · Buy it for real with PayPal, then let the agent refund it</h2>
-    <p class="note">This step is real money movement in the Braintree sandbox (PayPal's payment platform, test money).
+    <h2>3 · Make a PayPal sandbox payment, then test the refund</h2>
+    <p class="note">This step calls the Braintree sandbox payment API. It uses test money only; no real funds are charged or refunded.
     Pay for the selected scenario's order with the PayPal button. Then the agent's recorded refund calls for that
     scenario are sent through a gate onto <b>your</b> transaction: the gate decides now, and anything it lets through is
-    a real sandbox refund of your purchase. No model runs here, so this costs nothing.</p>
+    a sandbox refund of that test purchase. The agent calls are replayed from a saved run; no live model runs here.</p>
     <div class="row" style="margin-top:8px">
       <div class="grow"><b id="payOrder"></b><div class="note" id="payItems"></div></div>
       <button id="payPaypal">Pay with PayPal (sandbox account)</button>
       <button id="payStart" class="ghost">Pay by test card</button>
     </div>
-    <p class="note" style="margin-top:6px">PayPal accounts cannot be opened from Türkiye, so this sandbox has no linked
-    PayPal login. The PayPal button pays with Braintree's mocked PayPal account (<code>fake-paypal-one-time-nonce</code>):
-    a real sandbox transaction whose instrument is <code>paypal_account</code>. The card option uses Braintree Drop-in
+    <p class="note" style="margin-top:6px">This demo has no linked PayPal login. The PayPal button uses Braintree's mocked PayPal account (<code>fake-paypal-one-time-nonce</code>):
+    a test API transaction whose instrument is <code>paypal_account</code>. The card option uses Braintree Drop-in
     with a test card (4111 1111 1111 1111, any future date).</p>
     <div id="dropin" style="margin-top:10px"></div>
     <div class="row" style="margin-top:8px">
