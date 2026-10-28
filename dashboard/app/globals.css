@@ -731,3 +731,4 @@ main .ag-studio-layout-widget-title { font-family:var(--cf-font) !important; fon
 .plain-roles dd { margin: 0; line-height: 1.6; color: #6d5d67; }
 @media (max-width: 760px) { .plain-roles { grid-template-columns: 1fr; } }
 #simple-example { scroll-margin-top: 90px; }
+.brand-explainer { margin-bottom: 56px; padding-bottom: 28px; border-bottom: 1px solid #d6c8ce; }
