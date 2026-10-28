@@ -794,3 +794,34 @@ main .ag-studio-layout-widget-title { font-family:var(--cf-font) !important; fon
   .scene-payment-mascot { height: 250px; }
   .scene-review { max-width: 360px; margin: auto; }
 }
+
+/* Number the main route; distinguish review from the payment path. */
+.scene-sequence { list-style: none; display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 24px; padding: 0; margin: 30px 0 14px; }
+.scene-sequence li { position: relative; display: flex; gap: 9px; align-items: flex-start; font-size: 12px; line-height: 1.5; }
+.scene-sequence li:not(:last-child)::after { content: '→'; position: absolute; right: -19px; top: 5px; color: #927789; }
+.scene-sequence b, .scene-step-number { display: inline-flex; width: 25px; height: 25px; align-items: center; justify-content: center; flex-shrink: 0; border-radius: 50%; background: #54384d; color: white; font: 600 12px/1 sans-serif; letter-spacing: 0; vertical-align: middle; }
+.scene-sequence small { display: block; font-size: 10px; margin-top: 4px; }
+.scene-sequence .sequence-hold { color: #87521b; }
+.scene-sequence .sequence-hold b { background: #87521b; }
+.scene-sequence .sequence-hold::after { content: 'Ⅱ' !important; color: #87521b !important; }
+.scene-sequence .sequence-pass { color: #27623d; }
+.scene-sequence .sequence-pass b { background: #27623d; }
+.scene-sequence .sequence-pending { color: #706b73; }
+.scene-sequence .sequence-pending b { background: #817d83; }
+.payment-scene .scene-reading-guide { font-size: 13px; border-left: 3px solid #927789; padding-left: 14px; margin: 18px 0 24px; }
+.scene-gate, .scene-payment { position: relative; }
+.scene-column-arrow { position: absolute; left: -23px; top: 265px; color: #487858; font-size: 24px; }
+.scene-gate > .scene-column-arrow { color: #785b70; }
+.scene-column-arrow.scene-stop { color: #87521b; font-weight: bold; }
+.scene-down-arrow { text-align: center; font-size: 22px; color: #927789; margin: 4px 0; }
+.scene-agent-pair > figure:first-child { position: relative; }
+.scene-agent-pair > figure:first-child::after { content: '→'; position: absolute; right: -13px; top: 90px; font-size: 22px; color: #927789; }
+.scene-request { margin-top: 4px; }
+@media (max-width: 760px) {
+  .scene-sequence { grid-template-columns: 1fr; gap: 18px; }
+  .scene-sequence li:not(:last-child)::after { content: '↓'; left: 8px; right: auto; top: 25px; }
+  .scene-sequence li.sequence-hold::after { top: 35px; }
+  .scene-sequence li span { display: flex; flex-wrap: wrap; gap: 0 8px; }
+  .scene-sequence small { margin-top: 2px; }
+  .scene-column-arrow { top: -33px; left: calc(50% - 9px); transform: rotate(90deg); }
+}
