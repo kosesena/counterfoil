@@ -351,3 +351,8 @@
 
 /* Ensemble portraits share one still-image treatment. */
 .ensemble .portrait > img, .ensemble .active .portrait > img, .ensemble .active:nth-child(even) .portrait > img { transform: none; transition: none; }
+
+@media (max-width: 760px) {
+ .productMascot { height: 380px; padding-bottom: 90px; }
+ .productMascot :global(.foil) { height: 275px !important; top: 0; }
+}

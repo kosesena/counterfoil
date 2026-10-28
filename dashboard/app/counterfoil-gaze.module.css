@@ -1,8 +1,14 @@
 .character.character { position: relative; width: min(440px, 81%); flex: none; aspect-ratio: 11 / 15; transform: translateX(clamp(-52px, -3.5vw, -24px)); transition: none; }
-.character img { width: 100%; height: 100%; }
+.character img { width: 100%; height: 100%; object-fit: contain; }
 .character canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .character::after { content: ''; position: absolute; left: 20%; right: 15%; bottom: 4%; height: 3%; border-radius: 50%; background: radial-gradient(ellipse, #46301433, transparent 70%); pointer-events: none; }
 .hidden { visibility: hidden; }
 @media (max-width: 760px) {
   .character.character { width: min(420px, 81%); transform: translateX(-18px); }
+}
+
+/* Compact screens use the proportion-preserving still portrait. */
+@media (max-width: 760px) {
+  .character canvas { display: none; }
+  .character img { visibility: visible; }
 }

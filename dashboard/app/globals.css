@@ -855,3 +855,10 @@ main .ag-studio-layout-widget-title { font-family:var(--cf-font) !important; fon
 .continuation-next:focus-visible { outline: 3px solid #2875af; outline-offset: 3px; }
 .story-next-wrap { max-width: 1120px; margin: -24px auto 40px; padding: 0 28px; }
 @media (max-width: 760px) { .continuation-steps, .continuation-outcomes { grid-template-columns: 1fr; } .continuation-steps { gap: 12px; } }
+
+@media (max-width: 360px) {
+ .top .wordmark-felt { height: 24px; }
+ .top.crew-header { padding: 0 12px; gap: 10px; }
+ .crew-header nav { gap: 10px; }
+ .crew-header nav button { white-space: nowrap; }
+}
