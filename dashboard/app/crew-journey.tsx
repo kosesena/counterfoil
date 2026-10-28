@@ -142,15 +142,15 @@ export function ProductIntro() {
   return <section className={styles.productIntro} aria-labelledby="product-title">
     <div className={styles.productCopy}>
       <span className={styles.eyebrow}>COUNTERFOIL / RETURNS CONTROL</span>
-      <h1 id="product-title">A little trust.<br/><em>A firm boundary.</em></h1>
-      <p>Let AI agents handle returns.<br/>Keep every payment within your rules.</p>
+      <h1 id="product-title">AI handles refunds.<br/><em>You keep control.</em></h1>
+      <p>An AI agent is software that acts for your store. Counterfoil checks its payment requests before money is sent, helping prevent refunds to the wrong person or for the wrong amount.</p>
       <div className={styles.productActions}>
         <a href="https://counterfoil-demo.onrender.com" target="_blank" rel="noopener">Try it live <span aria-hidden="true">↗</span></a>
         <a href="#simple-example">See how it works <span aria-hidden="true">↓</span></a>
       </div>
-      <span className={styles.productNote}>Braintree sandbox · No real funds</span>
+      <span className={styles.productNote}>Demo only · test payments, no real money</span>
     </div>
-    <div className={styles.productMascot}><CounterfoilGaze/><div className={styles.mascotIdentity}><strong>Meet Counterfoil.</strong><span>Your returns gatekeeper.</span><p>Checks each payment request against the store’s rules.</p></div></div>
+    <div className={styles.productMascot}><CounterfoilGaze/><div className={styles.mascotIdentity}><strong>Meet Counterfoil.</strong><span>A check before money moves.</span><p>Checks each payment request against the store’s rules.</p></div></div>
     <a className={styles.productScroll} href="#simple-example">Understand it with one example <span aria-hidden="true">↓</span></a>
   </section>;
 }

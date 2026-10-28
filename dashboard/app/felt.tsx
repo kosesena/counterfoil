@@ -142,8 +142,8 @@ export function ClosingBand() {
   return (
     <section className="f-close">
       <div>
-        <h2>See where the boundary holds.</h2>
-        <p>Try the interactive demo with real return flows in the Braintree sandbox.</p>
+        <h2>Try a refund for yourself.</h2>
+        <p>See what happens when a request is allowed, held for review or blocked. All payments are tests; no real money is used.</p>
       </div>
       <a className="f-patch" href={DEMO} target="_blank" rel="noopener">
         {/* eslint-disable-next-line @next/next/no-img-element */}
