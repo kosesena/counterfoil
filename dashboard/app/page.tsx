@@ -18,6 +18,7 @@ import { CrewJourney, ProductIntro } from './crew-journey';
 import { EvidenceBoard } from './evidence';
 import { RailChecksBoard } from './rail-checks';
 import { ReviewIntro } from './review-intro';
+import { CallsWorkspace } from './calls-workspace';
 import { canvasPadding, counterfoilTheme } from './theme';
 
 if (process.env.NODE_ENV !== 'production') {
@@ -153,9 +154,10 @@ export default function Page() {
       )}
 
       {pageId === 'review' && data && <ReviewIntro data={data} />}
+      {pageId === 'calls' && data && <CallsWorkspace data={data} />}
 
       {/* On the Overview the board above replaces Studio's page; Studio stays mounted so the other two tabs keep their state. */}
-      <main id="review-workspace" className={pageId === 'overview' ? 'studio-off' : ''} style={studioHeight ? { height: studioHeight } : undefined}>
+      <main id="review-workspace" aria-hidden={pageId !== 'review'} inert={pageId !== 'review'} className={pageId !== 'review' ? 'studio-off' : ''} style={studioHeight ? { height: studioHeight } : undefined}>
         {error && <p className="message">Could not load counterfoil-data.json ({error}). Run scripts/export_dashboard.py first.</p>}
         {!error && !studioData && <p className="message">Loading…</p>}
         {studioData && report && (
