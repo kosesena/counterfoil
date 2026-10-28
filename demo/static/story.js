@@ -417,7 +417,7 @@ async function init() {
   catch (e) { $("storyNote").textContent = "The recorded run could not be loaded: " + e.message; }
   render();
   // the scene (three.js, a 2.7 MB GLB) only loads once the section is near the viewport
-  const near = () => $("storyStage").getBoundingClientRect().top < window.innerHeight + 300;
+  const near = () => { const rect = $("storyStage").getBoundingClientRect(); return rect.height > 0 && rect.top < window.innerHeight + 300; };
   if (near()) { mountView(); }
   else {
     const io = new IntersectionObserver((entries) => {

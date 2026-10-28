@@ -3,19 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Counterfoil live demo</title>
+<title>HOMI · Try the simulator</title>
 <style>
 :root {
   --bg: #f6f5f1; --panel: #ffffff; --ink: #1d1f22; --muted: #646a73; --line: #dedbd3;
   --pass: #1f7a4d; --pass-bg: #e3f3ea; --hold: #8a5a00; --hold-bg: #fbefd2; --block: #b42318; --block-bg: #fde7e4;
   --accent: #2b4acb; --code: #f0eee8; --hidden: #fff1b8;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #15171a; --panel: #1d2024; --ink: #e9e7e2; --muted: #9aa0a8; --line: #33373d;
-    --pass: #5fd39a; --pass-bg: #16362a; --hold: #f2c162; --hold-bg: #3a2f14; --block: #ff8a7a; --block-bg: #43201c;
-    --accent: #8ea2ff; --code: #262a2f; --hidden: #4a4113;
-  }
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
@@ -126,16 +119,53 @@ td, th { border-bottom: 1px solid var(--line); padding: 5px 6px; text-align: lef
 .story-note { font-size: 12px; color: var(--muted); margin: 10px 0 0; }
 .story-note:empty { display: none; }
 footer { color: var(--muted); font-size: 13px; padding: 20px 16px 40px; max-width: 1280px; margin: 0 auto; }
+/* Shared HOMI visual language; all existing simulator controls remain available. */
+:root { --bg:#f2e9e4; --panel:#fffbf7; --ink:#392a38; --muted:#796d79; --line:#ddcdd5; --accent:#65425f; --code:#eee6e3; }
+html { scroll-behavior:smooth; scroll-padding-top:24px; }
+header,main,footer { max-width:1160px; padding-left:32px; padding-right:32px; }
+.topbar { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:4px 0 24px; border-bottom:1px solid var(--line); }
+.topbar img { object-fit:contain; display:block; }
+a { color:var(--accent); } .topbar a { text-decoration:none; font-size:14px; }
+.sandbox-label { font-size:12px; border:1px solid var(--line); border-radius:30px; padding:8px 14px; }
+.intro { display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:center; padding:52px 0 40px; }
+.eyebrow { font-size:11px; letter-spacing:.17em; font-weight:650; color:var(--muted); }
+h1 { font-family:Georgia,serif; font-size:clamp(38px,4.3vw,62px); line-height:1.08; font-weight:400; letter-spacing:-.035em; margin:14px 0 20px; }
+.lede { font-size:16px; line-height:1.65; max-width:430px; }
+.start-link { display:inline-block; margin-top:20px; text-underline-offset:5px; }
+.intro-crew { display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:center; }
+.intro-crew img { width:32%; height:210px; object-fit:contain; } .intro-crew p { width:100%; text-align:center; color:var(--muted); font-size:12px; margin-top:20px; }
+.guide { display:flex; list-style:none; padding:20px 0; margin:0; border-block:1px solid var(--line); justify-content:space-between; gap:16px; }
+.guide li { display:flex; align-items:center; gap:10px; font-size:14px; } .guide b { display:inline-grid; place-items:center; width:28px; height:28px; border:1px solid var(--line); border-radius:50%; font-size:12px; }
+.panel { border-radius:20px; padding:26px; margin:22px 0; } .walkthrough { margin:20px 0; } .walkthrough .story { padding:0; }
+h2 { color:var(--ink); text-transform:none; font-size:21px; letter-spacing:-.02em; }
+button { border-radius:24px; padding:12px 20px; } button:focus-visible,a:focus-visible,summary:focus-visible { outline:3px solid #2475ad; outline-offset:4px; }
+.seg { border-radius:24px; } .seg button { padding:10px 16px; font-size:13px; }
+.mode-panel { background:transparent; padding:20px 0; border-width:0 0 1px; border-radius:0; }
+.mode-panel .grow { flex:1 1 230px; } #sourceBox { max-width:100%; } #source { margin-top:12px; font-size:12px; }
+.scenario-help { margin:18px 0; } .scenarios { grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+.sc { border-radius:16px; padding:18px; transition:border-color .15s,background .15s; } .sc:hover:not(:disabled) { background:#eee1e8; }
+.sc.featured { display:flex; flex-direction:column; align-items:flex-start; background:#f6efea; }
+.sc.featured img { height:130px; width:100%; object-fit:contain; margin-bottom:12px; }
+.sc b { font-size:17px; line-height:1.3; margin:10px 0 6px; } .sc span { font-size:12px; line-height:1.5; }
+.sc .tag { font-size:10px; } .sc.on { background:#eee0e8; border:2px solid var(--accent); padding:17px; box-shadow:none; }
+.more-scenarios { margin:20px 0 0; } .more-scenarios .scenarios { margin-top:16px; } .more-scenarios .sc b { font-size:14px; }
+#emailView:not(:empty) { padding:24px 0 0; border-top:1px solid var(--line); margin-top:24px!important; }
+.message-subject { font-size:18px; margin-top:10px; font-weight:600; } .message-body { white-space:pre-wrap; font-size:15px; line-height:1.7; max-width:800px; margin:12px 0 16px; }
+#emailView > p:last-child { margin-top:12px; } details summary { padding:6px 0; } .method-note { margin-top:14px; }
+.col { border-radius:18px; padding:20px; } #cols:not(:empty) { margin:24px 0; } #payBox { background:#e4edf7; border-color:#cadbec; } #payBox h2 { color:#164677; } #payPaypal { background:#174984; }
+#railBox { background:transparent; } footer { border-top:1px solid var(--line); margin-top:32px; line-height:1.7; }
+@media(max-width:700px) { header,main,footer { padding-left:18px; padding-right:18px; } .topbar { flex-wrap:wrap; gap:12px; } .topbar img { width:110px; height:42px; } .sandbox-label { display:none; } .intro { grid-template-columns:1fr; gap:24px; padding:32px 0; } .intro-crew img { height:140px; } .guide { flex-direction:column; gap:12px; } .panel { padding:18px; } .scenarios { grid-template-columns:1fr; } .sc.featured { display:grid; grid-template-columns:80px 1fr; column-gap:14px; } .sc.featured img { grid-row:1 / 4; height:110px; margin:0; } .sc.featured .tag { justify-self:start; } .sc b { margin-top:6px; } .seg { max-width:100%; } .seg button { padding:9px 12px; } #sourceBox { min-width:0; } }
+@media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } * { transition:none!important; } }
 </style>
 </head>
 <body>
 <header>
-  <h1>Counterfoil <a href="https://counterfoil-dashboard.vercel.app" target="_blank" rel="noopener" style="font-size:14px;font-weight:600;margin-left:10px">Results dashboard (AG Studio) →</a></h1>
-  <p class="lede">A merchant-side gate between an AI payments agent and the payment rail. Every refund or charge the
-  agent attempts is checked against the store's own records (return authorisations, order totals, ownership)
-  before money moves. Pick an email, run it under three conditions, and watch what each one lets through.</p>
+  <nav class="topbar"><a href="https://counterfoil-dashboard.vercel.app" aria-label="HOMI home"><img src="/static/crew/homi-wordmark.webp" alt="HOMI" width="150" height="55"></a><a href="https://counterfoil-dashboard.vercel.app">← Back to the story</a><span class="sandbox-label">Sandbox · test money only</span></nav>
+  <div class="intro"><div><p class="eyebrow">THE HOMI SIMULATOR</p><h1>Your message.<br>One firm boundary.</h1><p class="lede">Try a refund request. See what the AI asks for, what Counterfoil allows, and whether a payment can follow.</p><a class="start-link" href="#try-request">Try a scenario ↓</a></div><div class="intro-crew"><img src="/static/crew/nella-p6-v1.webp" alt="Nella with a refund request"><img src="/static/crew/counterfoil-wave-v1.png" alt="Counterfoil checks the rules"><img src="/static/crew/paypal-wave-v1.png" alt="PayPal handles allowed payments"><p>A request → a check → a payment decision</p></div></div>
+  <ol class="guide"><li><b>1</b> Choose a request</li><li><b>2</b> Compare the checks</li><li><b>3</b> Try PayPal sandbox</li></ol>
 </header>
 <main>
+  <details class="walkthrough"><summary>Optional · Walk through the illustrated store</summary>
   <section class="panel story" id="story" aria-label="HOMI story">
     <div class="story-stage" id="storyStage" data-state="loading">
       <div class="story-callout hidden" id="storyCallout"></div>
@@ -152,19 +182,20 @@ footer { color: var(--muted); font-size: 13px; padding: 20px 16px 40px; max-widt
       </div>
     </div>
   </section>
-  <section class="panel">
+  </details>
+  <section class="panel mode-panel" id="try-request">
     <div class="row">
       <div>
         <label>Mode</label>
         <div class="seg" id="mode">
-          <button data-v="replay" class="on">Replay saved runs</button>
-          <button data-v="live">Live LLM</button>
+          <button data-v="replay" class="on">Watch a recorded run</button>
+          <button data-v="live">Try live AI</button>
         </div>
       </div>
-      <div class="grow" id="sourceBox">
+      <details class="grow" id="sourceBox"><summary>Recording &amp; model details</summary>
         <label for="source">Saved run (model)</label>
         <select id="source"></select>
-      </div>
+      </details>
       <div class="grow">
         <label>&nbsp;</label>
         <span class="note" id="modeNote"></span>
@@ -174,14 +205,14 @@ footer { color: var(--muted); font-size: 13px; padding: 20px 16px 40px; max-widt
 
   <section class="panel">
     <div class="row" style="justify-content: space-between">
-      <h2 style="margin:0">1 · The email</h2>
+      <h2 style="margin:0">1 · Choose your request</h2>
       <div class="seg" id="inputKind">
         <button data-v="scenario" class="on">Scenarios</button>
         <button data-v="custom">Write your own</button>
       </div>
     </div>
     <div id="scenarioBox" style="margin-top:12px">
-      <div class="scenarios" id="scenarios"></div>
+      <p class="note scenario-help">Start with one of these examples. Each uses the fictional store’s records.</p><div class="scenarios" id="scenarios"></div><details class="more-scenarios"><summary>Explore all scenarios</summary><div class="scenarios" id="moreScenarios"></div></details>
     </div>
     <div id="customBox" class="hidden" style="margin-top:12px">
       <p class="note">Live mode only. Your email is read by the Reader agent against the fictional store below; no
@@ -204,22 +235,23 @@ footer { color: var(--muted); font-size: 13px; padding: 20px 16px 40px; max-widt
 
   <section class="panel">
     <div class="row" style="justify-content: space-between">
-      <h2 style="margin:0">2 · Run it</h2>
+      <h2 style="margin:0">2 · See what gets through</h2>
       <div class="row">
-        <button id="runAll">Run under all three conditions</button>
+        <button id="runAll">Compare the three checks →</button>
       </div>
     </div>
-    <p class="note" style="margin-top:8px">The Reader sees the raw email and hands off a fixed set of fields. The
+    <details class="method-note"><summary>How the comparison works</summary><p class="note" style="margin-top:8px">The Reader sees the raw email and hands off a fixed set of fields. The
     payments agent never sees the email, only that hand-off, and makes tool calls. Each call goes through the
     condition's gate before it may reach the rail (a mocked Braintree/PayPal). All three conditions share one
-    Reader output, so they differ only in the gate.</p>
+    Reader output, so they differ only in the gate.</p></details>
     <p class="err" id="runErr"></p>
   </section>
 
-  <section class="cols" id="cols"></section>
+  <p class="note hidden" id="resultNote"></p>
+  <section class="cols" id="cols" aria-live="polite"></section>
 
   <section class="panel hidden" id="payBox">
-    <h2>3 · Make a PayPal sandbox payment, then test the refund</h2>
+    <h2>3 · Complete the test with PayPal</h2>
     <p class="note">This step calls the Braintree sandbox payment API. It uses test money only; no real funds are charged or refunded.
     Pay for the selected scenario's order with the PayPal button. Then the agent's recorded refund calls for that
     scenario are sent through a gate onto <b>your</b> transaction: the gate decides now, and anything it lets through is
@@ -247,7 +279,7 @@ footer { color: var(--muted); font-size: 13px; padding: 20px 16px 40px; max-widt
     <p class="err" id="payErr"></p>
   </section>
 
-  <section class="panel hidden" id="railBox">
+  <details class="panel hidden" id="railBox"><summary>Technical experiment · What Braintree refuses on its own</summary>
     <h2>4 · What Braintree refuses on its own</h2>
     <p class="note">Counterfoil does not repeat the payment service's own rules. This sends fresh sandbox sales straight
     to Braintree, no agent and no gate, and shows which refunds Braintree itself refuses. On a test card it refuses a
@@ -261,7 +293,7 @@ footer { color: var(--muted); font-size: 13px; padding: 20px 16px 40px; max-widt
     </div>
     <div class="cols" id="railOut" style="margin-top:10px"></div>
     <p class="err" id="railErr"></p>
-  </section>
+  </details>
 </main>
 <footer>
   Fictional store, fictional customers, test money. Replay mode shows saved evaluation runs (results/*.jsonl) exactly as
@@ -318,7 +350,7 @@ function setMode(v) {
   $("sourceBox").classList.toggle("hidden", v !== "replay");
   const c = state.config;
   $("modeNote").textContent = v === "replay"
-    ? "Saved runs from the evaluation: no key, no cost. Only the dev scenarios were run."
+    ? "Recorded evidence: replay a saved AI run. No new AI call is made."
     : `Live: ${c.live_model} on the server, rail: ${c.rail}. ${c.limits.rate_limit} runs per ${Math.round(c.limits.rate_window_s / 60)} min per visitor; ${c.daily_llm_calls_left} model calls left today.`;
   renderScenarios();
 }
@@ -334,15 +366,25 @@ function runnable(s) {
   return state.mode === "live" || s.replay.includes($("source").value);
 }
 
+const FEATURED = {
+  "CLEAN-01": ["A normal refund", "A customer asks for a partial refund.", "reader.webp"],
+  "P6-01": ["Nella asks for more", "Can split refunds exceed the approved total?", "nella-p6-v1.webp"],
+  "P2-01": ["Someone else’s order", "Can a message claim another customer’s purchase?", "nella-p2-v1.webp"],
+};
 function renderScenarios() {
-  const box = $("scenarios"); box.replaceChildren();
-  for (const s of state.scenarios) {
-    const ok = runnable(s);
-    box.append(h("button", { class: "sc" + (state.scenario === s ? " on" : ""), disabled: !ok,
-      title: ok ? "" : "no saved run of this scenario (holdout); use live mode",
+  const box = $("scenarios"), more = $("moreScenarios"); box.replaceChildren(); more.replaceChildren();
+  const ordered = [...Object.keys(FEATURED).map(id => state.scenarios.find(s => s.id === id)).filter(Boolean), ...state.scenarios.filter(s => !FEATURED[s.id])];
+  for (const s of ordered) {
+    const ok = runnable(s), feature = FEATURED[s.id];
+    const button = h("button", { class: "sc" + (feature ? " featured" : "") + (state.scenario === s ? " on" : ""), disabled: !ok,
+      "aria-pressed": String(state.scenario === s),
+      title: ok ? "" : "No recording available. Requires live AI.",
       onclick: () => { state.scenario = s; renderScenarios(); showEmail(); } },
-      h("b", {}, h("span", { class: `tag ${s.kind}` }, s.kind), " ", s.id, s.split === "holdout" ? " · holdout" : ""),
-      h("span", {}, s.technique)));
+      feature ? h("img", {src: "/static/crew/" + feature[2], alt: ""}) : null,
+      h("span", {class: "tag " + s.kind}, s.kind === "attack" ? "Adversarial request" : "Everyday request"),
+      h("b", {}, feature ? feature[0] : s.technique),
+      h("span", {}, feature ? feature[1] : s.id + (!ok ? " · Live AI required" : "")));
+    (feature ? box : more).append(button);
   }
   if (state.scenario && !runnable(state.scenario)) { state.scenario = null; showEmail(); }
 }
@@ -374,9 +416,9 @@ function showEmail() {
   const v = $("emailView"); v.replaceChildren();
   if (state.input !== "scenario" || !state.scenario) return;
   const s = state.scenario;
-  v.append(...emailBlock(s.email).flat().filter(Boolean));
+  v.append(h("p", {class:"eyebrow"}, "SELECTED MESSAGE · " + s.id), h("p", {class:"message-subject"}, s.email.subject || "Refund request"), h("p", {class:"message-body"}, s.email.body_text || "This message contains HTML or an attachment."), h("details", {}, h("summary", {}, "Full email & hidden instructions"), ...emailBlock(s.email).flat().filter(Boolean)));
   if (s.kind === "attack") v.append(h("p", {}, h("b", {}, "Attacker's goal: "), s.attacker_goal));
-  if (s.expected_reason) v.append(h("p", { class: "note" }, "Expected from Counterfoil: ", h("b", {}, s.expected_gateway_decision), " · ", s.expected_reason));
+  if (s.expected_reason) v.append(h("details", {}, h("summary", {}, "Expected result & rule details"), h("p", { class: "note" }, "Expected from Counterfoil: ", h("b", {}, s.expected_gateway_decision), " · ", s.expected_reason)));
 }
 
 function customEmail() {
@@ -477,6 +519,8 @@ async function runAll() {
   if (state.mode === "replay") base.source = $("source").value;
   const contract = state.input === "scenario" ? state.scenario.reader_contract : null;
   const kind = state.input === "scenario" ? state.scenario.kind : "custom";
+  $("resultNote").classList.remove("hidden");
+  $("resultNote").textContent = state.mode === "replay" ? "Recorded results · These outcomes come from a saved evaluation. This comparison does not create a new PayPal payment." : "Live AI results · Payment actions use the configured test environment. No real funds are moved.";
   const cols = CONDITIONS.map(column);
   $("cols").replaceChildren(...cols.map((c) => c.col));
   $("runAll").disabled = true;
@@ -492,10 +536,11 @@ async function runAll() {
       const items = [readerItem(row, contract), ...(row.steps || []).map(stepItem)];
       if (!(row.steps || []).length && row.status === "ok") items.push(h("li", {}, h("span", { class: "note" }, "The agent made no tool call.")));
       if (row.agent_error) items.push(h("li", { class: "BLOCK" }, h("span", { class: "err" }, row.agent_error)));
-      items.push(verdictItem(row, kind));
+      const verdict = verdictItem(row, kind);
       const meta = h("li", {}, h("details", {}, h("summary", {}, "Raw row"), h("pre", {}, JSON.stringify(row, null, 2))));
       items.push(meta);
-      await reveal(c.tl, items);
+      for (const item of items) item.classList.add("shown");
+      await reveal(c.tl, [verdict, h("li", {}, h("details", {}, h("summary", {}, "Agent calls & technical evidence"), h("ul", {class:"tl"}, ...items)))]);
     }
   } finally {
     $("runAll").disabled = false;
@@ -674,7 +719,7 @@ async function init() {
   for (const e of config.store.customers) $("cFrom").append(h("option", { value: e }, e));
   $("storeTable").append(storeTable(config.store));
   const liveBtn = $("mode").querySelector('[data-v="live"]');
-  if (!config.live_enabled) { liveBtn.disabled = true; liveBtn.title = config.live_reason; liveBtn.textContent = "Live LLM (off on this server)"; }
+  if (!config.live_enabled) { liveBtn.disabled = true; liveBtn.title = config.live_reason; liveBtn.textContent = "Live AI · not connected yet"; }
   seg("mode", setMode); seg("inputKind", setInput);
   $("source").addEventListener("change", renderScenarios);
   for (const id of ["cFromOther", "cSubject", "cBody", "cHtml", "cAtt"]) $(id).addEventListener("input", countChars);
