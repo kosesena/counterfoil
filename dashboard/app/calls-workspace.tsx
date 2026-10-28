@@ -1,6 +1,6 @@
 'use client';
 
-import { SimpleStory } from './simple-story';
+import { StoryContinuation } from './story-continuation';
 import { useMemo, useState } from 'react';
 import { modelName, type CounterfoilData } from './studio-data';
 
@@ -10,7 +10,7 @@ const outcomes: Record<string,string> = { succeeded:'Succeeded', failed:'Failed'
 const PAGE_SIZE = 12;
 type CallRow = Record<string, unknown> & {run:Record<string,unknown>|undefined};
 
-export function CallsWorkspace({data}:{data:CounterfoilData}) {
+export function CallsWorkspace({data,onContinue}:{data:CounterfoilData;onContinue:()=>void}) {
   const [condition,setCondition]=useState('Counterfoil');
   const [decision,setDecision]=useState('All');
   const [rail,setRail]=useState('All');
@@ -44,8 +44,8 @@ export function CallsWorkspace({data}:{data:CounterfoilData}) {
     {label:'Model',value:model,set:setModel,options:['All',...new Set(rows.map(call=>modelName(call.run?.model)))]},
   ];
   return <section className="calls-workspace" aria-labelledby="calls-title">
-    <div className="calls-hero"><div><span className="review-eyebrow">COUNTERFOIL / THE CALL LOG</span><h1 id="calls-title">Did the payment<br/><em>go through?</em></h1><p>Runner asks to move money. Counterfoil checks the request. The payment service reports what happened.</p><small>Recorded evaluation data · read-only · no real funds</small></div><figure><img src="crew/runner-prepare-v1.png" alt="Runner preparing a proposed payment call" width="1127" height="1400"/><figcaption>“I ask. Counterfoil checks.”</figcaption></figure></div>
-    <SimpleStory view="calls" />
+    <div className="calls-hero"><div><span className="review-eyebrow">COUNTERFOIL / THE CALL LOG</span><h1 id="calls-title">Did the payment<br/><em>go through?</em></h1><p>Runner asks to move money. Counterfoil checks the request. The payment service reports what happened.</p><small>Illustrated story · recorded calls in Technical details</small></div><figure><img src="crew/paypal-wave-v1.png" alt="PayPal and Braintree payment mascot" width="1127" height="1400"/><figcaption>“I process the allowed payment.”</figcaption></figure></div>
+    <StoryContinuation view="calls" onContinue={onContinue} />
     <details className="simple-disclosure"><summary>Technical details · search all recorded calls</summary>
     <div className="calls-legend"><p><b>PASS</b> Eligible to execute. The payment can still fail.</p><p><b>APPROVAL</b> Held for human review.</p><p><b>BLOCK</b> Refused before execution.</p></div>
     <div id="calls-records" className="calls-records">

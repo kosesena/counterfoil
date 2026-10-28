@@ -832,3 +832,26 @@ main .ag-studio-layout-widget-title { font-family:var(--cf-font) !important; fon
 .scene-payment-status > .scene-hold-badge { margin: 0 auto 16px; }
 .scene-sequence small .scene-hold-badge { display: inline-flex; margin: 0 3px 4px 0; padding: 3px 6px; font-size: 10px; }
 .scene-sequence small .scene-hold-badge svg { width: 14px; height: 14px; }
+
+.story-continuation { padding: 32px 0; max-width: 1120px; margin: auto; }
+.story-continuation > h2 { font: 500 clamp(28px,4vw,40px)/1.2 Georgia, serif; margin: 16px 0; }
+.story-continuation > p { max-width: 760px; line-height: 1.7; color: #6d5d67; }
+.continuation-steps { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 24px; list-style: none; padding: 0; margin: 32px 0; }
+.continuation-steps li { padding: 20px 16px; border-top: 1px solid #d6c8ce; }
+.continuation-step { display: flex; align-items: center; gap: 8px; font-size: 12px; min-height: 40px; }
+.continuation-step b { display: inline-flex; width: 26px; height: 26px; flex-shrink: 0; align-items: center; justify-content: center; background: #54384d; color: white; border-radius: 50%; }
+.continuation-steps img { width: 100%; height: 210px; object-fit: contain; display: block; margin: 20px 0; }
+.continuation-steps h3 { font-size: 22px; margin: 16px 0 10px; }
+.continuation-steps p { font-size: 14px; line-height: 1.7; color: #6d5d67; }
+.continuation-steps .continuation-payment { background: #e5edf7; color: #123c75; border: 0; border-radius: 20px; }
+.continuation-payment p { color: #42617f; }
+.continuation-outcomes { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; border-top: 1px solid #d6c8ce; border-bottom: 1px solid #d6c8ce; padding: 24px 0; }
+.continuation-outcomes small, .continuation-outcomes strong, .continuation-outcomes span { display: block; }
+.continuation-outcomes small { font-size: 10px; letter-spacing: .1em; }
+.continuation-outcomes strong { font-size: 20px; margin: 10px 0; }
+.continuation-outcomes span { font-size: 12px; line-height: 1.6; color: #6d5d67; }
+.story-continuation .continuation-note { font-size: 12px; }
+.continuation-next { border: 0; border-radius: 24px; background: #493245; color: white; padding: 14px 22px; font: inherit; cursor: pointer; margin-top: 16px; }
+.continuation-next:focus-visible { outline: 3px solid #2875af; outline-offset: 3px; }
+.story-next-wrap { max-width: 1120px; margin: -24px auto 40px; padding: 0 28px; }
+@media (max-width: 760px) { .continuation-steps, .continuation-outcomes { grid-template-columns: 1fr; } .continuation-steps { gap: 12px; } }

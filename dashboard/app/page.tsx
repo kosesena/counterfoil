@@ -105,6 +105,7 @@ export default function Page() {
         <>
           <ProductIntro />
           <SimpleStory />
+          <div className="story-next-wrap"><button className="continuation-next" onClick={() => { openPage('review'); window.scrollTo({ top: 0 }); }}>Next: see how the manager reviews $80 →</button></div>
           <details className="simple-disclosure"><summary>Meet the crew and explore Nella’s other tricks</summary><CrewJourney /></details>
           <details id="crew-results" className="simple-disclosure"><summary>Technical details · test results and evidence</summary>
           <div className="crew-results">
@@ -155,8 +156,8 @@ export default function Page() {
         </>
       )}
 
-      {pageId === 'review' && data && <ReviewIntro data={data} />}
-      {pageId === 'calls' && data && <CallsWorkspace data={data} />}
+      {pageId === 'review' && data && <ReviewIntro data={data} onContinue={() => { openPage('calls'); window.scrollTo({ top: 0 }); }} />}
+      {pageId === 'calls' && data && <CallsWorkspace data={data} onContinue={() => { openPage('overview'); window.scrollTo({ top: 0 }); }} />}
 
       {/* Keep Studio mounted to preserve review state inside the optional records view. */}
       <details hidden={pageId !== 'review'} className="simple-disclosure"><summary>Technical details · inspect recorded review cases</summary>
