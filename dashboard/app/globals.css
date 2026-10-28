@@ -732,3 +732,9 @@ main .ag-studio-layout-widget-title { font-family:var(--cf-font) !important; fon
 @media (max-width: 760px) { .plain-roles { grid-template-columns: 1fr; } }
 #simple-example { scroll-margin-top: 90px; }
 .brand-explainer { margin-bottom: 56px; padding-bottom: 28px; border-bottom: 1px solid #d6c8ce; }
+.illustrated-steps .story-step-image { display: block; width: 100%; height: 240px; object-fit: contain; margin: 0 auto 24px; }
+.illustrated-steps > li { border-top: 0; }
+@media (max-width: 760px) {
+  .illustrated-steps .story-step-image { height: 230px; margin-bottom: 18px; }
+  .illustrated-steps > li { padding: 24px 0; border-bottom: 1px solid #d6c8ce; }
+}
