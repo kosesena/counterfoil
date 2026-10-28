@@ -755,8 +755,9 @@ main .ag-studio-layout-widget-title { font-family:var(--cf-font) !important; fon
 .scene-agent-pair { display: flex; gap: 10px; }
 .payment-scene figure { margin: 0; text-align: center; flex: 1; min-width: 0; }
 .payment-scene figure img { width: 100%; height: 190px; object-fit: contain; }
-.payment-scene figcaption b, .payment-scene figcaption span { display: block; }
-.payment-scene figcaption span { font-size: 11px; line-height: 1.5; margin-top: 5px; color: #796773; }
+.payment-scene figcaption > b { display: flex; align-items: center; justify-content: center; gap: 7px; }
+.payment-scene figcaption > span { display: block; }
+.payment-scene figcaption > span { font-size: 11px; line-height: 1.5; margin-top: 5px; color: #796773; }
 .scene-request { margin-top: 24px; padding: 18px; border: 1px dashed #b29aaa; border-radius: 12px; }
 .scene-request strong { display: block; font-size: 23px; }
 .scene-request small { display: block; font-size: 12px; line-height: 1.6; margin-top: 8px; }
