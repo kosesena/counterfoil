@@ -738,3 +738,59 @@ main .ag-studio-layout-widget-title { font-family:var(--cf-font) !important; fon
   .illustrated-steps .story-step-image { height: 230px; margin-bottom: 18px; }
   .illustrated-steps > li { padding: 24px 0; border-bottom: 1px solid #d6c8ce; }
 }
+
+.payment-scene { margin: 40px 0; }
+.payment-scene-heading { max-width: 740px; }
+.payment-scene-heading em { color: #123c75; }
+.payment-scene-controls { display: flex; gap: 10px; flex-wrap: wrap; margin: 26px 0; }
+.payment-scene-controls button { border: 1px solid #c9b5bf; border-radius: 24px; background: transparent; color: #533d4d; padding: 12px 20px; cursor: pointer; font: inherit; }
+.payment-scene-controls button[aria-pressed="true"] { background: #493245; color: white; border-color: #493245; }
+.payment-scene-controls button:focus-visible { outline: 3px solid #2875af; outline-offset: 3px; }
+.payment-scene-world { display: grid; grid-template-columns: 1fr .85fr 1.15fr; gap: 24px; padding: 28px 0; border-top: 1px solid #d6c8ce; align-items: start; }
+.scene-label, .scene-request > span, .scene-record > span { font-size: 10px; letter-spacing: .13em; display: block; margin-bottom: 8px; }
+.scene-message { display: flex; align-items: center; gap: 12px; padding-bottom: 20px; }
+.scene-message img { width: 70px; height: 95px; object-fit: contain; }
+.scene-message b { font-size: 15px; display: block; }
+.scene-message small { display: block; font-size: 11px; line-height: 1.5; color: #796773; margin-top: 8px; }
+.scene-agent-pair { display: flex; gap: 10px; }
+.payment-scene figure { margin: 0; text-align: center; flex: 1; min-width: 0; }
+.payment-scene figure img { width: 100%; height: 190px; object-fit: contain; }
+.payment-scene figcaption b, .payment-scene figcaption span { display: block; }
+.payment-scene figcaption span { font-size: 11px; line-height: 1.5; margin-top: 5px; color: #796773; }
+.scene-request { margin-top: 24px; padding: 18px; border: 1px dashed #b29aaa; border-radius: 12px; }
+.scene-request strong { display: block; font-size: 23px; }
+.scene-request small { display: block; font-size: 12px; line-height: 1.6; margin-top: 8px; }
+.scene-record { text-align: center; padding: 14px; border: 1px solid #d6c8ce; border-radius: 12px; margin-bottom: 18px; }
+.scene-record b, .scene-record small { display: block; }
+.scene-record b { font-size: 24px; }
+.scene-record small { font-size: 11px; margin-top: 6px; }
+.scene-gate-result { margin: 18px 0; border-radius: 10px; padding: 14px; background: #ecdfcf; }
+.scene-gate-result strong, .scene-gate-result span { display: block; }
+.scene-gate-result strong { font-size: 14px; }
+.scene-gate-result span { font-size: 12px; line-height: 1.5; margin-top: 8px; }
+[data-state="passed"] .scene-gate-result { background: #dce9dd; color: #2c533c; }
+.scene-review { display: flex; gap: 10px; align-items: center; border-top: 1px dashed #b29aaa; padding-top: 16px; }
+.scene-review img { width: 55px; height: 85px; object-fit: contain; }
+.scene-review b, .scene-review span, .scene-review small { display: block; font-size: 12px; line-height: 1.5; }
+.scene-review small { font-size: 10px; color: #796773; margin-top: 6px; }
+.scene-payment { border-radius: 22px; padding: 26px 24px; background: #e5edf7; color: #123c75; text-align: center; }
+.scene-payment h3 { margin: 10px 0; font-size: 32px; }
+.scene-payment h3 span { display: block; font-size: 19px; font-weight: 500; }
+.scene-payment p { color: #42617f; font-size: 13px; }
+.scene-payment-mascot { width: 100%; height: 230px; object-fit: contain; }
+.scene-api { padding: 12px; border-top: 1px solid #bacbdf; }
+.scene-api b, .scene-api span { display: block; font-size: 13px; }
+.scene-api span { font-size: 12px; margin-top: 5px; }
+.scene-receipt { background: #fffdf9; border-radius: 12px; padding: 18px; margin-top: 8px; }
+.scene-receipt small, .scene-receipt strong, .scene-receipt span { display: block; }
+.scene-receipt small { font-size: 9px; letter-spacing: .12em; }
+.scene-receipt strong { font-size: 30px; margin: 10px 0; }
+.scene-receipt span { font-size: 12px; line-height: 1.6; }
+.payment-scene .scene-caption { font-size: 12px; line-height: 1.6; }
+@media (max-width: 760px) {
+  .payment-scene-world { grid-template-columns: 1fr; gap: 28px; }
+  .scene-agents, .scene-gate { border-bottom: 1px solid #d6c8ce; padding-bottom: 24px; }
+  .scene-agent-pair { max-width: 350px; margin: auto; }
+  .scene-payment-mascot { height: 250px; }
+  .scene-review { max-width: 360px; margin: auto; }
+}
