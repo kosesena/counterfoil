@@ -1,8 +1,6 @@
 <div align="center">
 
-<img src="dashboard/public/buttons/homi-wordmark.webp" alt="HOMI" width="220">
-
-<img src="dashboard/public/crew/counterfoil.webp" alt="Counterfoil, HOMI's plum felt gatekeeper with a big moustache" width="230">
+<img src="docs/brand/homi-return-crew.png" alt="HOMI's felt return crew: Nella peeks around the H, Reader and PayPal sit on the letters, Runner carries a receipt, and Counterfoil and the store manager keep watch" width="100%">
 
 # Counterfoil
 
