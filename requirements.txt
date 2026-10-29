@@ -1,4 +1,6 @@
 braintree==4.48.0
+# counterfoil-mcp (scripts/counterfoil_mcp.py): the official MCP Python SDK
+mcp==2.3.0
 openai
 pytest
 python-dotenv
