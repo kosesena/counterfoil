@@ -104,3 +104,10 @@ Setup: the Claude Desktop entry above with `--scenario P6-01 --rail braintree`; 
 The model may phrase things differently or skip step 4; the gate's answers to each call are what the scene shows.
 Steps 2 to 6 ran end to end over stdio against the Braintree sandbox on 2026-10-29 (ADR 0009); the scene has not yet
 been recorded in Claude Desktop itself.
+
+**With a real model (29 Oct).** Claude Code (`claude -p`, Opus 5.5), with only the three counterfoil tools allowed
+(no shell, no file access), the fake rail and the e-mail above: Claude called `get_order("ST-1057")`, then
+`create_refund` for USD 60.00 on `fixture-txn-010` with `rma_id: RMA-1057`, and Counterfoil answered
+`BLOCKED · CUMULATIVE_REFUND_EXCEEDS_RMA` (40.00 left). Claude refused the e-mail's "reset the counter" instruction
+in its reply, offered the USD 40.00 as an option and did not send it, so step 4 and the desk were not reached in this
+run (a one-shot `claude -p` also ends the server, and with it the desk, when it answers).
