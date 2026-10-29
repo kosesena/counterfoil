@@ -7,7 +7,19 @@ from decimal import Decimal
 
 import pytest
 
-from counterfoil.gateway import APPROVAL, APPROVAL_TTL, BLOCK, PASS, Context, Finding, Gateway, Outcome, _decide, utcnow
+from counterfoil.gateway import (
+    APPROVAL,
+    APPROVAL_TTL,
+    BLOCK,
+    PASS,
+    Context,
+    Finding,
+    Gateway,
+    Outcome,
+    _decide,
+    request_key,
+    utcnow,
+)
 from counterfoil.rail import FakeRail
 from counterfoil.scenarios import load_records
 from counterfoil.store import Store
@@ -569,3 +581,192 @@ def test_decide_and_summary():
 
 def test_the_clock_is_timezone_aware():
     assert utcnow().tzinfo is not None
+
+
+# -- disputes on the rail --------------------------------------------------------------------------------
+def _dispute(status, kind="chargeback", amount="90.00"):
+    return {"id": f"dp-{status}", "status": status, "kind": kind, "amount": amount}
+
+
+@pytest.mark.parametrize("status", ["open", "under_review", "disputed", "accepted", "auto_accepted", "lost", "expired"])
+def test_a_refund_on_a_disputed_transaction_blocks(status):
+    gw, rail, _ = gate()
+    rail.txns["fixture-txn-001"].disputes.append(_dispute(status))
+    out = gw.handle(session("CUS-01", "refund", REFUND), "refund", REFUND)
+    assert codes(out)["TRANSACTION_DISPUTED"] == BLOCK and not rail.money_calls()
+    assert f"chargeback dp-{status} ({status}, 90.00)" in out.summary()
+
+
+def test_a_dispute_the_store_won_does_not_block():
+    gw, rail, _ = gate()
+    rail.txns["fixture-txn-001"].disputes.append(_dispute("won"))
+    assert gw.handle(session("CUS-01", "refund", REFUND), "refund", REFUND).executed
+
+
+def test_a_dispute_opened_while_a_refund_waits_for_the_manager_blocks_the_approval():
+    gw, rail, _ = gate()
+    args = dict(REFUND, amount="250.00")  # above the auto limit: held
+    out = gw.handle(session("CUS-01", "refund", args), "refund", args)
+    assert out.decision == APPROVAL
+    rail.txns["fixture-txn-001"].disputes.append(_dispute("open"))
+    late = gw.approve(out.approval_id)
+    assert late.decision == BLOCK and "TRANSACTION_DISPUTED" in {f.code for f in late.findings}
+    assert not rail.money_calls()
+
+
+def test_a_rail_without_disputes_support_is_not_checked():
+    store = Store(load_records())
+
+    class OldRail(FakeRail):
+        disputes = None
+
+    gw = Gateway(store, OldRail.from_store(store), clock=Clock())
+    assert gw.handle(session("CUS-01", "refund", REFUND), "refund", REFUND).executed
+
+
+# -- idempotency keys on the rail ------------------------------------------------------------------------
+class KeyRail(FakeRail):
+    def __init__(self, txns):
+        super().__init__(txns)
+        self.keys: list[str | None] = []
+
+    def refund(self, transaction_id, amount, request_key=None):
+        self.keys.append(request_key)
+        return super().refund(transaction_id, amount, request_key)
+
+    def void(self, transaction_id, request_key=None):
+        self.keys.append(request_key)
+        return super().void(transaction_id, request_key)
+
+
+def _key_gate(store=None):
+    store = store or Store(load_records())
+    rail = KeyRail(FakeRail.from_store(store).txns)
+    return Gateway(store, rail, clock=Clock()), rail
+
+
+def test_every_refund_and_void_carries_a_key_derived_from_the_money_movement():
+    gw, rail = _key_gate()
+    args = dict(REFUND, amount="10.00")
+    assert gw.handle(session("CUS-01", "refund", args), "refund", args).executed
+    assert rail.keys == [request_key("refund", "fixture-txn-001", "ST-1042", "RMA-1042", Decimal("10.00"), "0.00")]
+    assert rail.keys[0].startswith("cf-refund-") and len(rail.keys[0]) == len("cf-refund-") + 24
+
+
+def test_a_second_genuine_partial_refund_of_the_same_amount_gets_a_new_key_and_pays():
+    gw, rail = _key_gate()
+    args = dict(REFUND, amount="10.00")
+    for sid in ("s1", "s2"):
+        assert gw.handle(session("CUS-01", "refund", args, sid=sid), "refund", args).executed
+    assert len(set(rail.keys)) == 2 and rail.txns["fixture-txn-001"].refunded == Decimal("20.00")
+
+
+def test_two_gate_processes_racing_on_one_refund_pay_it_once():
+    # Two gate processes, each with its own ledger, in front of one rail. Both check before either refund reaches the
+    # rail, so neither sees the other's refund (UNRECONCILED_RAIL_REFUNDS only helps afterwards). Both send the same
+    # key; the rail answers the second with the first refund. Without keys this paid twice.
+    gw1, rail = _key_gate()
+    gw2 = Gateway(Store(load_records()), rail, clock=Clock())
+    args = dict(REFUND, amount="30.00")
+    ctx1, ctx2 = session("CUS-01", "refund", args), session("CUS-01", "refund", args, sid="s2")
+    f1, f2 = gw1.check(ctx1, "refund", args), gw2.check(ctx2, "refund", args)
+    assert f1 == f2 == []
+    first, again = gw1._execute(ctx1, "refund", args, f1), gw2._execute(ctx2, "refund", args, f2)
+    assert first.executed and again.executed and again.rail.id == first.rail.id
+    assert rail.keys[0] == rail.keys[1] and rail.txns["fixture-txn-001"].refunded == Decimal("30.00")
+
+
+def test_a_void_carries_a_key_per_transaction():
+    store = Store(load_records())
+    gw, rail = _key_gate(store)
+    args = {"order_no": "ST-1058"}
+    out = gw.handle(session("CUS-01", "void", args), "void", args)
+    assert rail.keys == [request_key("void", "fixture-txn-011")], out.summary()
+
+
+# -- the rail's line items as a second source for the return record --------------------------------------
+def _tampered(order_no, rma_id, items, approved, order_items=None):
+    """The store's records were edited after the sale; the rail still holds what was really sold."""
+    honest = Store(load_records())
+    rec = load_records()
+    order = next(o for o in rec["orders"] if o["order_no"] == order_no)
+    if order_items is not None:
+        order["items"] = order_items
+    rma = next(r for r in order["returns"] if r["rma_id"] == rma_id)
+    rma.update(items=items, approved_refund_amount=approved)
+    store = Store(rec)
+    rail = FakeRail.from_store(honest)
+    return Gateway(store, rail, clock=Clock()), rail
+
+
+def _refund(gw, order_no, rma_id, amount, customer):
+    args = {"order_no": order_no, "rma_id": rma_id, "amount": amount, "currency": "USD"}
+    return gw.handle(session(customer, "refund", args), "refund", args)
+
+
+def test_honest_records_agree_with_the_rail_and_the_rail_is_asked():
+    gw, rail, _ = gate()
+    out = _refund(gw, "ST-1042", "RMA-1042", "30.00", "CUS-01")
+    assert out.executed and "RAIL_ITEMS_MISMATCH" not in codes(out)
+    assert ("line_items", "fixture-txn-001") in rail.calls
+
+
+def test_more_returned_than_the_rail_sold_blocks():
+    # ST-1043: the rail sold 2 bags; the edited records say 3 were bought and returned
+    gw, rail = _tampered(
+        "ST-1043", "RMA-1043", [{"sku": "BAG", "qty": 3}], "120.00", [{"sku": "BAG", "qty": 3, "unit_price": "40.00"}]
+    )
+    out = _refund(gw, "ST-1043", "RMA-1043", "120.00", "CUS-02")
+    assert codes(out)["RAIL_ITEMS_MISMATCH"] == BLOCK and not rail.money_calls()
+    assert "3 × BAG returned, rail sold 2" in out.summary()
+
+
+def test_an_item_the_rail_never_sold_blocks():
+    gw, rail = _tampered("ST-1042", "RMA-1042", [{"sku": "LAMP", "qty": 1}], "30.00")
+    out = _refund(gw, "ST-1042", "RMA-1042", "30.00", "CUS-01")
+    assert codes(out)["RAIL_ITEMS_MISMATCH"] == BLOCK and not rail.money_calls()
+
+
+def test_an_rma_worth_more_than_the_rail_charged_blocks_even_when_every_store_check_passes():
+    # RMA-1042 edited to approve 60.00 for the one 30.00 tray: amount = RMA, under the auto limit, Reader agrees
+    gw, rail = _tampered("ST-1042", "RMA-1042", [{"sku": "TRAY", "qty": 1}], "60.00")
+    out = _refund(gw, "ST-1042", "RMA-1042", "60.00", "CUS-01")
+    assert {c for c, sev in codes(out).items() if sev != PASS} == {"RAIL_ITEMS_MISMATCH"}
+    assert out.decision == BLOCK and not rail.money_calls()
+    assert "approves 60.00, rail charged 30.00" in out.summary()
+
+
+def test_returns_on_the_order_are_counted_together():
+    # ST-1050: the rail sold 3 bags; RMA-1050 (already refunded) took one back, so 3 more cannot be open
+    rec = load_records()
+    order = next(o for o in rec["orders"] if o["order_no"] == "ST-1050")
+    order["returns"].append(
+        {
+            "rma_id": "RMA-1050B",
+            "items": [{"sku": "BAG", "qty": 3}],
+            "approved_refund_amount": "80.00",
+            "status": "open",
+        }
+    )
+    gw, rail, _ = gate(rec)
+    out = _refund(gw, "ST-1050", "RMA-1050B", "80.00", order["customer_id"])
+    assert codes(out)["RAIL_ITEMS_MISMATCH"] == BLOCK
+    assert "4 × BAG returned, rail sold 3" in out.summary()
+
+
+def test_a_sale_without_line_items_on_the_rail_is_not_checked():
+    gw, rail = _tampered("ST-1042", "RMA-1042", [{"sku": "TRAY", "qty": 1}], "60.00")
+    rail.txns["fixture-txn-001"].line_items = None
+    out = _refund(gw, "ST-1042", "RMA-1042", "60.00", "CUS-01")
+    assert "RAIL_ITEMS_MISMATCH" not in codes(out)
+
+
+def test_a_rail_without_line_items_support_is_not_checked():
+    store = Store(load_records())
+
+    class OldRail(FakeRail):
+        line_items = None
+
+    rail = OldRail.from_store(store)
+    gw = Gateway(store, rail, clock=Clock())
+    assert _refund(gw, "ST-1042", "RMA-1042", "30.00", "CUS-01").executed

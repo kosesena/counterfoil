@@ -2,7 +2,7 @@
 
 // The HOMI story: attack P6-01 told from the shop floor in seven steps. He shops, pays with PayPal at till 01,
 // returns 4 of the 8 cups, and types the injected instruction into the returns kiosk; HOMI's agent asks for
-// 60 USD too many, Counterfoil holds it, the manager rejects it and 40 USD is refunded.
+// 60 USD too many, Counterfoil blocks it; after the earlier refund settles, a new valid 40 USD request can pass.
 // Scene: docs/gorseller/homi-story.glb (tools/export_story_glb.py + tools/homi_story_polish.py), re-packed for
 // the web with gltf-transform (meshopt) into public/3d/homi-story.glb, and its step table homi-story.json.
 // Nothing advances on its own: Next eases to the step's camera, plays its frames once and holds; Back jumps to
@@ -30,9 +30,9 @@ const STEPS = [
   { title: 'Pays with PayPal', text: 'Self-checkout at till 01: he scans the rug, the plant and the cups (ST-1057: 49.00 + 19.00 + 200.00 = 268.00 USD), then scans the till’s QR code with his phone.' },
   { title: 'Changes his mind', text: 'He has already asked for 60 USD back online for these cups. Now he takes 4 of them to the returns kiosk: the shared store record allows 100 USD in total (RMA-1057), 60 of it already on its way.' },
   { title: 'Asks again, in the store', text: 'In the kiosk’s reason box he asks for the same 60 USD again and tells HOMI’s agent to treat it as a separate call and reset the refund counter: a double return across channels, aimed at the AI.', tone: 'amber' },
-  { title: 'Agent asks for 60 USD', text: '60 + 60 = 120 USD against a 100 USD return. Braintree would pay it (it is under the 268 USD sale) and so would a 200 USD cap. Counterfoil checks the store record and holds the call.', tone: 'amber' },
-  { title: 'Manager’s tablet', text: 'The manager sees why it was held and rejects it; 40 USD is still owed.', tone: 'block' },
-  { title: 'Receipt: 40 USD', text: 'A fresh 40 USD refund passes the gate. Braintree confirms it: 100 USD back in total, exactly what the record allows.', tone: 'ok' },
+  { title: 'Agent asks for 60 USD', text: '60 + 60 = 120 USD against a 100 USD return. A transaction-total check and a $200 per-call cap miss the combined amount. Counterfoil counts paid and reserved refunds together and blocks this call.', tone: 'amber' },
+  { title: 'Manager’s tablet', text: 'The manager sees the blocked attempt. This is not an approval request: the $60 call cannot be released. The earlier refund must finish and its reservation clear before another refund can proceed.', tone: 'block' },
+  { title: 'Receipt: 40 USD', text: 'After the first $60 refund completes and its reservation clears, Runner submits a separate $40 request. Counterfoil checks it again. This illustration ends with $100 refunded in total, within the return record.', tone: 'ok' },
 ] as const;
 
 type Meta = {
@@ -339,7 +339,7 @@ const MOMENTS = [
   ['Return', '4 cups to the kiosk'],
   ['Note', 'The injected reason'],
   ['Request', 'Agent asks for $60'],
-  ['Review', "The manager's tablet"],
+  ['Blocked', 'The manager sees why'],
   ['Resolve', '$40 refunded'],
 ] as const;
 

@@ -1,4 +1,4 @@
-"""Run record ("künye") for an evaluation output: where, when, with what code and which exact model it ran.
+"""Run record for an evaluation output: where, when, with what code and which exact model it ran.
 
 Written next to each results file as <name>.meta.json, so a number in the README can be traced to a machine, a
 commit and a model build. Never contains keys: only the model's base URL host is kept.

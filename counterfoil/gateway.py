@@ -82,6 +82,17 @@ def _decide(findings: list[Finding]) -> str:
     return max((f.severity for f in findings), key=_RANK.__getitem__, default=PASS)
 
 
+def request_key(tool: str, *parts) -> str:
+    """The rail's idempotency key (Braintree api_request_key, PayPal-Request-Id) for one money movement.
+
+    Derived from what the money movement is, not from the session or the attempt: the same refund asked for again
+    (an agent retry, a second gate process, a store that lost its ledger) carries the same key, and the rail answers
+    with the first refund instead of paying twice. For refunds the parts include what the store had already refunded
+    on the RMA, so a second, genuine partial refund of the same amount gets a new key."""
+    blob = json.dumps([tool, *map(str, parts)])
+    return f"cf-{tool}-{hashlib.sha256(blob.encode()).hexdigest()[:24]}"
+
+
 def _fingerprint(session_id: str, tool: str, args: dict) -> str:
     blob = json.dumps({"s": session_id, "t": tool, "a": args}, sort_keys=True, default=str)
     return hashlib.sha256(blob.encode()).hexdigest()
@@ -251,6 +262,9 @@ class Gateway:
         drift = self._rail_drift(order)
         if drift:
             findings.append(drift)
+        disputed = self._disputed(order)
+        if disputed:
+            findings.append(disputed)
 
         rma = self.store.rma(order_no, rma_id)
         if rma_id is None:
@@ -277,6 +291,11 @@ class Gateway:
                         APPROVAL, "RMA_AMOUNT_MISMATCH", f"{amount} requested, return record approves {ent.approved}"
                     )
                 )
+
+        if rma is not None and rma["status"] == "open":
+            sold = self._rail_items(order, rma)
+            if sold:
+                findings.append(sold)
 
         findings += self._reader_check(
             ctx, "refund", {"tutar": amount, "siparis_no": order_no, "iade_kaydi_no": rma_id, "para_birimi": currency}
@@ -305,6 +324,73 @@ class Gateway:
                 f"rail shows {rail_total} refunded on {order['order_no']}, store knows {local}",
             )
         return None
+
+    def _disputed(self, order) -> Finding | None:
+        """A refund on a transaction with a dispute the store has not won pays the customer twice: once through the
+        chargeback, once through the refund. Braintree does not refuse it (spikes/braintree_dispute_spike.py).
+
+        Two sources: what the rail lists on the transaction now, and what Braintree's webhooks already told the store
+        (counterfoil/webhooks.py). Where the rail lists a dispute, its status is the current one; a dispute only the
+        store knows (the rail is slow to show it, cannot list disputes, or does not know the transaction) still counts.
+        Only a won dispute lifts the lock; lost, accepted and expired keep it, since the chargeback money is gone."""
+        disputes = getattr(self.rail, "disputes", None)
+        found = disputes(order["braintree_transaction_id"]) if disputes else None
+        merged = {d["id"]: d for d in self.store.disputes_on(order["braintree_transaction_id"])}
+        merged.update({d["id"]: d for d in found or []})
+        live = [d for d in merged.values() if d["status"] != "won"]
+        if not live:
+            return None
+        listed = ", ".join(
+            f"{d['kind']} {d['id']} ({d['status']}, {d['amount']}{', from ' + d['source'] if 'source' in d else ''})"
+            for d in live
+        )
+        return Finding(
+            BLOCK,
+            "TRANSACTION_DISPUTED",
+            f"{order['order_no']} has {listed}; answer the dispute instead of refunding",
+        )
+
+    def _rail_items(self, order, rma) -> Finding | None:
+        """Second source for the return record: what the rail itself recorded as sold on this sale (line items).
+
+        Every other refund check reads the store's own records; this one does not. The returned quantities (this RMA
+        and the order's other open or refunded RMAs) must fit what the rail sold, and the amount this RMA approves must
+        not exceed what the rail charged for those lines. A sale with no line items on the rail is not checked."""
+        line_items = getattr(self.rail, "line_items", None)
+        lines = line_items(order["braintree_transaction_id"]) if line_items else None
+        if not lines:
+            return None
+        sold: dict[str, tuple[Decimal, Decimal]] = {}  # sku -> (quantity, total)
+        for ln in lines:
+            q, t = sold.get(ln["product_code"], (Decimal(0), Decimal("0.00")))
+            sold[ln["product_code"]] = (q + ln["quantity"], t + ln["total_amount"])
+        returned: dict[str, Decimal] = {}
+        for r in order.get("returns", []):
+            if r["status"] in ("open", "refunded"):
+                for it in r["items"]:
+                    returned[it["sku"]] = returned.get(it["sku"], Decimal(0)) + Decimal(str(it["qty"]))
+        problems = []
+        for sku in sorted({it["sku"] for it in rma["items"]}):
+            have = sold.get(sku, (Decimal(0), None))[0]
+            if returned[sku] > have:
+                problems.append(f"{returned[sku]} × {sku} returned, rail sold {have}")
+        if not problems:
+            value = sum(
+                (
+                    Decimal(str(it["qty"])) * sold[it["sku"]][1] / sold[it["sku"]][0]
+                    for it in rma["items"]
+                    if Decimal(str(it["qty"]))  # a zero line may name an item the rail never sold
+                ),
+                Decimal("0.00"),
+            ).quantize(Decimal("0.01"))
+            approved = parse_amount(rma["approved_refund_amount"])
+            if approved > value:
+                problems.append(f"{rma['rma_id']} approves {approved}, rail charged {value} for those items")
+        if not problems:
+            return None
+        return Finding(
+            BLOCK, "RAIL_ITEMS_MISMATCH", f"return record disagrees with the rail's line items: {'; '.join(problems)}"
+        )
 
     def _check_charge(self, ctx, args):
         try:
@@ -420,8 +506,8 @@ class Gateway:
         if tool == "lookup_transaction":
             return Outcome(decision, findings, "succeeded", data=order_view(self.store, self.rail, args["order_no"]))
         if tool == "void":
-            order = self.store.orders[args["order_no"]]
-            return self._call(decision, findings, lambda: self.rail.void(order["braintree_transaction_id"]))
+            txn = self.store.orders[args["order_no"]]["braintree_transaction_id"]
+            return self._call(decision, findings, lambda: self.rail.void(txn, request_key("void", txn)))
         if tool == "charge":
             return self._execute_charge(ctx, args, findings, decision)
         return self._execute_refund(ctx, args, findings, decision, approved)
@@ -470,7 +556,9 @@ class Gateway:
                 ctx.blocked_attempts += 1
                 return Outcome(BLOCK, findings + [Finding(BLOCK, "CONCURRENT_REFUND", late)])
             self.store.reserve(reservation, order["order_no"], rma_id, amount, ctx.session_id)
-        out = self._call(decision, findings, lambda: self.rail.refund(order["braintree_transaction_id"], amount))
+            txn = order["braintree_transaction_id"]
+            key = request_key("refund", txn, order["order_no"], rma_id, amount, ent.spent)
+        out = self._call(decision, findings, lambda: self.rail.refund(txn, amount, key))
         if out.rail_state == "succeeded":
             self.store.settle_reservation(
                 reservation, (out.rail and out.rail.id) or f"accepted-{reservation}", "accepted"

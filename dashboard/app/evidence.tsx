@@ -18,6 +18,10 @@ const GATE_PATCH: Record<Gate, string> = { Counterfoil: 'counterfoil', '$200 cap
 // every model the evaluation has used, in the order Codex's design lists them
 const MODELS = ['Claude Haiku 4.5', 'Claude Opus 5.5', 'Claude Sonnet 5', 'GPT-5.6 Sol', 'GPT-5.6 Terra', 'Hermes 3', 'Llama 3.1', 'Qwen 2.5', 'Qwen 3'];
 
+// Codex's model-name felt patches (docs/gorseller/site-tasarim/model-patches-v1/, tools/felt_patches.py): cream when
+// idle, the model's own colour when picked; no vendor logos (Devpost brand rule)
+const slug = (m: string) => m.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
 const sandbox = (r: Run) => String(r.source).includes('braintree');
 const split = (r: Run) => (String(r.source).includes('holdout') ? 'holdout' : 'dev');
 const count = (runs: Run[], field: string) => runs.reduce((n, r) => n + (r[field] === 1 ? 1 : 0), 0);
@@ -79,6 +83,8 @@ function Panel({ title, runs, models }: { title: string; runs: Run[]; models: st
 export function EvidenceBoard({ data }: { data: CounterfoilData }) {
   const [gate, setGate] = useState<Gate>('Counterfoil');
   const [model, setModel] = useState('All');
+  // a model whose patch image is missing falls back to the plain text pill
+  const [noPatch, setNoPatch] = useState<Set<string>>(new Set());
 
   const runs = useMemo(() => data.runs.filter((r) => !sandbox(r)), [data]);
   const ran = useMemo(() => new Set(runs.map((r) => modelName(r.model))), [runs]);
@@ -108,7 +114,7 @@ export function EvidenceBoard({ data }: { data: CounterfoilData }) {
   return (
     <section className="ev">
       <p className="ev-meta">
-        Latest gate · {runs.length} runs · exported {day}
+        Simulation evidence · {runs.length} completed runs · exported {day}
       </p>
       <div className="ev-filters">
         <div className="ev-filter felt" role="group" aria-label="Gate condition">
@@ -124,16 +130,23 @@ export function EvidenceBoard({ data }: { data: CounterfoilData }) {
         <div className="ev-filter felt" role="group" aria-label="Model">
           <h3>Model</h3>
           <div className="ev-pills">
-            {['All', ...MODELS].map((m) => (
-              <button
-                key={m}
-                className={`${m === model ? 'on' : ''} ${pending.includes(m) ? 'later' : ''}`}
-                aria-pressed={m === model}
-                onClick={() => setModel(m)}
-              >
-                {m}
-              </button>
-            ))}
+            {['All', ...MODELS].map((m) => {
+              const patch = !noPatch.has(m);
+              return (
+                <button
+                  key={m}
+                  className={`${m === model ? 'on' : ''} ${pending.includes(m) ? 'later' : ''} ${patch ? 'patch' : ''}`}
+                  aria-pressed={m === model}
+                  onClick={() => setModel(m)}
+                >
+                  {patch ? (
+                    <img src={`/models/${slug(m)}${m === model ? '-on' : ''}.webp`} alt={m} onError={() => setNoPatch((s) => new Set(s).add(m))} />
+                  ) : (
+                    m
+                  )}
+                </button>
+              );
+            })}
           </div>
           {pending.length > 0 && <p className="ev-foot">{pending.join(', ')}: latest-gate runs pending</p>}
         </div>
@@ -142,16 +155,16 @@ export function EvidenceBoard({ data }: { data: CounterfoilData }) {
       <div className="ev-tiles">
         <Tile title="Agent misled" value={none ? 'Pending' : pct(count(attacks, 'agentMisled'), attacks.length)} note={`followed the attacker · ${gate}`} />
         <Tile
-          title="Wrong money paid"
+          title="Unsafe outcomes"
           value={none ? 'Pending' : `${count(attacks, 'harm')} / ${attacks.length}`}
-          note={`reached Braintree · ${gate} · ${sets}`}
+          note={`simulation: wrong payments or unauthorised reads · ${gate} · ${sets}`}
         />
         <Tile title="Genuine requests" value={clean.length ? pct(count(clean, 'cleanDone'), clean.length) : 'Pending'} note={`handled right · ${gate}`} />
       </div>
 
       <div className="ev-panels">
-        <Panel title="Dev · wrong-money cases" runs={runs.filter((r) => split(r) === 'dev')} models={shown} />
-        <Panel title="Holdout · wrong-money cases" runs={runs.filter((r) => split(r) === 'holdout')} models={shown} />
+        <Panel title="Dev · unsafe outcomes" runs={runs.filter((r) => split(r) === 'dev')} models={shown} />
+        <Panel title="Holdout · unsafe outcomes" runs={runs.filter((r) => split(r) === 'holdout')} models={shown} />
       </div>
 
       {unfinished.length > 0 && (

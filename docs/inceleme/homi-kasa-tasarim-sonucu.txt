@@ -1,37 +1,37 @@
-HOMI self-servis iade noktası — 23 Ekim 2026
+HOMI self-service return point — 23 October 2026
 
-Ana dosya güncellendi:
+Main file updated:
 /Users/kosesena/Desktop/paypal-ai-hackathon/docs/gorseller/counterfoil-magaza.blend
-Sahne: Counterfoil_Market_Composite
-Gösterim: frame 620, HOMI_Checkout_Hero kamera.
-Yeni koleksiyon: HOMI_Return_Station (HR_ öneki).
-Ayrı ürün inceleme sahnesi: HOMI_Checkout_Design_Review.
+Scene: Counterfoil_Market_Composite
+Display: frame 620, HOMI_Checkout_Hero camera.
+New collection: HOMI_Return_Station (HR_ prefix).
+Separate product review scene: HOMI_Checkout_Design_Review.
 
-Değişiklikler:
-- Till1 yerine 3,27 m genişliğinde kırık beyaz, meşe ve koyu yeşil self-servis iade noktası.
-- Büyütülmüş müşteri ekranı: ST-1042, onaylı tepsi iadesi $30, sipariş toplamı $90, inceleme sürüyor.
-- Küçük AI Reader tarayıcı ünitesi, ekran içi işlem ajanı avatarı.
-- Seramik tepsi ve ürün bırakma yüzeyi; ayrı ödeme terminali ve kapalı fiş çıkışı.
-- Resmî mevcut PayPal görseli bozulmadan küçük ödeme yöntemi plakasında; SANDBOX DEMO etiketi.
-- Eski SE_Till1_* ve Inst_Reader_Agent / Inst_Transaction_Agent gizlendi; silinmedi.
-- Müşteri ve arabanın mevcut animasyonları, müdür/ofis, kapılar, sepet standı ve diğer kasalar korundu.
-- Yemek katı değiştirilmedi. Öneri: hackathon demo rotasının dışında bırakılması.
+Changes:
+- In place of Till1, a 3.27 m wide off-white, oak and dark green self-service return point.
+- Enlarged customer screen: ST-1042, approved tray refund $30, order total $90, review in progress.
+- Small AI Reader scanner unit, on-screen transaction agent avatar.
+- Ceramic tray and product drop surface; separate payment terminal and enclosed receipt slot.
+- Official existing PayPal image, undistorted, on a small payment method plate; SANDBOX DEMO label.
+- Old SE_Till1_* and Inst_Reader_Agent / Inst_Transaction_Agent hidden; not deleted.
+- Existing customer and cart animations, manager/office, gates, basket stand and the other tills kept.
+- Food floor not changed. Suggestion: leave it out of the hackathon demo route.
 
-Sınırlar / sonraki adım:
-- Ekran statik görsel prototiptir; gerçek geçit/Braintree sonuçlarıyla bağlı değildir.
-- Saldırılı $90 isteğin ret ekranı ve ardından yeni $30 isteğin yürütülmesi henüz animasyonlaştırılmadı.
-- Fiş yalnız sağlayıcı başarı doğrulamasından sonra çıkmalı; mevcut eski fiş gizlendi.
-- Mevcut 'pay' kol animasyonu korunmuştur; yeni terminale tam temas için animasyon ayrıca ayarlanmalı.
-- PayPal logosunun bu 3D/video kullanımına özel izin doğrulanmadı. HR_PayPal* nesneleri bağımsızdır.
-- Logo dış dosyaya referanslıdır: marka-dis/paypal-2024/black/Logo - Black/PayPal-Logo-Black-RGB.png.
-- Ana proje için tools/homi_checkout.py ve tools/homi_checkout_large.py eklendi. Tek seferlik betikler; mevcut koleksiyon üzerine yeniden çalıştırılmaz.
-- Tasarım inceleme sahnesi ve kameranın son ayarları blend dosyasında kaydedilmiştir.
+Limits / next step:
+- The screen is a static visual prototype; it is not connected to real gate/Braintree results.
+- The rejection screen for the attacked $90 request, and the execution of the new $30 request after it, are not animated yet.
+- The receipt must come out only after provider success confirmation; the existing old receipt is hidden.
+- The existing 'pay' arm animation is kept; the animation must be adjusted separately for full contact with the new terminal.
+- Specific permission for this 3D/video use of the PayPal logo has not been verified. The HR_PayPal* objects are independent.
+- The logo references an external file: marka-dis/paypal-2024/black/Logo - Black/PayPal-Logo-Black-RGB.png.
+- For the main project, tools/homi_checkout.py and tools/homi_checkout_large.py were added. One-off scripts; not to be re-run over the existing collection.
+- The design review scene and the final camera settings are saved in the blend file.
 
-Çıktılar:
+Outputs:
 /Users/kosesena/Documents/Codex/2026-10-23/se/outputs/homi-self-service-design-4k.png
 /Users/kosesena/Documents/Codex/2026-10-23/se/outputs/homi-self-service-in-store-4k.png
 /Users/kosesena/Documents/Codex/2026-10-23/se/outputs/homi-self-service-screen-4k.png
 /Users/kosesena/Documents/Codex/2026-10-23/se/outputs/homi-self-service-checkout.blend
 
-Commit/push yapılmadı. Eski dosyayı gösteren diğer Blender penceresinden kayıt yapılmamalı.
-Başlangıç yedeği: /Users/kosesena/Documents/Codex/2026-10-23/se/work/counterfoil-magaza-before-checkout.blend
+No commit/push was made. Do not save from the other Blender window that shows the old file.
+Starting backup: /Users/kosesena/Documents/Codex/2026-10-23/se/work/counterfoil-magaza-before-checkout.blend

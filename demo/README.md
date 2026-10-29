@@ -67,6 +67,10 @@ key and no network).
 | `GET /api/scenarios` | All scenarios: the email, the attacker's goal, the expected decision, and which saved runs include it |
 | `GET /api/config` | Whether live mode is on (and which model), the rail, the limits, the replay sources, the fixture store |
 | `POST /api/run` | `{scenario_id \| email, condition, mode, source?}` → one row in run_eval's shape, plus `demo` metadata |
+| `POST /api/checkout/rail-rules` | Braintree keys only. Fresh sandbox sales sent straight to Braintree (no agent, no gate): a test card (refund before settlement → `91506`, `testing.settle_transaction`, above the sale → `91521`, after a full refund → `91512`), the same calls on mocked PayPal (all accepted), and a sale on the dispute test card `4023898493988028` with the gate's check (`TRANSACTION_DISPUTED`) next to Braintree's own refund (accepted). About 15 sandbox calls per request, under the checkout rate limit |
+
+| `POST /api/braintree/webhook` | Braintree keys only. Braintree's form post (`bt_signature`, `bt_payload`), verified with `webhook_notification.parse`; unverified → 403, nothing recorded. A dispute notification on a purchase locks its refund runs (`TRANSACTION_DISPUTED`). Answers `{kind, action, duplicate}` |
+| `GET /api/braintree/events` | The audit of verified notifications, newest first: kind, subject (transaction or refund id), when Braintree sent it, what the store did (`dispute_locked`, `dispute_unlocked`, `refund_failed`, `flagged`, `checked`, `ignored`, ...) and the details |
 
 `condition` is `none`, `cap` or `counterfoil`. `email` is `{from, subject, body_text, body_html?, attachment_text?}`.
 `source` (replay only) is a `results/*.jsonl` file stem; the default is the qwen2.5 run, or `DEMO_REPLAY_SOURCE`.
@@ -105,6 +109,26 @@ key and no network).
    `ANTHROPIC_API_KEY`) in the dashboard. Optionally add the three `BRAINTREE_*` values for the sandbox rail.
 3. Deploy, then open the `.onrender.com` URL. A free instance sleeps when idle, so the first request after a pause
    takes up to a minute.
+
+## Braintree webhooks (sandbox Control Panel)
+
+Needs the demo deployed with the three `BRAINTREE_*` values (above), at a public HTTPS URL.
+
+1. Sign in to the Braintree **sandbox** Control Panel (sandbox.braintreegateway.com). Gear icon → **API** →
+   **Webhooks** → **Create new webhook**.
+2. Destination URL: `https://<your-service>.onrender.com/api/braintree/webhook`.
+3. Tick the dispute notifications (Opened, Under Review, Disputed, Won, Lost, Accepted, Auto Accepted, Expired), and,
+   if offered, Disbursement, Transaction Disbursed, Transaction Settled, Transaction Settlement Declined and Refund
+   Failed. Counterfoil records and ignores anything else. Create the webhook.
+4. Press **Check URL** next to it. Braintree posts a `check` notification; `GET /api/braintree/events` on the demo
+   should list it with action `checked`. If the instance was asleep, press it again after the first request wakes it.
+5. Real chargeback: run section 4 of the demo ("What Braintree refuses on its own"). Its dispute-card sale gets a
+   chargeback within seconds; the `dispute_opened` delivery should appear in `/api/braintree/events` with Braintree's
+   own dispute id. (Not yet observed; please note the result.)
+
+The free instance keeps events in memory: they are gone after a restart. `DEMO_EVENTS_DB=/path/file.sqlite` keeps
+them on a disk the service has. Braintree retries deliveries that do not get a 2xx; a repeated delivery is recorded
+once.
 
 ## Deploy on a Vultr VM
 

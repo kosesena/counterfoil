@@ -3,6 +3,8 @@
 
 import type { AgDataSourcesDefinition, AgFieldDefinition, AgFormat, AgRelationDefinition } from 'ag-studio';
 
+import type { RailChecks } from './rail-checks';
+
 export type CounterfoilData = {
   asOf: string;
   runs: Record<string, unknown>[];
@@ -13,6 +15,7 @@ export type CounterfoilData = {
   orders: Record<string, unknown>[];
   returns: Record<string, unknown>[];
   skipped?: Record<string, unknown>[]; // runs the model never finished (timeouts): listed, not scored
+  railChecks?: RailChecks | null; // sandbox record of the rail-side checks (scripts/record_rail_checks.py)
 };
 
 // [id, name, format, hide?]
@@ -246,7 +249,7 @@ export function buildStudioData(data: CounterfoilData): AgDataSourcesDefinition 
     ],
     expressions: [
       total('misledRuns', 'Agent misled', 'runs.agentMisled'),
-      total('harmRuns', 'Wrong money paid', 'runs.harm'),
+      total('harmRuns', 'Unsafe outcomes', 'runs.harm'),
       total('stoppedRuns', 'Stopped by gate', 'runs.stoppedByGate'),
       total('moneyCalls', 'Money calls', 'calls.moneyCall'),
       total('harmNoGate', 'No gate', 'runs.harmNoGate'),
