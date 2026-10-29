@@ -4,6 +4,11 @@ Orders, catalog and customers are read-only fixtures. Refunds, reservations and 
 "check remaining entitlement, then reserve it" is one transaction. The running app must pass a file path
 (state has to survive a restart); ':memory:' is for tests.
 
+Disputes and rail events come from Braintree webhooks (counterfoil/webhooks.py): `disputes` holds the latest status
+of every dispute Braintree told the store about, by the rail's transaction id, so the gate refuses a refund on it even
+before it asks the rail; `rail_events` is the audit of every verified notification, keyed by its payload digest so the
+same notification twice is recorded once.
+
 Refund states: accepted (rail took it, not yet settled; counts as spent), completed, pending/unknown
 (outcome not known: blocks new refunds on the order until reconciled), failed (does not count).
 """
@@ -43,6 +48,24 @@ CREATE TABLE IF NOT EXISTS charges (
     amount      TEXT NOT NULL,
     status      TEXT NOT NULL CHECK (status IN ('requested', 'accepted', 'failed', 'unknown')),
     rail_id     TEXT
+);
+CREATE TABLE IF NOT EXISTS disputes (
+    dispute_id     TEXT PRIMARY KEY,
+    transaction_id TEXT NOT NULL,
+    kind           TEXT NOT NULL,
+    status         TEXT NOT NULL,
+    amount         TEXT NOT NULL,
+    as_of          TEXT NOT NULL,  -- timestamp of the notification that set this status
+    source         TEXT NOT NULL   -- e.g. 'webhook dispute_opened'
+);
+CREATE TABLE IF NOT EXISTS rail_events (
+    event_id    TEXT PRIMARY KEY,  -- sha256 of the signed payload
+    kind        TEXT NOT NULL,
+    subject_id  TEXT,
+    sent_at     TEXT NOT NULL,
+    received_at TEXT NOT NULL,
+    action      TEXT NOT NULL,
+    detail      TEXT NOT NULL      -- JSON
 );
 """
 SPENT = ("accepted", "completed")
@@ -200,3 +223,59 @@ class Store:
                 "INSERT OR REPLACE INTO charges VALUES (?,?,?,?,?)",
                 (request_id, customer_id, str(amount), status, rail_id),
             )
+
+    # -- disputes and rail events (webhooks) -----------------------------------------------------
+    def record_dispute(
+        self, dispute_id: str, transaction_id: str, kind: str, status: str, amount: str, as_of: str, source: str
+    ) -> bool:
+        """Latest status wins by notification time: an older notification arriving late changes nothing."""
+        with self.transaction():
+            row = self.db.execute("SELECT as_of, status FROM disputes WHERE dispute_id=?", (dispute_id,)).fetchone()
+            if row and (row[0] > as_of or (row[0] == as_of and row[1] == status)):
+                return False
+            self.db.execute(
+                "INSERT OR REPLACE INTO disputes VALUES (?,?,?,?,?,?,?)",
+                (dispute_id, transaction_id, kind, status, amount, as_of, source),
+            )
+            return True
+
+    def disputes_on(self, transaction_id: str) -> list[dict]:
+        rows = self.sql(
+            "SELECT dispute_id, kind, status, amount, as_of, source FROM disputes WHERE transaction_id=? ORDER BY dispute_id",
+            (transaction_id,),
+        )
+        return [dict(zip(("id", "kind", "status", "amount", "as_of", "source"), r, strict=True)) for r in rows]
+
+    def record_event(
+        self,
+        event_id: str,
+        kind: str,
+        subject_id: str | None,
+        sent_at: str,
+        received_at: str,
+        action: str,
+        detail: dict,
+    ) -> bool:
+        """False if this exact notification was recorded before."""
+        with self.transaction():
+            cur = self.db.execute(
+                "INSERT OR IGNORE INTO rail_events VALUES (?,?,?,?,?,?,?)",
+                (event_id, kind, subject_id, sent_at, received_at, action, json.dumps(detail, default=str)),
+            )
+            return cur.rowcount == 1
+
+    def event(self, event_id: str) -> dict | None:
+        found = self._events("WHERE event_id=?", (event_id,))
+        return found[0] if found else None
+
+    def events(self, limit: int = 50) -> list[dict]:
+        """The audit of rail notifications, newest first."""
+        return self._events("ORDER BY received_at DESC, rowid DESC LIMIT ?", (limit,))
+
+    def _events(self, tail: str, params: tuple) -> list[dict]:
+        rows = self.sql(
+            "SELECT event_id, kind, subject_id, sent_at, received_at, action, detail FROM rail_events " + tail,  # noqa: S608 - fixed clauses
+            params,
+        )
+        keys = ("event_id", "kind", "subject_id", "sent_at", "received_at", "action", "detail")
+        return [{**dict(zip(keys, r, strict=True)), "detail": json.loads(r[6])} for r in rows]

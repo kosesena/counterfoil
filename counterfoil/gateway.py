@@ -327,13 +327,23 @@ class Gateway:
 
     def _disputed(self, order) -> Finding | None:
         """A refund on a transaction with a dispute the store has not won pays the customer twice: once through the
-        chargeback, once through the refund. Braintree does not refuse it (spikes/braintree_dispute_spike.py)."""
+        chargeback, once through the refund. Braintree does not refuse it (spikes/braintree_dispute_spike.py).
+
+        Two sources: what the rail lists on the transaction now, and what Braintree's webhooks already told the store
+        (counterfoil/webhooks.py). Where the rail lists a dispute, its status is the current one; a dispute only the
+        store knows (the rail is slow to show it, cannot list disputes, or does not know the transaction) still counts.
+        Only a won dispute lifts the lock; lost, accepted and expired keep it, since the chargeback money is gone."""
         disputes = getattr(self.rail, "disputes", None)
         found = disputes(order["braintree_transaction_id"]) if disputes else None
-        live = [d for d in found or [] if d["status"] != "won"]
+        merged = {d["id"]: d for d in self.store.disputes_on(order["braintree_transaction_id"])}
+        merged.update({d["id"]: d for d in found or []})
+        live = [d for d in merged.values() if d["status"] != "won"]
         if not live:
             return None
-        listed = ", ".join(f"{d['kind']} {d['id']} ({d['status']}, {d['amount']})" for d in live)
+        listed = ", ".join(
+            f"{d['kind']} {d['id']} ({d['status']}, {d['amount']}{', from ' + d['source'] if 'source' in d else ''})"
+            for d in live
+        )
         return Finding(
             BLOCK,
             "TRANSACTION_DISPUTED",
