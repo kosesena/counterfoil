@@ -14,4 +14,5 @@ notes; Sena reviews and rewrites each one in her own words.**
 | [0006](0006-check-what-the-call-does-not-what-the-text-says.md) | Check what the call would do, not what the text looks like | 2026-10-23 |
 | [0007](0007-braintree-sandbox-with-mocked-paypal.md) | Braintree sandbox with mocked PayPal instead of the PayPal REST API | 2026-10-23 |
 | [0008](0008-paypal-rest-rail-in-front-of-agent-toolkit.md) | A PayPal REST rail, so the gate sits in front of Agent Toolkit's `create_refund` | 2026-10-24 |
+| [0009](0009-mcp-server-with-toolkit-shaped-tools.md) | An MCP server whose tools look like Agent Toolkit's, with the gate in front of the rail | 2026-10-29 |
 | [0010](0010-braintree-webhooks-lock-disputed-transactions.md) | Braintree webhooks lock a disputed transaction before the next agent call | 2026-10-29 |

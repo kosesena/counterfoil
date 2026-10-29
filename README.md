@@ -203,6 +203,25 @@ cd dashboard && npm install && npm run dev      # http://localhost:3000
 
 More: [`demo/README.md`](demo/README.md), [`dashboard/README.md`](dashboard/README.md).
 
+## Use it from any MCP client
+
+`counterfoil-mcp` is a stdio MCP server with PayPal Agent Toolkit's tool names and parameters: `create_refund(capture_id, amount {currency_code, value}, invoice_id, note_to_payer)`, plus an optional `rma_id`, and `get_order(id)`. Claude Desktop, Cursor or Claude Code add it with one entry; every call goes through the gate, and the answer comes back as a tool result: `COMPLETED` with the Braintree transaction id, `HELD_FOR_APPROVAL` with a hold id and the reasons, or `BLOCKED` with the rule and the reason. No tool can approve; the store manager decides at a localhost approval desk. Behind the Toolkit-shaped interface the rail is the **Braintree sandbox, not PayPal REST**.
+
+Claude Desktop (`claude_desktop_config.json`, absolute paths; the keys stay in `.env`, never in this file):
+
+```json
+{
+  "mcpServers": {
+    "counterfoil": {
+      "command": "/path/to/counterfoil/.venv/bin/python",
+      "args": ["/path/to/counterfoil/scripts/counterfoil_mcp.py", "serve", "--scenario", "P6-01", "--rail", "braintree"]
+    }
+  }
+}
+```
+
+Without `--rail braintree` it runs on the in-memory rail, no keys. Paste the P6-01 e-mail and the gate refuses the USD 60 refund (60 reserved + 60 > the USD 100 return record) and holds the USD 40 remainder for the manager. Approve or reject it with `scripts/counterfoil_mcp.py holds|approve|reject`. Tools, Cursor and Claude Code setup, and the walkthrough: [`docs/mcp.md`](docs/mcp.md); design and what was run for real: [ADR 0009](docs/adr/0009-mcp-server-with-toolkit-shaped-tools.md).
+
 ## Architecture
 
 | Part | Where | What it does |
@@ -213,6 +232,7 @@ More: [`demo/README.md`](demo/README.md), [`dashboard/README.md`](dashboard/READ
 | Rails | [`counterfoil/rail.py`](counterfoil/rail.py), [`counterfoil/paypal.py`](counterfoil/paypal.py), [`counterfoil/toolkit.py`](counterfoil/toolkit.py) | Braintree sandbox (official `braintree` SDK), PayPal REST sandbox, in-memory rail; a gated stand-in for PayPal Agent Toolkit's `create_refund` |
 | Baselines | [`counterfoil/baselines.py`](counterfoil/baselines.py) | no gate, and a $200 per-transaction cap |
 | Evaluation | [`scripts/run_eval.py`](scripts/run_eval.py), [`counterfoil/evaluate.py`](counterfoil/evaluate.py), [`docs/senaryolar/`](docs/senaryolar/) | runs the scenarios under the three conditions and scores each run |
+| MCP server | [`counterfoil/mcp_server.py`](counterfoil/mcp_server.py), [`scripts/counterfoil_mcp.py`](scripts/counterfoil_mcp.py) | Toolkit-shaped `create_refund` / `get_order` over MCP, gated; localhost approval desk |
 | Live demo | [`demo/`](demo/README.md) | pay in the Braintree sandbox, let the agent refund it, approve or reject held calls |
 | Dashboard | [`dashboard/`](dashboard/README.md) | the felt overview, the 3D story and the evidence board, built on AG Studio |
 
