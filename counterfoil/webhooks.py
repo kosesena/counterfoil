@@ -26,7 +26,8 @@ What each kind does (Braintree's list: braintree.WebhookNotification.Kind, SDK 4
 Braintree sends no webhook when a refund or credit is created, so a refund made in the Control Panel is found by the
 sweep on the next settlement or disbursement notification, or by the gate's per-transaction check before the next
 refund on that order. transaction_settled and transaction_settlement_declined are only sent for some payment methods
-(ACH, local payments), not for cards or PayPal; disbursement is daily.
+(ACH, local payments), not for cards or PayPal; disbursement is daily. On 29 Oct the sandbox Control Panel offered
+none of the four to this merchant (only the dispute kinds and refund_failed), so the sweep mostly runs on its own.
 """
 
 from __future__ import annotations
