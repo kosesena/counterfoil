@@ -8,6 +8,8 @@
 
 A gate between an AI returns agent and Braintree. Every refund or charge the agent asks for is checked against the store's own records before any money moves.
 
+<sub>Built from Türkiye on <b>Braintree</b>, the PayPal service PayPal's team confirmed for this hackathon where PayPal accounts can't be opened (<a href="docs/adr/0007-braintree-sandbox-with-mocked-paypal.md">ADR 0007</a>).</sub>
+
 [**Live dashboard**](https://counterfoil-dashboard.vercel.app) · [**Live demo**](https://counterfoil-demo.onrender.com) · [How it works](#how-it-works) · [Results](#results) · [Quick start](#quick-start)
 
 [![tests](https://github.com/kosesena/counterfoil/actions/workflows/tests.yml/badge.svg)](https://github.com/kosesena/counterfoil/actions/workflows/tests.yml)
