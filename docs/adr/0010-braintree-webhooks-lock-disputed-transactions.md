@@ -40,8 +40,11 @@ The demo serves it at `POST /api/braintree/webhook`.
   notifications (it records them). Dispute notifications on a judge's purchase do lock that purchase's refund runs.
 - The demo keeps events in memory unless `DEMO_EVENTS_DB` names a file; the free Render instance loses them on
   restart. A real store would keep them in its own database.
-- Verified for real on 29 Oct (`spikes/braintree_webhook_spike.py`, `docs/arastirma/2026-10-29-braintree-webhooks.md`):
-  a sale on the dispute test card got a real open chargeback, a notification for it signed with the real sandbox keys
-  locked the transaction, and the next refund was blocked with nothing sent to Braintree. Simulated: the delivery
-  itself (`webhook_testing.sample_notification`), because Braintree only delivers to a public URL set in the Control
-  Panel. Not yet seen: a real Braintree delivery, and which of these kinds the Control Panel offers to subscribe to.
+- Verified for real on 29 Oct (`docs/arastirma/2026-10-29-braintree-webhooks.md`): with the webhook set in the
+  sandbox Control Panel, Braintree's own `check` and a real `dispute_opened` for a chargeback on the dispute test card
+  reached the hosted demo, verified, and locked the transaction. Before that, `spikes/braintree_webhook_spike.py`
+  showed the next refund blocked with nothing sent to Braintree, with a simulated delivery signed by the real keys.
+- The Control Panel offers this merchant the dispute kinds and `refund_failed`, not the settlement or disbursement
+  kinds. The handlers for those stay (they are in the SDK and cost nothing), but the sweep is run by
+  `scripts/sweep_refunds.py` and the per-transaction check in practice. Won and lost from Braintree itself, and a
+  real `refund_failed`, have not been seen yet.

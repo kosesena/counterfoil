@@ -43,11 +43,29 @@ demo audit: [('dispute_opened', 'eeg4559w', 'dispute_locked')]
 - The demo endpoint accepted the notification once, recorded the same notification again as a duplicate, refused a
   changed payload with 403, and its audit shows one row.
 
-## Not verified
+## Real delivery from Braintree (29 Oct, 19:01–19:03 UTC)
 
-- A real delivery from Braintree. It needs the webhook URL set in the sandbox Control Panel and a public server
-  (the Render demo); instructions in `demo/README.md`. Section 4 of the live demo makes a sale on the dispute test
-  card, so after that setup it should produce a real `dispute_opened` delivery, visible at `GET /api/braintree/events`.
-- Which kinds the Control Panel lets a sandbox merchant subscribe to. The SDK knows `refund_failed`; the webhook docs
-  read on 26 Oct do not list it (`2026-10-26-paypal-braintree-features.md`).
-- Won and lost transitions from Braintree itself (tested with sample notifications only).
+After the merge Render deployed the endpoint, and the webhook was created in the sandbox Control Panel (API →
+Webhooks) for `https://counterfoil-demo.onrender.com/api/braintree/webhook`.
+
+- **Kinds the Control Panel offers** a sandbox merchant: Subscription (8), Dispute (Accepted, Auto Accepted, Disputed,
+  Expired, Lost, Opened, Under Review, Won), Disputed Transaction (Custom field updated), Payment Method (2) and
+  Refund (Refund Failed). No transaction settlement, disbursement or refund-created kinds. Subscribed: the eight
+  dispute kinds and Refund Failed.
+- **Check URL**: Braintree's own `check` notification arrived at 19:01:49, verified, recorded as `checked`.
+- **Real chargeback, real delivery**: section 4 of the live demo (`POST /api/checkout/rail-rules`) made a sale of
+  80.14 on the dispute test card (`1w71eq0n`); Braintree opened chargeback `y6c5t9nsm7834gnt` (open, fraud), sent
+  `dispute_opened` at 19:02:40, and the demo received it at 19:02:42: verified, action `dispute_locked`, refunds on
+  `1w71eq0n` blocked. Nothing about this delivery was simulated.
+- In the same section the gate blocked a refund of 40.00 on the sale, and Braintree alone accepted it (`7fjkz5he`).
+  That refund went straight to Braintree, outside the gate, as the section is meant to show.
+- When the dispute event arrived the earlier `check` row was no longer listed: the demo keeps events in memory, so
+  the process restarted or a second instance answered in between. A file in `DEMO_EVENTS_DB` on a persistent disk
+  would keep them.
+
+## Still not verified
+
+- Won and lost transitions sent by Braintree itself (tested with sample notifications only).
+- A real `refund_failed` delivery.
+- The settlement and disbursement handling: the Control Panel does not offer those kinds to this merchant, so in
+  practice the sweep runs from `scripts/sweep_refunds.py` and the gate's per-transaction check, not from a webhook.

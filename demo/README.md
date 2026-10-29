@@ -116,15 +116,16 @@ Needs the demo deployed with the three `BRAINTREE_*` values (above), at a public
 
 1. Sign in to the Braintree **sandbox** Control Panel (sandbox.braintreegateway.com). Gear icon → **API** →
    **Webhooks** → **Create new webhook**.
-2. Destination URL: `https://<your-service>.onrender.com/api/braintree/webhook`.
-3. Tick the dispute notifications (Opened, Under Review, Disputed, Won, Lost, Accepted, Auto Accepted, Expired), and,
-   if offered, Disbursement, Transaction Disbursed, Transaction Settled, Transaction Settlement Declined and Refund
-   Failed. Counterfoil records and ignores anything else. Create the webhook.
+2. Destination URL: `https://<your-service>.onrender.com/api/braintree/webhook` (set up for
+   `counterfoil-demo.onrender.com` on 29 Oct).
+3. Tick the eight Dispute notifications (Accepted, Auto Accepted, Disputed, Expired, Lost, Opened, Under Review, Won)
+   and Refund → Refund Failed. On 29 Oct the sandbox offered no settlement or disbursement kinds. Counterfoil records
+   and ignores any other kind. Create the webhook.
 4. Press **Check URL** next to it. Braintree posts a `check` notification; `GET /api/braintree/events` on the demo
    should list it with action `checked`. If the instance was asleep, press it again after the first request wakes it.
 5. Real chargeback: run section 4 of the demo ("What Braintree refuses on its own"). Its dispute-card sale gets a
    chargeback within seconds; the `dispute_opened` delivery should appear in `/api/braintree/events` with Braintree's
-   own dispute id. (Not yet observed; please note the result.)
+   own dispute id. Observed on 29 Oct: delivered about two seconds after Braintree sent it, action `dispute_locked`.
 
 The free instance keeps events in memory: they are gone after a restart. `DEMO_EVENTS_DB=/path/file.sqlite` keeps
 them on a disk the service has. Braintree retries deliveries that do not get a 2xx; a repeated delivery is recorded
