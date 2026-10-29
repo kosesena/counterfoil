@@ -153,7 +153,7 @@ button { border-radius:24px; padding:12px 20px; } button:focus-visible,a:focus-v
 .message-subject { font-size:18px; margin-top:10px; font-weight:600; } .message-body { white-space:pre-wrap; font-size:15px; line-height:1.7; max-width:800px; margin:12px 0 16px; }
 #emailView > p:last-child { margin-top:12px; } details summary { padding:6px 0; } .method-note { margin-top:14px; }
 .col { border-radius:18px; padding:20px; } #cols:not(:empty) { margin:24px 0; } #payBox { background:#e4edf7; border-color:#cadbec; } #payBox h2 { color:#164677; } #payPaypal { background:#174984; }
-#railBox { background:transparent; } footer { border-top:1px solid var(--line); margin-top:32px; line-height:1.7; }
+#railBox { background:transparent; } #hookList:empty { display:none; } .hook-new { outline:2px solid var(--accent); border-radius:8px; } footer { border-top:1px solid var(--line); margin-top:32px; line-height:1.7; }
 @media(max-width:700px) { header,main,footer { padding-left:18px; padding-right:18px; } .topbar { flex-wrap:wrap; gap:12px; } .topbar img { width:110px; height:42px; } .sandbox-label { display:none; } .intro { grid-template-columns:1fr; gap:24px; padding:32px 0; } .intro-crew img { height:140px; } .guide { flex-direction:column; gap:12px; } .panel { padding:18px; } .scenarios { grid-template-columns:1fr; } .sc.featured { display:grid; grid-template-columns:80px 1fr; column-gap:14px; } .sc.featured img { grid-row:1 / 4; height:110px; margin:0; } .sc.featured .tag { justify-self:start; } .sc b { margin-top:6px; } .seg { max-width:100%; } .seg button { padding:9px 12px; } #sourceBox { min-width:0; } }
 @media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } * { transition:none!important; } }
 
@@ -311,6 +311,15 @@ button { border-radius:24px; padding:12px 20px; } button:focus-visible,a:focus-v
     </div>
     <div class="cols" id="railOut" style="margin-top:10px"></div>
     <p class="err" id="railErr"></p>
+    <div class="col" id="hookBox" style="margin-top:14px">
+      <h3>Braintree's webhook <small>· a chargeback opens, Counterfoil locks refunds on its own</small></h3>
+      <p class="note">Braintree posts every dispute to this server (<code>POST /api/braintree/webhook</code>). Counterfoil
+      checks the signature with the Braintree SDK and marks the transaction disputed, so every later refund on it is
+      blocked before any agent asks. Only a won dispute lifts the lock. After the dispute-card sale above, Braintree's
+      notification shows up here within seconds.</p>
+      <p class="note" id="hookStatus"></p>
+      <ul class="tl" id="hookList"></ul>
+    </div>
   </details>
 </main>
 <footer>
@@ -722,6 +731,37 @@ function railCol(title, sub, steps, verdict, cls) {
   return h("div", { class: "col" }, h("h3", {}, title, " ", h("small", {}, sub)),
     h("ul", { class: "tl" }, ...steps.map(railStep)), h("div", { class: `verdict ${cls}` }, verdict));
 }
+// --- Braintree webhooks: the notifications this server received, newest first ---------------------------
+function hookItem(e, mark) {
+  const d = e.detail || {}, sent = Date.parse(e.sent_at), got = Date.parse(e.received_at);
+  const lag = Number.isFinite(sent) && Number.isFinite(got) ? ` · arrived ${Math.max(0, (got - sent) / 1000)} s after Braintree sent it` : "";
+  const locked = d.refunds_on_transaction === "blocked";
+  const cls = e.action === "dispute_locked" ? "BLOCK" : e.action === "dispute_unlocked" ? "PASS" : "APPROVAL";
+  const tag = e.action === "dispute_locked" ? "LOCKED" : e.action === "dispute_unlocked" ? "UNLOCKED" : e.action.toUpperCase();
+  return h("li", { class: `shown ${cls}${mark ? " hook-new" : ""}` }, h("span", { class: `dec ${cls}` }, tag), " ",
+    h("code", {}, e.kind), e.subject_id ? [" on ", h("code", {}, e.subject_id)] : null,
+    h("div", { class: "note" }, `sent ${e.sent_at.replace("T", " ").replace("Z", " UTC")}${lag}`),
+    d.dispute_id ? h("div", { class: "finding" }, h("code", {}, d.dispute_kind || "dispute"), ` ${d.dispute_id} · ${d.status} · ${d.amount}${d.reason ? " · " + d.reason : ""}`) : null,
+    d.refunds_on_transaction ? h("div", { class: "finding" }, h("code", {}, "TRANSACTION_DISPUTED"),
+      locked ? ` every later refund on ${d.transaction_id} is blocked` : ` refunds on ${d.transaction_id} allowed again (dispute won)`) : null);
+}
+async function hookRefresh(waitFor) {
+  const r = await api("/api/braintree/events");
+  const events = r.events || [];
+  $("hookList").replaceChildren(...events.slice(0, 6).map((e) => hookItem(e, waitFor && e.subject_id === waitFor)));
+  if (!events.length && !waitFor) $("hookStatus").textContent = "No notification received since the server started.";
+  return events.find((e) => waitFor && e.subject_id === waitFor && e.kind.startsWith("dispute_"));
+}
+async function hookWait(tid) {
+  $("hookStatus").textContent = `Waiting for Braintree's notification about ${tid}…`;
+  for (let i = 0; i < 30; i++) {  // Braintree usually posts within a few seconds; give it a minute
+    const hit = await hookRefresh(tid).catch(() => null);
+    if (hit) { $("hookStatus").textContent = `Braintree reported the chargeback on ${tid}; Counterfoil locked refunds on it before anyone asked.`; return; }
+    await new Promise((ok) => setTimeout(ok, 2000));
+  }
+  $("hookStatus").textContent = `No notification about ${tid} yet. The webhook may not be set up in the Braintree Control Panel for this server.`;
+}
+
 async function railRun() {
   $("railErr").textContent = ""; $("railRun").disabled = true; $("railStatus").textContent = "Calling the Braintree sandbox…";
   try {
@@ -736,6 +776,8 @@ async function railRun() {
         bt && bt.ok && cf && cf.gate === "BLOCK" ? "Braintree refunds on top of the chargeback: the customer is paid twice. Counterfoil blocks it." : "See the steps.",
         bt && bt.ok ? "harm" : "neutral"));
     $("railStatus").textContent = "";
+    const sale = r.dispute[0];
+    if (state.config.braintree_webhooks && sale && sale.ok && sale.id) hookWait(sale.id);
   } catch (e) { $("railErr").textContent = e.message; $("railStatus").textContent = ""; }
   finally { $("railRun").disabled = false; }
 }
@@ -761,6 +803,7 @@ async function init() {
     $("refundCf").addEventListener("click", () => refundRun("counterfoil"));
     $("railBox").classList.remove("hidden");
     $("railRun").addEventListener("click", railRun);
+    if (config.braintree_webhooks) hookRefresh().catch(() => {}); else $("hookBox").classList.add("hidden");
     document.addEventListener("click", (e) => { if (e.target.closest(".sc")) setTimeout(showPayOrder, 0); });
   }
   setMode("replay");
