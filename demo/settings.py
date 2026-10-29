@@ -40,6 +40,7 @@ class Settings:
     live_reason: str = "no model configured on the server (set DEMO_MODEL or LLM_BASE_URL/LLM_MODEL/LLM_API_KEY)"
     braintree: bool = False
     paypal_rest: bool = False  # DEMO_RAIL=paypal + PAYPAL_CLIENT_ID/SECRET: live runs refund via PayPal REST
+    events_db: str = ":memory:"  # DEMO_EVENTS_DB: SQLite file for Braintree webhook events and dispute locks
 
     @classmethod
     def from_env(cls) -> Settings:
@@ -56,6 +57,7 @@ class Settings:
             braintree=os.environ.get("BRAINTREE_ENVIRONMENT") == "sandbox"
             and all(os.environ.get(v) for v in BRAINTREE_VARS),
             paypal_rest=os.environ.get("DEMO_RAIL") == "paypal" and paypal.configured(),
+            events_db=os.environ.get("DEMO_EVENTS_DB", ":memory:"),
         )
         live, reason = live_config()
         if live is not None:
@@ -70,6 +72,7 @@ class Settings:
             "live_reason": "" if self.live else self.live_reason,
             "rail": "paypal-sandbox" if self.paypal_rest else "braintree-sandbox" if self.braintree else "fake",
             "paypal_checkout": self.braintree,
+            "braintree_webhooks": self.braintree,
             "limits": {
                 "max_email_chars": self.max_email_chars,
                 "max_turns": self.max_turns,

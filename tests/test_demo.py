@@ -5,6 +5,7 @@ import dataclasses
 import json
 from types import SimpleNamespace
 
+import braintree as bt_sdk
 import pytest
 from fastapi.testclient import TestClient
 
@@ -342,6 +343,10 @@ class FakeBraintree:
         self.lines: dict[str, list[dict]] = {}
         self.customer = SimpleNamespace(create=self._customer)
         self.testing = SimpleNamespace(settle_transaction=self._settle)
+        sdk = bt_sdk.BraintreeGateway(  # the real SDK's webhook signing and parsing, with sandbox-style test keys
+            bt_sdk.Configuration(bt_sdk.Environment.Sandbox, "test-merchant", "test-public", "test-private")
+        )
+        self.webhook_notification, self.webhook_testing = sdk.webhook_notification, sdk.webhook_testing
 
     def _txn(self, amount, kind="sale"):
         t = SimpleNamespace(
@@ -596,3 +601,68 @@ def test_rail_rules_show_braintree_paying_on_top_of_a_chargeback_and_the_gate_bl
 
 def test_rail_rules_are_off_without_braintree_keys():
     assert client().post("/api/checkout/rail-rules", json={}).status_code == 503
+
+
+# -- Braintree webhooks -------------------------------------------------------------------------------------------
+
+
+def webhook(c, braintree, kind, txn_id, signature=None):
+    n = braintree.webhook_testing.sample_notification(kind, txn_id)
+    form = {"bt_signature": signature or n["bt_signature"], "bt_payload": n["bt_payload"].decode()}
+    return c.post("/api/braintree/webhook", data=form)
+
+
+def test_webhooks_are_off_without_braintree_keys():
+    c = client()
+    assert c.post("/api/braintree/webhook", data={"bt_signature": "x", "bt_payload": "eA=="}).status_code == 503
+    assert c.get("/api/braintree/events").json() == {"enabled": False, "events": []}
+
+
+def test_an_unverified_webhook_is_refused_and_recorded_nowhere(braintree):
+    c = client(dataclasses.replace(Settings(), braintree=True))
+    assert webhook(c, braintree, "dispute_opened", "bt0000", signature="test-public|" + "0" * 40).status_code == 403
+    assert c.post("/api/braintree/webhook", content=b"not a form").status_code == 403
+    assert c.get("/api/braintree/events").json()["events"] == []
+
+
+def test_a_chargeback_webhook_on_a_purchase_blocks_its_refund_run(braintree):
+    c = client(dataclasses.replace(Settings(), braintree=True))
+    p = c.post("/api/checkout/buy", json={"scenario_id": "P6-01", "nonce": "fake-paypal-one-time-nonce"}).json()
+    assert braintree.txns[p["transaction_id"]].disputes == []  # the rail lists none: the lock is the webhook's
+    r = webhook(c, braintree, "dispute_opened", p["transaction_id"])
+    assert r.status_code == 200 and r.json() == {
+        "kind": "dispute_opened",
+        "action": "dispute_locked",
+        "duplicate": False,
+    }
+    run = c.post(
+        "/api/checkout/refund", json={"purchase_id": p["id"], "scenario_id": "P6-01", "source": SAVED.stem}
+    ).json()
+    refunds = [s for s in run["steps"] if s["tool"] == "refund"]
+    assert refunds and all(s["decision"] == "BLOCK" for s in refunds)
+    assert all("TRANSACTION_DISPUTED" in {f["code"] for f in s["findings"]} for s in refunds)
+    assert braintree.refunds() == []
+    event = c.get("/api/braintree/events").json()["events"][0]
+    assert event["kind"] == "dispute_opened" and event["subject_id"] == p["transaction_id"]
+    assert event["detail"]["refunds_on_transaction"] == "blocked"
+
+
+def test_a_chargeback_while_a_refund_waits_for_the_manager_refuses_the_approval(braintree):
+    c = client(dataclasses.replace(Settings(), braintree=True))
+    purchase, run = bought(c, "P6-01")
+    held = run["correction"]
+    assert held["decision"] == "APPROVAL"
+    webhook(c, braintree, "dispute_opened", purchase["transaction_id"])
+    body = {"purchase_id": purchase["id"], "approval_id": held["approval_id"], "decision": "approve"}
+    done = c.post("/api/checkout/approve", json=body).json()["correction"]["approved"]
+    assert done["decision"] == "BLOCK" and "TRANSACTION_DISPUTED" in {f["code"] for f in done["findings"]}
+    assert braintree.refunds() == []
+
+
+def test_the_same_webhook_twice_is_recorded_once(braintree):
+    c = client(dataclasses.replace(Settings(), braintree=True))
+    n = braintree.webhook_testing.sample_notification("check", "x")
+    form = {"bt_signature": n["bt_signature"], "bt_payload": n["bt_payload"].decode()}
+    assert c.post("/api/braintree/webhook", data=form).json()["duplicate"] is False
+    assert c.post("/api/braintree/webhook", data=form).json()["duplicate"] is True
+    assert [e["kind"] for e in c.get("/api/braintree/events").json()["events"]] == ["check"]

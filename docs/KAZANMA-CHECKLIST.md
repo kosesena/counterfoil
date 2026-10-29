@@ -41,6 +41,7 @@ Nobody can guarantee first place: judging is subjective, the criteria are equall
 - 0:15–1:30 working product: live demo, three conditions side by side, the call Counterfoil held, the manager's approval screen, real Braintree transaction id
 - 1:30–2:15 proof: 0/270 vs 99/270, worst-case 0/14; "the agent is still fooled, no money goes out"
 - 2:15–2:45 why PayPal + for whom + difference from competitors
+- One line for the Braintree part: "a chargeback opens → Counterfoil locks refunds on its own" (Braintree dispute webhook → the next refund on that sale is BLOCKED; show `GET /api/braintree/events` and the BLOCK; ADR 0009)
 - 2:45–3:00 limits in one sentence + repo
 - Royalty-free music, real screen recording, separate English subtitles
 

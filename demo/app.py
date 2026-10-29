@@ -15,6 +15,7 @@ import logging
 import os
 import re
 import threading
+import urllib.parse
 import uuid
 from pathlib import Path
 from typing import Literal
@@ -30,6 +31,7 @@ from counterfoil.llm import LLM
 from counterfoil.paypal import PayPalSandboxRail
 from counterfoil.rail import SandboxRail
 from counterfoil.scenarios import load_records, load_scenarios
+from counterfoil.webhooks import Unverified
 from scripts.run_eval import CONDITIONS, run_one
 
 from .checkout import Checkout
@@ -141,7 +143,7 @@ def create_app(settings: Settings | None = None, llm_factory=None, results: Path
     slots = threading.BoundedSemaphore(settings.max_concurrent)
     reader_cache = LRU()
     live_llm = MeteredLLM(llm_factory(settings.live), budget) if settings.live else None
-    checkout = Checkout(settings.braintree)
+    checkout = Checkout(settings.braintree, settings.events_db)
 
     app = FastAPI(title="Counterfoil live demo", docs_url=None, redoc_url=None, openapi_url=None)
 
@@ -318,6 +320,27 @@ def create_app(settings: Settings | None = None, llm_factory=None, results: Path
             log.exception("checkout approval failed")
             raise HTTPException(502, "the approved call failed on the server") from None
         return redact(out, _secrets())
+
+    # -- Braintree webhooks: the rail tells the store what happened between agent calls ----------------------
+    @app.post("/api/braintree/webhook")
+    async def braintree_webhook(request: Request):
+        """Braintree posts bt_signature and bt_payload as a form. Only a notification the SDK verifies with this
+        server's keys changes anything; the same notification twice is recorded once."""
+        if not checkout.enabled:
+            raise HTTPException(503, "webhooks are off: the server has no Braintree sandbox keys")
+        form = urllib.parse.parse_qs((await request.body()).decode("utf-8", "replace"))
+        try:
+            got = checkout.webhooks.receive(
+                (form.get("bt_signature") or [None])[0], (form.get("bt_payload") or [None])[0]
+            )
+        except Unverified:
+            raise HTTPException(403, "notification did not verify") from None
+        return {"kind": got.kind, "action": got.action, "duplicate": got.duplicate}
+
+    @app.get("/api/braintree/events")
+    def braintree_events():
+        """The audit of verified Braintree notifications and what the store did with each, newest first."""
+        return {"enabled": checkout.enabled, "events": checkout.events.events(50)}
 
     def _replay(body: RunIn) -> dict:
         if body.email is not None:

@@ -13,6 +13,10 @@ gateway's own single-use, time-limited, argument-bound approval. Nothing held re
 refunds before settlement (91506), above the sale (91521) and after a full refund (91512), with
 `testing.settle_transaction` in between; the same calls on mocked PayPal; and a refund on top of an open chargeback
 (test card 4023898493988028), next to the gate's decision on it.
+
+Braintree webhooks land in `events`, one store that outlives the per-run stores (counterfoil/webhooks.py). A dispute
+Braintree reports on a judge's purchase is copied into the store of every later refund run on that purchase, so the
+gate blocks the refund from the webhook alone, before it reads the rail.
 """
 
 from __future__ import annotations
@@ -28,6 +32,7 @@ from counterfoil.gateway import Context, Gateway
 from counterfoil.rail import BraintreeRail, SandboxRail, sale_line_items
 from counterfoil.scenarios import build, load_records
 from counterfoil.store import Store
+from counterfoil.webhooks import Webhooks
 from scripts.run_eval import CONDITIONS
 
 MONEY_TOOLS = {"refund", "void", "charge"}
@@ -39,9 +44,11 @@ DISPUTE_ORDER = "ST-1056"  # a card order of the fixture store, RMA-1056 approve
 
 
 class Checkout:
-    def __init__(self, enabled: bool):
+    def __init__(self, enabled: bool, events_db: str = ":memory:"):
         self.enabled = enabled
         self._bt = None
+        self.events = Store(load_records(), events_db)  # webhook audit and dispute locks, by sandbox transaction id
+        self._webhooks: Webhooks | None = None
         self._purchases: dict[str, dict] = {}
         self._runs: dict[str, dict] = {}  # run id -> the gate, its rail and the response, while calls are held
         self._held: dict[str, str] = {}  # approval id -> run id
@@ -53,6 +60,14 @@ class Checkout:
         if self._bt is None:  # the SDK and keys are only touched when checkout is on
             self._bt = BraintreeRail()
         return self._bt.gw
+
+    @property
+    def webhooks(self) -> Webhooks:
+        # no sweep rail: this store's orders are fixtures with no sandbox sales behind them (scripts/sweep_refunds.py
+        # sweeps the sandbox); dispute notifications still lock the transaction they name
+        if self._webhooks is None:
+            self._webhooks = Webhooks(self.events, self.gw)
+        return self._webhooks
 
     def client_token(self) -> str:
         return self.gw.client_token.generate()
@@ -145,7 +160,9 @@ class Checkout:
         ctx.customer_id = sender["customer_id"] if sender else None
         ctx.reader = saved_row.get("reader")
         rail = SandboxRail(store, f"homi-demo-{purchase_id[:8]}-{condition}")
-        rail.real[_target_order(scenario)["braintree_transaction_id"]] = purchase["transaction_id"]
+        fixture_txn = _target_order(scenario)["braintree_transaction_id"]
+        rail.real[fixture_txn] = purchase["transaction_id"]
+        self._sync_disputes(store, fixture_txn, purchase["transaction_id"])
         gate = CONDITIONS[condition](store, rail)
         steps = []
         for s in saved_row.get("steps", []):
@@ -189,6 +206,7 @@ class Checkout:
                     "result": result,
                     "lock": threading.Lock(),
                     "created": time.time(),
+                    "txns": (fixture_txn, purchase["transaction_id"]),
                 }
                 self._held.update(dict.fromkeys(held, result["run_id"]))
         return result
@@ -207,7 +225,8 @@ class Checkout:
             item = next(
                 c for c in [*result["steps"], result["correction"]] if c and c.get("approval_id") == approval_id
             )
-            if approve:
+            if approve:  # a chargeback Braintree reported while the call waited is in the store before re-checking
+                self._sync_disputes(run["gate"].store, *run["txns"])
                 item["approved"] = _outcome(run["gate"].approve(approval_id))
             else:
                 run["gate"].reject(approval_id)
@@ -215,6 +234,12 @@ class Checkout:
             item["approval_id"] = None
             result["braintree_calls"] = _calls(run["rail"])
             return result
+
+    def _sync_disputes(self, store: Store, fixture_txn: str, sandbox_txn: str) -> None:
+        """Copy what Braintree's webhooks said about the judge's sandbox sale onto the fixture transaction the run's
+        store knows it as."""
+        for d in self.events.disputes_on(sandbox_txn):
+            store.record_dispute(d["id"], fixture_txn, d["kind"], d["status"], d["amount"], d["as_of"], d["source"])
 
     def rail_rules(self) -> dict:
         """Fresh sandbox sales, straight to Braintree (no gate): what does the rail itself refuse?"""
