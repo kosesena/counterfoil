@@ -63,6 +63,11 @@ Webhooks) for `https://counterfoil-demo.onrender.com/api/braintree/webhook`.
   the process restarted or a second instance answered in between. A file in `DEMO_EVENTS_DB` on a persistent disk
   would keep them.
 
+- **Second real delivery** (19:16, after the demo panel was deployed): sale `ha8mrjw1`, chargeback
+  `hbvxshgxcph3pp39` created 19:16:03; Braintree's notification is stamped 19:16:18 but reached the demo at 19:20:36,
+  about four minutes later; verified, `dispute_locked`. Whether a first attempt failed (the deploy had just switched
+  instances) or Braintree delayed it is not known. The demo page now keeps checking for ten minutes.
+
 ## Still not verified
 
 - Won and lost transitions sent by Braintree itself (tested with sample notifications only).
