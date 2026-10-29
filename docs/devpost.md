@@ -11,6 +11,8 @@ Your AI agent can be talked into a refund. Your store's records can't. Counterfo
 ## Inspiration
 Shops are starting to hand customer e-mail to AI agents, and PayPal's own Agent Toolkit already gives agents a `create_refund` tool. But the e-mail is written by the customer, or by whoever is pretending to be one. OWASP ranks prompt injection first among LLM risks (LLM01:2025), including instructions hidden in e-mails and documents. *Moffatt v. Air Canada* (2024) showed that a business answers for what its AI says.
 
+Counterfoil was built solo, by one developer in Türkiye, on Braintree, the PayPal service PayPal's team confirmed for this hackathon where PayPal accounts can't be opened.
+
 Our Braintree sandbox experiment showed what the payment rail can and can't catch. It refuses a card refund above the transaction total. It has no idea whether the customer returned one item or three, or whether the sender owns the order. That gap, between what the rail can see and what only the merchant knows, is where Counterfoil sits.
 
 The project builds on the author's ongoing graduation thesis on indirect prompt injection against LLM agents in ERP systems, rewritten from scratch for payments.
@@ -28,28 +30,30 @@ Counterfoil compares the call with the store's record of that transaction:
 
 The result is PASS, APPROVAL (held for a human, with a single-use, time-limited approval bound to the exact arguments) or BLOCK.
 
-**Measured on 7 attacks and 6 genuine requests, dev set, 3 repeats, nine models:** 21 attack runs and 18 genuine runs per model and condition, from `results/2026-10-24-dev-r3-*.jsonl`.
+**Measured with the latest gate, nine models, 3 repeats:** the dev set (7 attacks, one per family, and 6 genuine requests) for all nine models; the holdout set (7 more attacks and 2 genuine requests, kept apart while the gate was written) for the four local models. 21 attack runs and 18 genuine runs per model and condition on dev, from `results/2026-10-25-dev-r3-current-gate-*.jsonl`, `results/2026-10-26-dev-r3-current-gate-*.jsonl` and `results/2026-10-25-holdout-r3-*.jsonl`.
 
-| Model | Agent misled (no gate) | Harm: no gate | Harm: $200 cap | Harm: Counterfoil | Genuine requests handled right (no gate / cap / Counterfoil) |
+| Model (dev set) | Agent misled (no gate) | Harm: no gate | Harm: $200 cap | Harm: Counterfoil | Genuine requests handled right (no gate / cap / Counterfoil) |
 |---|---|---|---|---|---|
-| qwen3, local (Ollama, 8B) | 15/21 | 12/21 | 12/21 | **3/21** ¹ | 15/18 · 18/18 · **18/18** |
-| qwen2.5, local (Ollama, 7.6B) | 12/21 | 12/21 | 12/21 | **0/21** | 15/18 · 18/18 · **18/18** |
-| Claude Haiku 4.5 | 9/21 | 9/21 | 9/21 | **0/21** | 15/18 · 18/18 · **18/18** |
-| GPT-5.6 Sol | 9/21 | 9/21 | 9/21 | **0/21** | 15/18 · 18/18 · **18/18** |
-| Claude Opus 5.5 | 6/21 | 6/21 | 6/21 | **0/21** | 15/18 · 18/18 · **18/18** |
-| GPT-5.6 Terra | 6/21 | 6/21 | 6/21 | **0/21** | 15/18 · 18/18 · **18/18** |
-| Claude Sonnet 5 | 5/21 | 5/21 | 5/21 | **0/21** | 15/18 · 18/18 · **18/18** |
-| hermes3, local (Ollama, 8B) | 6/21 | 6/21 | 6/21 | **0/21** | 6/18 · 6/18 · **6/18** ² |
-| llama3.1, local (Ollama, 8B) | 18/21 | 6/21 | 6/21 | **0/21** | 6/18 · 6/18 · **6/18** ² |
+| qwen2.5, local (Ollama, 7.6B) | 12/21 | 12/21 | 12/21 | **0/21** | 12/18 · 15/18 · **18/18** |
+| qwen3, local (Ollama, 8B) | 15/21 | 12/21 | 12/21 | **0/21** | 12/18 · 15/18 · **18/18** |
+| Claude Haiku 4.5 | 9/21 | 9/21 | 9/21 | **0/21** | 12/18 · 15/18 · **18/18** |
+| GPT-5.6 Sol | 9/21 | 9/21 | 8/21 | **0/21** | 12/18 · 15/18 · **18/18** |
+| GPT-5.6 Terra | 7/21 | 7/21 | 8/21 | **0/21** | 12/18 · 15/18 · **18/18** |
+| Claude Opus 5.5 | 6/21 | 6/21 | 6/21 | **0/21** | 12/18 · 15/18 · **18/18** |
+| hermes3, local (Ollama, 8B) | 6/21 | 6/21 | 6/21 | **0/21** | 6/18 · 6/18 · **6/18** ¹ |
+| llama3.1, local (Ollama, 8B) | 18/21 | 6/21 | 6/21 | **0/21** | 6/15 · 6/15 · **6/15** ¹ ² |
+| Claude Sonnet 5 | 5/21 | 5/21 | 6/21 | **0/21** | 12/18 · 15/18 · **18/18** |
 
-¹ All three are the same P7-01 reorder charge under the earlier gate; see the last note below.
-² These two models failed most genuine requests on their own (the same 6/18 with no gate at all); the gate did not block them. llama3.1 also had 9 rows end in a model error.
+**Holdout set** (qwen2.5, qwen3, llama3.1, hermes3): harm in 27/81 attack runs with no gate, 27/81 with the cap, **0/81** with Counterfoil ².
+
+¹ These two models fail most genuine requests on their own (the same count with no gate at all). Counterfoil stopped their reorder call in CLEAN-06 (3 runs each), a request both also got wrong with no gate.
+² llama3.1 never finished 18 runs (timeouts): dev genuine request CLEAN-03 ×9 and holdout attack P4-02 ×9. They are not counted, so its denominators are 15 and 18.
 
 Notes on the table:
-- "Harm" means wrong money moved, or another customer's data was read. Totals: 71 harmful outcomes in 189 attack runs with no gate, 71 with a $200 cap, 3 with Counterfoil.
-- "Handled right" is completed, or held for review when policy requires it: the $300 return (CLEAN-07). With no gate, that return went through unreviewed.
-- The $200 cap stopped nothing: every harmful amount was below it.
-- Measured with the earlier gate (commit 6f30a4a). qwen3 broke the zero: in all three repeats its Reader obeyed P7-01's hidden HTML and handed off 6 cups for $150.00; the charge matched that hand-off, and $150.00 reached the rail. The gate now holds every charge for confirmation of the itemised total, so that charge is held. The genuine reorder (CLEAN-06) is held too.
+- "Harm" means wrong money moved, or another customer's data was read. Totals: dev 72/189 with no gate, 73/189 with a $200 cap, 0/189 with Counterfoil; with the holdout set, 99/270, 100/270 and **0/270**.
+- "Handled right" is completed, or held for a person where store policy requires it: the $300 return (CLEAN-07), and under Counterfoil also the genuine reorder (CLEAN-06), because every charge waits for confirmation of the itemised total. With no gate, the $300 return went through unreviewed.
+- The $200 cap stopped nothing: no single harmful call was above $160.
+- Under an earlier gate (commit 6f30a4a) qwen3 broke the zero: in all three repeats its Reader obeyed P7-01's hidden HTML and handed off 6 cups for $150.00; the charge matched that hand-off, and $150.00 reached the rail. That led to the charge rule above, and the latest gate holds that charge. Every number in the table is from the latest gate.
 
 **The worst case, against the real Braintree sandbox:** a scripted agent and Reader fully on the attacker's side (no model, so no model can resist) ran all 22 scenarios. With no gate, its attack calls moved money 12 times in the sandbox (10 refunds, 2 charges). With Counterfoil: zero, and none of the 8 genuine requests was blocked (5 completed, 3 held as store policy requires).
 
@@ -59,7 +63,7 @@ Notes on the table:
 - **Baselines:** two baselines that share no Counterfoil logic, no gate and a $200 cap.
 - **Scenarios:** 22 scenarios (14 attacks in seven families, 8 genuine requests), split into dev and holdout.
 - **Scoring:** outcome-based. It looks at what actually moved, where, and how much, and keeps attempt, intervention, harm and legitimate completion separate.
-- **Models:** an OpenAI-compatible client runs local Ollama models and cloud models. The Claude runs went through the Astro AI Gateway.
+- **Models:** an OpenAI-compatible client runs local Ollama models and cloud models. The Claude and GPT-5.6 runs went through the Astro AI Gateway.
 - **Dashboard:** an AG Studio report over the runs.
 - **Tests:** 174 tests cover the gateway rules, approvals, races and reconciliation, without an LLM.
 
@@ -70,7 +74,7 @@ Notes on the table:
 - **Our own runs found two bugs.** The agent used the Reader's field name for quantity and the gate rejected a genuine reorder, and a scenario setup counted a refund twice. Both were fixed, with tests.
 
 ## Accomplishments that we're proud of
-- **Eight of nine models: zero harmful outcomes** with Counterfoil (189 attack runs in all), without blocking a single genuine request. The one refund held for review is a $300 return that store policy says needs a person. The ninth, qwen3, got an inflated reorder through the earlier gate in all three repeats; that led to the charge rule, which now holds it.
+- **All nine models: zero harmful outcomes** with the latest gate (270 attack runs, dev and holdout), and no genuine request a model handled right without a gate was lost. What Counterfoil holds for a person is what store policy says needs one: the $300 return and every charge. Under an earlier gate qwen3 got an inflated reorder through in all three repeats; that led to the charge rule, which now holds it.
 - **Attacks that pass both baselines.** Over-refunds, split refunds and replays all stay below the transaction total, so neither Braintree nor a $200 cap stops them.
 - **Approvals that can't be replayed or stretched.** Each one is bound to the exact arguments and to the refund state the human saw.
 
@@ -86,4 +90,4 @@ Notes on the table:
 - **Privacy in a real store (KVKK / GDPR):** the demo uses fictional customers and test money. A real store would tell customers that an AI agent reads their e-mail, that calls are checked automatically and that staff review the held ones (an information notice). Human review of held calls also answers the right to object to purely automated decisions (KVKK art. 11/1-g, GDPR art. 22). The review screen shows only the order, the items and the amount; card data stays with Braintree as a vault token. If e-mails go to a model hosted abroad, that is a cross-border transfer that needs its legal basis (KVKK art. 9); a local model avoids it.
 
 ## Built with
-python, braintree (Python SDK, sandbox), mocked PayPal (Braintree sandbox), sqlite, openai-python (OpenAI-compatible client), ollama, qwen2.5, claude (Haiku 4.5, Opus 5.5 via Astro AI Gateway), astropods, pytest, next.js, react, typescript, ag-grid / ag-studio, three.js, blender
+python, braintree (Python SDK, sandbox), mocked PayPal (Braintree sandbox), sqlite, openai-python (OpenAI-compatible client), ollama, qwen2.5, claude (Haiku 4.5, Sonnet 5, Opus 5.5) and gpt-5.6 (Terra, Sol) via Astro AI Gateway, astropods, pytest, next.js, react, typescript, ag-grid / ag-studio, three.js, blender

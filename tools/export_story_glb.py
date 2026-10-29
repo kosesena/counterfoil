@@ -58,6 +58,8 @@ for name,label in [('HP01_LaneNumber','01'),('HP03_LaneNumber','02'),('HR_LaneNu
  obj=bpy.data.objects.get(name)
  if obj and obj.type=='FONT':obj.data.body=label
 # Static store context is evaluated once, then detached while sampling the cast.
+# The names are the .blend file's own collection names (Turkish): facade (show/hide), roof, floors 3 restaurant,
+# 2 showroom and 1 market, building (walls + columns), street.
 environment=bpy.data.collections.new('__HOMI_EXPORT_CONTEXT');evalscene.collection.children.link(environment)
 context_sources=['Cephe (gizle-göster)','Çatı','Kat 3 · Restoran','Kat 2 · Showroom','Kat 1 · Market','Bina (duvar+kolon)','Sokak']
 for name in context_sources:

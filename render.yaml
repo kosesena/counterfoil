@@ -1,10 +1,12 @@
-# Render Blueprint for the live demo (New → Blueprint → this repo). Replay mode works with no env vars at all.
+# Render Blueprint for the live demo and the dashboard (New → Blueprint → this repo). Replay mode works with no env vars.
+# The hackathon rules ask for the project to stay reachable until judging ends (15 Dec 2026), so the demo runs on a paid
+# instance that does not sleep; the dashboard is a static site, which Render serves without sleeping.
 # Values marked sync: false are entered in the Render dashboard and never committed.
 services:
   - type: web
     name: counterfoil-demo
     runtime: docker
-    plan: free
+    plan: starter
     dockerfilePath: ./Dockerfile
     healthCheckPath: /healthz
     envVars:
@@ -31,4 +33,15 @@ services:
         sync: false
       # optional: id of a USD merchant account (the sandbox's default account may settle in another currency)
       - key: BRAINTREE_MERCHANT_ACCOUNT_ID
+        sync: false
+
+  - type: web
+    name: counterfoil-dashboard
+    runtime: static
+    rootDir: dashboard
+    buildCommand: npm ci && npm run build
+    staticPublishPath: out
+    envVars:
+      # optional: AG Studio licence key; without it Studio shows a watermark
+      - key: NEXT_PUBLIC_AG_STUDIO_LICENSE
         sync: false

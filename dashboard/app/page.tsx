@@ -13,9 +13,13 @@ import { SOFT_WIDGETS } from './soft-charts';
 import { CASE_WIDGET } from './case-file';
 import { buildCaseHarness } from './case-agent';
 import { Story3D, StoryStrip } from './story-3d';
-import { ClosingBand, Crew, FollowingFoil, Hero, ResultBand, StoryAside, useFeltConditions } from './felt';
-import { ModelBars3D } from './model-bars-3d';
+import { ClosingBand, Crew, Hero, ResultBand, StoryAside, useFeltConditions } from './felt';
+import { CrewJourney, ProductIntro } from './crew-journey';
 import { EvidenceBoard } from './evidence';
+import { RailChecksBoard } from './rail-checks';
+import { ReviewIntro } from './review-intro';
+import { SimpleStory } from './simple-story';
+import { CallsWorkspace } from './calls-workspace';
 import { canvasPadding, counterfoilTheme } from './theme';
 
 if (process.env.NODE_ENV !== 'production') {
@@ -52,6 +56,7 @@ function harmByCondition(data: CounterfoilData) {
 export default function Page() {
   const [data, setData] = useState<CounterfoilData | null>(null);
   const [error, setError] = useState('');
+  const [storyOpen, setStoryOpen] = useState(false);
   const [compact, setCompact] = useState<boolean | null>(null);
   const [pageId, setPageId] = useState('overview');
   useFeltConditions();
@@ -86,34 +91,34 @@ export default function Page() {
 
   return (
     <>
-      <header className="top">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="wordmark-felt" src="buttons/homi-wordmark.webp" alt="HOMI" />
-        <nav>
+      <header className="top crew-header">
+        <button className="crew-wordmark" onClick={() => openPage('overview')} aria-label="HOMI home"><img className="wordmark-felt" src="buttons/homi-wordmark.webp" alt="HOMI" /></button>
+        <nav aria-label="Main navigation">
           {Object.entries(PAGE_TITLES).map(([id, text]) => (
-            <button key={id} className={id === pageId ? 'active' : ''} aria-current={id === pageId ? 'page' : undefined} onClick={() => openPage(id)}>
-              {/* Codex's felt letters (docs/gorseller/site-tasarim/tabs-text-v2, v3): navy, plum for the current page */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`buttons/nav-${id}${id === pageId ? '-on' : ''}.webp`} alt={text} />
-            </button>
+            <button key={id} className={id === pageId ? 'active' : ''} aria-current={id === pageId ? 'page' : undefined} onClick={() => openPage(id)}>{text}</button>
           ))}
         </nav>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="sandbox-felt" src="buttons/sandbox.webp" alt="Sandbox" />
-        <a className="live f-patch" href="https://counterfoil-demo.onrender.com" target="_blank" rel="noopener">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="buttons/try-it-live-plum.webp" alt="Try it live" />
-        </a>
+        <span className="crew-sandbox">Sandbox</span>
       </header>
 
       {pageId === 'overview' && data && (
         <>
-          <Hero onStory={() => document.getElementById('story')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} />
-          <ResultBand compare={compare} runs={data.runs.length} models={models.length} />
-          <Crew />
-          <section className="f-story felt" id="story">
+          <ProductIntro />
+          <SimpleStory />
+          <div className="story-next-wrap"><button className="continuation-next" onClick={() => { openPage('review'); window.scrollTo({ top: 0 }); }}>Next: see how the manager reviews $80 →</button></div>
+          <details className="simple-disclosure"><summary>Meet the crew and explore Nella’s other tricks</summary><p className="evidence-context">A separate teaching story using $60 and $40, plus examples of other attacks. These scenes are illustrations, not transaction replays.</p><CrewJourney /></details>
+          <details id="crew-results" className="simple-disclosure"><summary>Technical details · test results and evidence</summary>
+          <div className="crew-results">
+            <span className="crew-results-kicker">THE RESULTS</span>
+            <h2>The boundary, measured.</h2><p className="evidence-context">Recorded evaluation snapshot · exported {data.asOf.slice(0,16).replace('T',' ')} UTC. The figures below come from the test data, not the illustrated story. Zero observed unsafe outcomes in this suite is not a guarantee for every future request.</p>
+            <ResultBand compare={compare} runs={offSandbox(data).runs.length} models={models.length} />
+            <p className="result-scope">{data.runs.length} completed runs in total: {offSandbox(data).runs.length} simulations and {data.runs.length-offSandbox(data).runs.length} Braintree sandbox runs. Each fraction above counts attack runs within one condition, not distinct attacks. The suite contains 14 attack scenarios across 7 families.</p>
+          </div>
+          <details className="story-disclosure" onToggle={e=>setStoryOpen(e.currentTarget.open)}>
+            <summary>See a return in the store <span>Optional · seven-step walkthrough</span></summary>
+          {storyOpen && <section className="f-story felt" id="story">
             <h2>One receipt. Seven moments.</h2>
-            <p className="f-sub">Follow attack P6-01 from checkout to resolution, one button at a time.</p>
+            <p className="f-sub">An illustrative walkthrough based on attack P6-01, not a replay of one recorded test run.</p>
             <div className="f-story-grid">
               <div className="station">
                 <Story3D />
@@ -122,31 +127,41 @@ export default function Page() {
             </div>
             <StoryStrip />
             <p className="f-note">The blocked $60 and the new, valid $40 are separate requests · Braintree sandbox, mocked PayPal</p>
-          </section>
+          </section>}
+          </details>
           <section className="f-evidence-head">
             <h2>The evidence, without the guesswork.</h2>
           </section>
           <EvidenceBoard data={data} />
+          {data.railChecks && (
+            <>
+              <section className="f-evidence-head">
+                <h2>Braintree, checked from both sides.</h2>
+                <p className="f-sub">The money that left without the store knowing, and the refunds Braintree refuses by itself.</p>
+              </section>
+              <RailChecksBoard data={data} />
+            </>
+          )}
+          </details>
+          <section className="f-evidence-head f-studio-head">
+            <h2>Every held call, one by one.</h2>
+            <p className="f-sub">
+              <b>Held for review:</b> understand why a request needs attention. <b>Agent calls:</b> see what was requested and whether a payment happened.
+            </p>
+            <p className="f-studio-links">
+              <button onClick={() => { openPage('review'); window.scrollTo({ top: 0 }); }}>Open Held for review →</button>
+              <button onClick={() => { openPage('calls'); window.scrollTo({ top: 0 }); }}>Open Agent calls →</button>
+            </p>
+          </section>
         </>
       )}
 
-      {pageId === 'review' && (
-        <section className="intro felt">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="intro-foil" src="crew/counterfoil-block.webp" alt="" />
-          <p>
-            Every refund or charge Counterfoil did not let straight through. <b>APPROVAL</b> waits for the merchant; <b>BLOCK</b> never
-            reaches Braintree. Step through the cases on the right, or narrow them with the buttons: the case agent reads the store
-            record and lays each call out next to what the record allows. It cannot approve anything.
-          </p>
-          <a href="https://counterfoil-demo.onrender.com" target="_blank" rel="noopener">
-            Approve a held call in the live demo →
-          </a>
-        </section>
-      )}
+      {pageId === 'review' && data && <ReviewIntro data={data} onContinue={() => { openPage('calls'); window.scrollTo({ top: 0 }); }} />}
+      {pageId === 'calls' && data && <CallsWorkspace data={data} onContinue={() => { openPage('overview'); window.scrollTo({ top: 0 }); }} />}
 
-      {/* On the Overview the board above replaces Studio's page; Studio stays mounted so the other two tabs keep their state. */}
-      <main className={pageId === 'overview' ? 'studio-off' : ''} style={studioHeight ? { height: studioHeight } : undefined}>
+      {/* Keep Studio mounted to preserve review state inside the optional records view. */}
+      <details hidden={pageId !== 'review'} className="simple-disclosure"><summary>Technical details · inspect recorded review cases</summary>{data && <p className="evidence-context">Recorded evaluation snapshot · exported {data.asOf.slice(0,16).replace('T',' ')} UTC. Cases below come from test calls; they are not a live approval queue or the illustrated $80 story.</p>}
+      <main id="review-workspace" aria-hidden={pageId !== 'review'} inert={pageId !== 'review'} className={pageId !== 'review' ? 'studio-off' : ''} style={studioHeight ? { height: studioHeight } : undefined}>
         {error && <p className="message">Could not load counterfoil-data.json ({error}). Run scripts/export_dashboard.py first.</p>}
         {!error && !studioData && <p className="message">Loading…</p>}
         {studioData && report && (
@@ -169,20 +184,7 @@ export default function Page() {
           </AgStudioProvider>
         )}
       </main>
-
-      {/* The console's model table, again in 3D, under it. Desktop only: phones keep just the table. */}
-      {pageId === 'overview' && data && compact === false && (
-        <section className="bars3d-section">
-          <div className="bars3d-head">
-            <div>
-              <h2>Wrong money paid, by model.</h2>
-              <p className="f-sub">Every latest-gate run, attack and clean · drag to turn, hover a bar</p>
-            </div>
-            <FollowingFoil src="crew/counterfoil-complete.webp" alt="" />
-          </div>
-          <ModelBars3D data={offSandbox(data)} />
-        </section>
-      )}
+      </details>
 
       {pageId === 'overview' && data && <ClosingBand />}
 
@@ -191,9 +193,7 @@ export default function Page() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img className="wordmark-felt small" src="buttons/homi-wordmark.webp" alt="HOMI" />
           <span>Fictional store · Braintree sandbox · No real funds</span>
-          <span>
-            {data.runs.length} runs · {models.join(', ')} · exported {data.asOf.slice(0, 16).replace('T', ' ')} UTC
-          </span>
+
         </footer>
       )}
     </>

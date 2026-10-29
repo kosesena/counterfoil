@@ -1,0 +1,48 @@
+{
+ "note": "written after the run: the container printed result rows (CFROW) to its log, not this file; start time from the rows, finish is when the host saw CFDONE in the log, spend from `ast billing get` before and after",
+ "started_at": "2026-10-26T16:42:17+00:00",
+ "finished_about": "2026-10-26T16:48:12+00:00",
+ "duration_minutes": 5.9,
+ "rows": 117,
+ "status": {
+  "ok": 117
+ },
+ "rail": "fake",
+ "selection": {
+  "split": "dev",
+  "conditions": [
+   "counterfoil",
+   "cap",
+   "none"
+  ],
+  "repeats": 3
+ },
+ "argv_in_container": [
+  "--model",
+  "astropods",
+  "--split",
+  "dev",
+  "--conditions",
+  "counterfoil,cap,none",
+  "--repeats",
+  "3"
+ ],
+ "code": {
+  "commit": "a601996c7e38372737bebf691eca22d20bf0962c",
+  "gate": "same gate code as the 25 Oct current-gate runs (8c30644); later commits only add counterfoil/worst_case.py, its --model worst-case option in scripts/run_eval.py, and formatting"
+ },
+ "machine": {
+  "where": "Astropods container on this Mac (ast project start), model calls through the gateway",
+  "host_machine": {
+   "cpu": "Apple M2 Pro",
+   "memory_gb": 16,
+   "os": "macOS-26.6.2-arm64-arm-64bit-Mach-O"
+  }
+ },
+ "model": {
+  "model": "gpt-5-6-sol",
+  "endpoint_host": "aig.astropods.ai",
+  "provider_route": "Astro AI Gateway (Astropods) \u2192 Amazon Bedrock"
+ },
+ "cost_usd_approx": 1.31
+}

@@ -296,6 +296,16 @@ def create_app(settings: Settings | None = None, llm_factory=None, results: Path
         out["replayed_from"] = {"source": source, "model": row.get("model")}
         return redact(out, _secrets())
 
+    @app.post("/api/checkout/rail-rules")
+    def checkout_rail_rules(request: Request):
+        """Fresh sandbox sales sent straight to Braintree: which refunds does the rail itself refuse?"""
+        _checkout_guard(request, None)
+        try:
+            return redact(checkout.rail_rules(), _secrets())
+        except Exception:
+            log.exception("rail rules failed")
+            raise HTTPException(502, "the sandbox calls failed on the server") from None
+
     @app.post("/api/checkout/approve")
     def checkout_approve(body: ApproveIn, request: Request):
         """The store manager's answer to a held call; only "approve" can send it to Braintree."""

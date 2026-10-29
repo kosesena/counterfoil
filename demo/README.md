@@ -67,6 +67,7 @@ key and no network).
 | `GET /api/scenarios` | All scenarios: the email, the attacker's goal, the expected decision, and which saved runs include it |
 | `GET /api/config` | Whether live mode is on (and which model), the rail, the limits, the replay sources, the fixture store |
 | `POST /api/run` | `{scenario_id \| email, condition, mode, source?}` → one row in run_eval's shape, plus `demo` metadata |
+| `POST /api/checkout/rail-rules` | Braintree keys only. Fresh sandbox sales sent straight to Braintree (no agent, no gate): a test card (refund before settlement → `91506`, `testing.settle_transaction`, above the sale → `91521`, after a full refund → `91512`), the same calls on mocked PayPal (all accepted), and a sale on the dispute test card `4023898493988028` with the gate's check (`TRANSACTION_DISPUTED`) next to Braintree's own refund (accepted). About 15 sandbox calls per request, under the checkout rate limit |
 
 `condition` is `none`, `cap` or `counterfoil`. `email` is `{from, subject, body_text, body_html?, attachment_text?}`.
 `source` (replay only) is a `results/*.jsonl` file stem; the default is the qwen2.5 run, or `DEMO_REPLAY_SOURCE`.

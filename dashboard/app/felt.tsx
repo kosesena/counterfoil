@@ -5,6 +5,7 @@
 // renders on cream (public/crew/); the page multiplies them onto its own cream, so their backdrop disappears.
 
 import { useEffect, useRef } from 'react';
+import { CounterfoilGaze } from './counterfoil-gaze';
 
 const DEMO = 'https://counterfoil-demo.onrender.com';
 
@@ -66,7 +67,7 @@ export function Hero({ onStory }: { onStory: () => void }) {
         </div>
       </div>
       <div className="f-hero-art">
-        <FollowingFoil src="crew/counterfoil.webp" alt="Counterfoil, HOMI's felt gatekeeper, with a ledger under his arm" />
+        <CounterfoilGaze />
         <div className="f-receipt" aria-label="The agent asked for 60 USD; Counterfoil blocked it; 40 USD is still owed">
           <b>$60</b><span>requested</span>
           <i />
@@ -88,7 +89,7 @@ export function ResultBand({ compare, runs, models }: { compare: { label: string
           <strong>{c.harm}<small>/{c.total}</small></strong>
         </div>
       ))}
-      <p>Attack runs where wrong money reached Braintree · {runs} runs, {models} models</p>
+      <p>Unsafe outcomes in simulation: wrong payments or unauthorised data access. {runs} simulation runs · {models} models</p>
     </section>
   );
 }
@@ -141,8 +142,8 @@ export function ClosingBand() {
   return (
     <section className="f-close">
       <div>
-        <h2>See where the boundary holds.</h2>
-        <p>Try the interactive demo with real return flows in the Braintree sandbox.</p>
+        <h2>Try a refund for yourself.</h2>
+        <p>See what happens when a request is allowed, held for review or blocked. All payments are tests; no real money is used.</p>
       </div>
       <a className="f-patch" href={DEMO} target="_blank" rel="noopener">
         {/* eslint-disable-next-line @next/next/no-img-element */}
