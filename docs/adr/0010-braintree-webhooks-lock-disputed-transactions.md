@@ -1,4 +1,4 @@
-# 0009 · Braintree webhooks lock a disputed transaction before the next agent call
+# 0010 · Braintree webhooks lock a disputed transaction before the next agent call
 
 **Status:** accepted · 2026-10-29
 
