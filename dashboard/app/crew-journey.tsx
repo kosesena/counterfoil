@@ -97,7 +97,7 @@ export function CrewJourney() {
       <div className={styles.lineup}>
         {CREW.map((member,i)=>{
           const active=ensemble||step.actor===i;
-          const img=i===2?'counterfoil-wave-v1.png':i===3?'manager-wave-v1.png':i===4?(chapter>=5?'paypal-complete-v1.png':'paypal-wave-v1.png'):`${member.image}.webp`;
+          const img=i===2?'counterfoil-wave-v1.webp':i===3?'manager-wave-v1.webp':i===4?(chapter>=5?'paypal-complete-v1.webp':'paypal-wave-v1.webp'):`${member.image}.webp`;
           return <button key={member.name} type="button" className={`${styles.member} ${active?styles.active:''}`} aria-hidden={!active} tabIndex={active?0:-1} aria-label={`${member.name}: ${member.role}`} aria-expanded={selected===i} aria-controls="crew-detail"
             onPointerEnter={e=>{if(e.pointerType==='mouse')setHovered(i);}} onPointerLeave={e=>{setHovered(null);e.currentTarget.style.removeProperty('--look');}}
             onPointerMove={e=>{if(e.pointerType!=='mouse'||calm)return;const r=e.currentTarget.getBoundingClientRect();e.currentTarget.style.setProperty('--look',`${((e.clientX-r.left)/r.width-.5)*8}deg`);}}
@@ -113,7 +113,7 @@ export function CrewJourney() {
         {step.actor===1 && <div className={styles.intruder}>
           <button type="button" aria-label="Meet Nella, the attacker" onClick={()=>setInspected(inspected===5?null:5)} aria-expanded={inspected===5}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="crew/nella.png" alt="Nella slipping a false instruction into a return note" width="200" height="260"/>
+            <img src="crew/nella.webp" alt="Nella slipping a false instruction into a return note" width="200" height="260"/>
             <strong>Nella</strong><span>THE ATTACKER ↗</span>
           </button>
           <p className={inspected===5?styles.revealed:undefined}>Hides instructions in the customer’s note to trick the agents into requesting an extra refund.</p>
@@ -196,7 +196,7 @@ function CharacterSpotlight({character,progress,calm,manual}:{character:'Reader'
     <div className={styles.readerFigure}>
       <div className={styles.readerImages}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={`crew/${character.toLowerCase()}-wave-v1.png`} alt={shift<.5?`${character} waving hello`:''} style={{opacity:1-shift}} width="1127" height="1400"/>
+        <img src={`crew/${character.toLowerCase()}-wave-v1.webp`} alt={shift<.5?`${character} waving hello`:''} style={{opacity:1-shift}} width="1127" height="1400"/>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         {(payment?['paypal-receive-v1','paypal-process-v1','paypal-complete-v1']:manager?['manager-review-v1','manager-decline-v1','manager-record-v1']:foil?['counterfoil-check-v1','counterfoil-hold-v1','counterfoil-allow-v1']:runner?['runner-receive-v1','nella-runner-handoff-v1','runner-prepare-v1','runner-wait-v1']:['reader-look-right-v1','reader-extract-v1','reader-no-payment-v1']).map((pose,i)=><img key={pose} src={`crew/${pose}.png`} alt={shift>=.5&&!attack&&poseTask===i?(payment?['Payment mascot receiving the allowed call','Payment mascot processing a refund','Payment mascot presenting the successful result']:manager?['Store manager reviewing the held request','Store manager refusing the extra refund','Store manager recording a decision on the tablet']:foil?['Counterfoil comparing store records','Counterfoil raising a hand to hold the call','Counterfoil giving a thumbs-up for a valid call']:runner?['Runner receiving the request','Nella passing a manipulated note to Runner','Runner preparing a proposed money call','Runner waiting for Counterfoil']:['Reader introducing the customer note','Reader pointing out details on the note','Reader opening both hands to explain that it cannot move money'])[i]:''} style={{opacity:!attack&&poseTask===i?shift:0}} width="1127" height="1400"/>)}
         {runner&&NELLA_ATTEMPTS.map(attempt=><img key={attempt.family} src={`crew/${attempt.image}.webp`} alt={attack===attempt?attempt.alt:''} style={{opacity:attack===attempt?1:0}} width="1024" height="1536"/>)}
