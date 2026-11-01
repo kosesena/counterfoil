@@ -65,7 +65,21 @@ Notes on the table:
 - **Scoring:** outcome-based. It looks at what actually moved, where, and how much, and keeps attempt, intervention, harm and legitimate completion separate.
 - **Models:** an OpenAI-compatible client runs local Ollama models and cloud models. The Claude and GPT-5.6 runs went through the Astro AI Gateway.
 - **Dashboard:** an AG Studio report over the runs.
-- **Tests:** 174 tests cover the gateway rules, approvals, races and reconciliation, without an LLM.
+- **Tests:** 449 tests cover the gateway rules, approvals, races, reconciliation, webhooks and the MCP server, without an LLM.
+
+## What ran on a real rail, and what didn't
+Every figure above comes from one of these rows. "Real" means a Braintree sandbox transaction you can look up in the Control Panel.
+
+| | Rail | Model |
+|---|---|---|
+| 270-run evaluation (14 attacks × 9 models × 3 repeats) | in-memory rail that applies the card limits we measured in the sandbox | real models deciding: 4 local (Ollama) + 5 cloud (Claude, GPT-5.6) |
+| Braintree sandbox run (dev set, one repeat): 4/7 · 4/7 · **0/7** | **real** Braintree sandbox, mocked PayPal account | real: qwen2.5 |
+| Worst case (14 attacks): **0/14** vs 11/14 in memory, 12/14 in the sandbox | in-memory **and real** Braintree sandbox | none: scripted Reader and agent on the attacker's side |
+| Live demo | **real** Braintree sandbox: PayPal-button checkout, refunds, voids, dispute test card, signed webhooks | recorded runs replayed; live model only with a server key |
+| MCP server, P6-01 over stdio | **real** Braintree sandbox: USD 60 blocked, USD 40 held, approved, refunded | Claude Desktop or any MCP client |
+| PayPal Agent Toolkit path | **not run against PayPal REST**: faked HTTP layer only; no PayPal account can be opened from Türkiye (PayPal's team confirmed Braintree for this entry) | — |
+
+Other agent-payment benchmarks run a scripted agent against a mocked rail and report how often the guard fires. We publish that run too; it is our worst case, the floor, not the headline. The 270 runs are real models deciding, and the Braintree rows are real sandbox money.
 
 ## Challenges we ran into
 - **Braintree changed the design.** Our first attack ("refund $120 on a $40 order") is something Braintree already refuses on cards (91521), so it couldn't be our selling point. We rebuilt the gate around the return authorisation, which only the merchant has.

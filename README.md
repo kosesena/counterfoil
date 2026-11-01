@@ -111,6 +111,22 @@ Each scenario records whether the rail's own rules would have stopped it (`rail_
 
 **PayPal Agent Toolkit.** The Toolkit gives an agent a `create_refund` tool. [`counterfoil/toolkit.py`](counterfoil/toolkit.py) takes the Toolkit's own parameters (`capture_id`, `amount`) and sends the call through the gate first; only a pass or a human approval reaches the PayPal REST rail ([`counterfoil/paypal.py`](counterfoil/paypal.py)). The agent never holds PayPal keys. This path is tested with a faked HTTP layer and has **not** run against a real PayPal REST sandbox, because PayPal accounts can't be opened from Türkiye ([ADR 0008](docs/adr/0008-paypal-rest-rail-in-front-of-agent-toolkit.md)).
 
+### What ran on a real rail, and what didn't
+
+Every number in this README comes from one of the rows below. Rows marked **real** are sandbox transactions you can look up in the Braintree Control Panel.
+
+| | Rail | Model | Record |
+|---|---|---|---|
+| **270-run evaluation** (14 attacks × 9 models × 3 repeats, dev + holdout) | in-memory rail that applies the card limits we measured in the sandbox | **real models deciding:** qwen2.5, qwen3, llama3.1, hermes3 (Ollama), Claude Haiku 4.5 / Sonnet 5 / Opus 5.5, GPT-5.6 Sol / Terra | [`results/`](results/), dashboard |
+| **Braintree sandbox run** (dev set, one repeat): 4/7 · 4/7 · **0/7** | **real** Braintree sandbox, mocked PayPal account | real: qwen2.5 | [`results/`](results/), dashboard "Braintree sandbox" line |
+| **Worst case** (14 attacks): **0/14** vs 11/14 in memory, 12/14 in the sandbox | in-memory **and real** Braintree sandbox | none: a scripted Reader and agent fully on the attacker's side | [`results/2026-10-25-all-worst-case.jsonl`](results/2026-10-25-all-worst-case.jsonl) |
+| **Live demo** | **real** Braintree sandbox: PayPal-button checkout, refunds, voids, the dispute test card, signed webhooks | recorded runs replayed; a live model only when a key is set on the server | [counterfoil-demo.onrender.com](https://counterfoil-demo.onrender.com), section 4 |
+| **MCP server**, P6-01 over stdio (29 Oct) | **real** Braintree sandbox: USD 60 blocked, USD 40 held, approved, refunded | Claude Desktop, or any MCP client | [`docs/mcp.md`](docs/mcp.md), [ADR 0009](docs/adr/0009-mcp-server-with-toolkit-shaped-tools.md) |
+| **PayPal Agent Toolkit path** (`toolkit.py` → `paypal.py`) | **not run against PayPal REST.** Tested with a faked HTTP layer only; no PayPal account can be opened from Türkiye | — | [`tests/test_paypal_rail.py`](tests/test_paypal_rail.py), [ADR 0008](docs/adr/0008-paypal-rest-rail-in-front-of-agent-toolkit.md) |
+| **Mocked PayPal inside Braintree** | real sandbox transactions, but the mock does not enforce the refund total; no stop that only this gap explains is counted for Counterfoil | — | [ADR 0007](docs/adr/0007-braintree-sandbox-with-mocked-paypal.md) |
+
+Other benchmarks for agent-payment guards run a scripted agent against a mocked rail and report how often the guard fires. We publish that run too: it is the worst case above, and it is the floor, not the headline. The 270 runs are real models deciding, and the Braintree rows are real sandbox money.
+
 ## What else guards agent payments, and where it stops
 
 The guards we found for agent payments sit on the **buyer's** side: an agent spends on a customer's behalf, and the guard limits how much and where. A returns agent works on the **seller's** side, giving the store's money back, and the question there is different: *does this refund match what this store's record says is owed?*
@@ -169,6 +185,7 @@ Where and when each run happened, how long it took and what the cloud runs cost 
 ### What these results show, and what they don't
 
 - **14 distinct attacks, 7 families.** The 270 runs repeat the same 14 scenarios across models and repeats; they are not 270 independent attacks.
+- **Real models, one real rail, one simulated.** The 270 runs use real models on an in-memory rail that copies the sandbox's card limits; the Braintree lines are real sandbox transactions. [What ran on a real rail, and what didn't](#what-ran-on-a-real-rail-and-what-didnt) lists every row.
 - **We wrote the scenarios and the gate.** The holdout set was kept apart while the gate was written, but it comes from the same authors and the same families. A new attack written by someone else could change the result.
 - **The zero comes from how the gate works.** The gate compares every money call with the store's own record (the order, the return record, refunds already made); money that doesn't match the record can't leave. In the worst-case run (Reader and agent fully on the attacker's side, no model), Counterfoil is still 0/14, against 11–12/14 with no gate or the cap.
 - **It can't catch a wrong record.** If an attacker gets a fake return record opened, or a request matches the record but does harm some other way, the gate won't see it. For calls held for a human, the decision is the human's.
