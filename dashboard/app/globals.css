@@ -22,21 +22,21 @@
   --cf-navy: #46638d;
   --cf-accent: var(--cf-navy);
   --cf-on-accent: #ffffff;
-  /* meaning: green = stopped / safe, terracotta = harm, amber = agent misled. Soft, not shouting. */
-  --cf-green: #4f9a7b;
+  /* meaning: pink = stopped / safe (was green until 1 Nov; token names kept), terracotta = harm, amber = agent misled. Soft, not shouting. */
+  --cf-green: #c45f9f;
   --cf-harm: #d97a62;
   --cf-amber: #d1a04a;
   /* chart palette in meaning order (report.ts relies on it): pale fill, firmer edge */
   --cf-chart-1: #f1d3a0; --cf-chart-1-edge: #d9a94f;
   --cf-chart-2: #f2b8a6; --cf-chart-2-edge: #cf7a62;
-  --cf-chart-3: #b4dcc8; --cf-chart-3-edge: #5fa986;
+  --cf-chart-3: #efbfe0; --cf-chart-3-edge: #c45f9f;
   --cf-chart-4: #c3d2e6; --cf-chart-4-edge: #46638d;
   --cf-chart-5: #f3cdc3; --cf-chart-5-edge: #e08d7a;
   --cf-chart-6: #e0d8c9; --cf-chart-6-edge: #b9ab93;
   /* KPI tiles: pale tint behind a deep shade of the same hue */
   --cf-amber-tint: #fff7e6; --cf-amber-deep: #8a5a0e;
   --cf-harm-tint: #fdeeea; --cf-harm-deep: #9a3d28;
-  --cf-green-tint: #eaf5ef; --cf-green-deep: #24593f;
+  --cf-green-tint: #fbedf6; --cf-green-deep: #7a2a62;
   --cf-gutter: 24px;
 }
 
@@ -646,11 +646,18 @@ main .ag-studio-layout-widget-title { font-family:var(--cf-font) !important; fon
 .calls-filter-heading h2 { font:500 30px var(--cf-serif); margin:0; }
 .calls-filter-heading p { font-size:12px; line-height:1.6; color:var(--cf-muted); }
 .calls-workspace button { cursor:pointer; font:inherit; }
-.calls-filter-heading button,.calls-pagination button,.calls-empty button { background:var(--cf-surface); border:1px solid var(--cf-border); color:var(--cf-ink); border-radius:8px; padding:10px 14px; font-size:12px; }
-.calls-filters { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:14px; margin:20px 0; }
-.calls-filters label,.calls-mobile-select { display:flex; flex-direction:column; gap:8px; font-size:11px; color:var(--cf-muted); }
-.calls-filters input,.calls-filters select,.calls-mobile-select select { width:100%; min-width:0; padding:11px; border:1px solid var(--cf-border); border-radius:8px; background:var(--cf-surface); color:var(--cf-ink); font:13px var(--cf-font); }
-.calls-search { grid-column:1/-1; }
+.calls-filter-heading button,.calls-pagination button,.calls-empty button { background:var(--cf-surface); border:1px solid var(--cf-border); color:var(--cf-ink); border-radius:999px; padding:10px 14px; font-size:12px; }
+/* filters: one row per filter, rounded pills; the chosen one is plum (1 Nov, replaced native selects) */
+.calls-filters { display:flex; flex-direction:column; gap:14px; margin:24px 0; }
+.calls-filter, .calls-search { display:grid; grid-template-columns:120px minmax(0,1fr); align-items:center; gap:16px; font-size:12px; color:var(--cf-muted); }
+.calls-pills { display:flex; flex-wrap:wrap; gap:8px; }
+.calls-pills button { padding:8px 16px; border:1px solid var(--cf-border); border-radius:999px; background:var(--cf-surface); color:var(--cf-ink); font:500 13px var(--cf-font); cursor:pointer; transition:background .15s, border-color .15s, color .15s; }
+.calls-pills button:hover { border-color:#b897a9; background:#f8eef3; }
+.calls-pills button[aria-pressed=true] { background:var(--cf-plum); border-color:var(--cf-plum); color:#fff; }
+.calls-pills button:focus-visible, .calls-search input:focus-visible { outline:2px solid var(--cf-plum); outline-offset:2px; }
+.calls-search input { width:100%; min-width:0; padding:11px 18px; border:1px solid var(--cf-border); border-radius:999px; background:var(--cf-surface); color:var(--cf-ink); font:13px var(--cf-font); }
+.calls-mobile-select { display:flex; flex-direction:column; gap:8px; font-size:11px; color:var(--cf-muted); }
+.calls-mobile-select select { width:100%; min-width:0; padding:11px; border:1px solid var(--cf-border); border-radius:8px; background:var(--cf-surface); color:var(--cf-ink); font:13px var(--cf-font); }
 .calls-totals { display:flex; flex-wrap:wrap; gap:12px 24px; padding:16px 0; border-block:1px solid var(--cf-border); font-size:12px; color:var(--cf-muted); }
 .calls-totals b { color:var(--cf-ink); font-size:18px; font-weight:500; }
 .calls-browser { display:grid; grid-template-columns:minmax(260px,.8fr) minmax(0,1.4fr); gap:24px; margin-top:24px; align-items:start; }
@@ -689,7 +696,9 @@ main .ag-studio-layout-widget-title { font-family:var(--cf-font) !important; fon
  .calls-legend p { font-size:11px; }
  .calls-filter-heading { align-items:start; }
  .calls-filter-heading h2 { font-size:25px; }
- .calls-filters { grid-template-columns:1fr 1fr; }
+ .calls-filter, .calls-search { grid-template-columns:1fr; gap:8px; }
+ .calls-pills { flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; }
+ .calls-pills button { flex:none; }
  .calls-browser { grid-template-columns:1fr; }
  .calls-mobile-select { display:flex; }
  .calls-list { display:none; }
