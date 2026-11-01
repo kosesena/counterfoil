@@ -1,7 +1,7 @@
 'use client';
 
-// Same body/eye pivot approach as the Claude hero, applied to our own Blender model.
-// The black beads move as whole objects; there are no added irises or pupil overlays.
+// Meshy wool character with continuous eye-gaze morphs and the original pointer easing.
+// Morphs move the existing textured beads without cutting holes or adding pupils.
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -43,7 +43,8 @@ export function CounterfoilGaze() {
     const camera = new THREE.OrthographicCamera(-2, 2, 2.825, -2.825, .1, 100);
     camera.position.set(-1.4, 4.2, 12); camera.lookAt(0, 2.43, .02);
     const draco = new DRACOLoader().setDecoderPath('draco/');
-    let upper: THREE.Object3D | undefined, eyes: THREE.Object3D | undefined, model: THREE.Group | undefined;
+    let upper: THREE.Object3D | undefined, model: THREE.Group | undefined;
+    const gazeMeshes: THREE.Mesh[] = [];
     let disposed = false, visible = true, frameId = 0, previous = 0;
     const aim = { yaw: 0, pitch: 0 }, current = { yaw: 0, pitch: 0 };
     let pointer: { x: number; y: number } | null = null;
@@ -56,7 +57,11 @@ export function CounterfoilGaze() {
       current.pitch += (aim.pitch - current.pitch) * ease;
       const yaw = clamp(current.yaw, -.30, .30), pitch = clamp(current.pitch, -.065, .10);
       if (upper) upper.rotation.set(pitch, yaw, -yaw * .045);
-      if (eyes) eyes.rotation.set(clamp(current.pitch * .25, -.065, .018), clamp(current.yaw * .3, -.12, .12), 0);
+      for (const mesh of gazeMeshes) {
+        const dict = mesh.morphTargetDictionary!, values = mesh.morphTargetInfluences!;
+        values[dict.GazeHorizontal] = clamp(current.yaw / .65, -1, 1);
+        values[dict.GazeVertical] = clamp(-current.pitch / .4, -1, 1);
+      }
       renderer.render(scene, camera);
       // Observable pose also makes pointer-regression checks independent of screenshots.
       el.dataset.gazeYaw = yaw.toFixed(4); el.dataset.gazePitch = pitch.toFixed(4);
@@ -87,36 +92,26 @@ export function CounterfoilGaze() {
         const mesh=child as THREE.Mesh;
         if (!mesh.isMesh) return;
         mesh.geometry.dispose();
-        (Array.isArray(mesh.material) ? mesh.material : [mesh.material]).forEach(m=>m.dispose());
+        (Array.isArray(mesh.material) ? mesh.material : [mesh.material]).forEach(m=>{
+          Object.values(m).forEach(value => { if (value instanceof THREE.Texture) value.dispose(); });
+          m.dispose();
+        });
       });
     };
-    new GLTFLoader().setDRACOLoader(draco).load('3d/counterfoil-codex.glb', gltf => {
+    new GLTFLoader().setDRACOLoader(draco).load('3d/counterfoil-meshy.glb', gltf => {
       if (disposed) { disposeModel(gltf.scene); return; }
-      model=gltf.scene; upper=model.getObjectByName('CF_Upper'); eyes=model.getObjectByName('CF_Eyes');
+      model=gltf.scene; upper=model.getObjectByName('CF_Upper');
       model.traverse(child => {
         const mesh=child as THREE.Mesh;
         if (!mesh.isMesh) return;
-        const mat=mesh.material as THREE.MeshStandardMaterial;
-        if (mesh.name.startsWith('CF_eyes')) {
-          mat.envMapIntensity=1.5; mat.roughness=.12;
-        } else {
-          // sRGB swatches matched to the reference; matte wool must not wash out like plastic.
-          const swatches: Record<string, string> = {
-            '01': '#5a2047', '02': '#77335c',
-            '03': '#9b2315', '04': '#bc3820',
-            '05': '#f4cd92', '06': '#ffe3ad',
-            '07': '#c88bc5', '08': '#e7b5df',
-          };
-          const id=mat.name.match(/WEB (\d{2})/)?.[1];
-          const wool=new THREE.MeshPhysicalMaterial({
-            color: id && swatches[id] ? swatches[id] : mat.color,
-            roughness: 1, specularIntensity: .12, envMapIntensity: .25,
-          });
-          if (id === '05' || id === '06') {
-            wool.emissive.set('#ffd6a0'); wool.emissiveIntensity=.14;
-          }
-          mesh.material=wool; mat.dispose();
-        }
+        if (mesh.morphTargetDictionary?.GazeHorizontal !== undefined &&
+            mesh.morphTargetDictionary?.GazeVertical !== undefined && mesh.morphTargetInfluences) gazeMeshes.push(mesh);
+        // Keep Meshy's color, roughness and normal maps intact.
+        const materials=Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+        materials.forEach(material => {
+          const mat=material as THREE.MeshStandardMaterial;
+          mat.envMapIntensity=.35;
+        });
       });
       scene.add(model); setLoaded(true); kick();
     }, undefined, () => { if (!disposed) { setLoaded(false); renderer.domElement.style.visibility='hidden'; } });
@@ -150,7 +145,7 @@ export function CounterfoilGaze() {
   return <div className={`foil ${styles.character}`} ref={root} data-model-loaded={loaded}
     role="img" aria-label="Counterfoil, the wool gatekeeper; his black bead eyes and body follow your pointer">
     {/* eslint-disable-next-line @next/next/no-img-element */}
-    <img src="crew/counterfoil-codex.webp" width={1100} height={1500} alt="" draggable={false}
+    <img src="crew/counterfoil-meshy.webp" width={1100} height={1500} alt="" draggable={false}
       className={loaded ? styles.hidden : undefined} />
   </div>;
 }
