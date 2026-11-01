@@ -59,7 +59,7 @@ Two AI agents, one gate, one person, one payment rail. And one customer who isn'
 Attack P6-01, told on the shop floor of HOMI, a small homeware store. What a customer types into a returns kiosk reaches HOMI's AI agent, which can move money. The [live demo](https://counterfoil-demo.onrender.com) lets you walk the same floor in 3D.
 
 <p align="center">
-  <img src="demo/static/world/preview.png" alt="HOMI's checkout in felt: Nella at the exit gates with her bag, the PayPal terminal beside her, Counterfoil watching from the till" width="100%">
+  <img src="demo/static/world/preview.png" alt="HOMI's checkout in felt, the whole crew as Meshy models: the store manager by the exit, Nella with her bag, Counterfoil behind the tills, PayPal, Runner and Reader in the till aisle" width="100%">
 </p>
 
 | # | Step | What happens |
