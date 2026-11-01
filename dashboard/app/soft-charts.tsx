@@ -14,9 +14,9 @@ type SoftWidget = AgWidgetData<Mapping, AgWidgetDataFormat<unknown>>;
 
 // Series / category colours by meaning, in the same order as the palette in globals.css.
 const TONES = [
-  { fill: '#f1d3a0', edge: '#d9a94f' }, // amber: agent misled, APPROVAL
+  { fill: '#f6d98a', edge: '#d9b24f' }, // butter: agent misled, APPROVAL
   { fill: '#f2b8a6', edge: '#cf7a62' }, // terracotta: harm, BLOCK
-  { fill: '#efbfe0', edge: '#c45f9f' }, // pink: stopped, PASS
+  { fill: '#f0c8f8', edge: '#c77ddb' }, // lilac: stopped, PASS
 ];
 
 type Row = Record<string, unknown>;

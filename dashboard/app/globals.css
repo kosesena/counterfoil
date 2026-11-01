@@ -22,22 +22,25 @@
   --cf-navy: #46638d;
   --cf-accent: var(--cf-navy);
   --cf-on-accent: #ffffff;
-  /* meaning: pink = stopped / safe (was green until 1 Nov; token names kept), terracotta = harm, amber = agent misled. Soft, not shouting. */
-  --cf-green: #c45f9f;
+  /* meaning: lilac = stopped / safe (was green until 1 Nov; token names kept), terracotta = harm, amber = agent misled. Soft, not shouting. */
+  --cf-green: #b05cc8;
   --cf-harm: #d97a62;
   --cf-amber: #d1a04a;
   /* chart palette in meaning order (report.ts relies on it): pale fill, firmer edge */
-  --cf-chart-1: #f1d3a0; --cf-chart-1-edge: #d9a94f;
+  --cf-chart-1: #f6d98a; --cf-chart-1-edge: #d9b24f;
   --cf-chart-2: #f2b8a6; --cf-chart-2-edge: #cf7a62;
-  --cf-chart-3: #efbfe0; --cf-chart-3-edge: #c45f9f;
+  --cf-chart-3: #f0c8f8; --cf-chart-3-edge: #c77ddb;
   --cf-chart-4: #c3d2e6; --cf-chart-4-edge: #46638d;
   --cf-chart-5: #f3cdc3; --cf-chart-5-edge: #e08d7a;
   --cf-chart-6: #e0d8c9; --cf-chart-6-edge: #b9ab93;
   /* KPI tiles: pale tint behind a deep shade of the same hue */
   --cf-amber-tint: #fff7e6; --cf-amber-deep: #8a5a0e;
   --cf-harm-tint: #fdeeea; --cf-harm-deep: #9a3d28;
-  --cf-green-tint: #fbedf6; --cf-green-deep: #7a2a62;
+  --cf-green-tint: #f8ecfc; --cf-green-deep: #6b2a7d;
   --cf-gutter: 24px;
+  /* second palette (1 Nov, Sena's Dewbloom reference): espresso ground, lilac and butter marks, orange and periwinkle accents */
+  --dw-espresso: #2d1e19; --dw-espresso-2: #3a2721; --dw-ink: #1c1210; --dw-cream: #fbf7f2;
+  --dw-lilac: #e4a1f5; --dw-butter: #f6d98a; --dw-orange: #e98a3a; --dw-periwinkle: #8e93e6; --dw-powder: #c5d0e6;
 }
 
 /* AG Studio renders inside <main> on the same paper as the page; widgets sit as white panels with hairlines. */
@@ -339,6 +342,10 @@ h2 { font-family: var(--cf-display); font-weight: 800; color: var(--cf-ink); }
 
 /* closing band */
 .f-close { display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; margin: 30px 0 0; padding: 34px calc(var(--cf-gutter) + 24px); background: var(--cf-ink); color: #fff; background-image: repeating-linear-gradient(90deg, rgba(255,255,255,.035) 0 2px, transparent 2px 6px); }
+.f-close { background: var(--dw-espresso) !important; background-image: none !important; }
+.f-close p { color: #e6d9d2 !important; }
+.f-close .f-pill { display: inline-flex; align-items: center; gap: 14px; padding: 18px 32px; border-radius: 999px; background: var(--dw-cream); color: var(--dw-ink); font: 600 17px var(--cf-font); text-decoration: none; transition: transform .15s; }
+.f-close .f-pill:hover { transform: translateY(-2px); }
 .f-close h2 { margin: 0; color: #fff; font-size: clamp(30px, 3.4vw, 46px); }
 .f-close p { margin: 6px 0 0; font-size: 17px; color: #d8dcea; }
 footer { align-items: center; padding: 16px calc(var(--cf-gutter) + 24px) 24px; }
@@ -653,7 +660,7 @@ main .ag-studio-layout-widget-title { font-family:var(--cf-font) !important; fon
 .calls-pills { display:flex; flex-wrap:wrap; gap:8px; }
 .calls-pills button { padding:8px 16px; border:1px solid var(--cf-border); border-radius:999px; background:var(--cf-surface); color:var(--cf-ink); font:500 13px var(--cf-font); cursor:pointer; transition:background .15s, border-color .15s, color .15s; }
 .calls-pills button:hover { border-color:#b897a9; background:#f8eef3; }
-.calls-pills button[aria-pressed=true] { background:var(--cf-plum); border-color:var(--cf-plum); color:#fff; }
+.calls-pills button[aria-pressed=true] { background:var(--dw-espresso); border-color:var(--dw-espresso); color:var(--dw-cream); }
 .calls-pills button:focus-visible, .calls-search input:focus-visible { outline:2px solid var(--cf-plum); outline-offset:2px; }
 .calls-search input { width:100%; min-width:0; padding:11px 18px; border:1px solid var(--cf-border); border-radius:999px; background:var(--cf-surface); color:var(--cf-ink); font:13px var(--cf-font); }
 .calls-mobile-select { display:flex; flex-direction:column; gap:8px; font-size:11px; color:var(--cf-muted); }

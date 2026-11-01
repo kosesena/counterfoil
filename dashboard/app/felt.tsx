@@ -145,9 +145,8 @@ export function ClosingBand() {
         <h2>Try a refund for yourself.</h2>
         <p>See what happens when a request is allowed, held for review or blocked. All payments are tests; no real money is used.</p>
       </div>
-      <a className="f-patch" href={DEMO} target="_blank" rel="noopener">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="buttons/try-it-live-cream.webp" alt="Try it live" />
+      <a className="f-pill" href={DEMO} target="_blank" rel="noopener">
+        Try it live <span aria-hidden="true">→</span>
       </a>
     </section>
   );
