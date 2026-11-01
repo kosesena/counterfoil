@@ -6,7 +6,8 @@
 
 **A little trust. A firm boundary.**
 
-A gate between an AI returns agent and Braintree. Every refund or charge the agent asks for is checked against the store's own records before any money moves.
+A gate between an AI returns agent and Braintree. Every refund or charge the agent asks for is checked against the store's own records before any money moves.<br>
+<b>It refunds only what came back.</b> The return record and Braintree's own line items decide, not the customer's text.
 
 <sub>Built solo by Sena Köse from Türkiye on <b>Braintree</b>, the PayPal service PayPal's team confirmed for this hackathon where PayPal accounts can't be opened (<a href="docs/adr/0007-braintree-sandbox-with-mocked-paypal.md">ADR 0007</a>).</sub>
 
@@ -23,7 +24,13 @@ A gate between an AI returns agent and Braintree. Every refund or charge the age
 > 1. **No setup:** open the [live dashboard](https://counterfoil-dashboard.vercel.app). Step through the story (one button per step, nothing plays on its own), then the evidence board: wrong money moved **0/270** with Counterfoil, **99/270** with no gate, **100/270** with a $200 cap.
 > 2. **One attack, three conditions side by side:** open the [live demo](https://counterfoil-demo.onrender.com) and pick **P6-01** (split refund). You see what the Reader extracted, every call the agent made, the gate's PASS / APPROVAL / BLOCK with its reason, and whether money reached the rail. This is a replay of a measured run: no model call, no cost.
 > 3. **In a terminal, no model and no keys:** after the [quick start](#quick-start), `.venv/bin/python scripts/run_eval.py --model worst-case --split all` puts a Reader and an agent fully on the attacker's side across all 14 attacks. Wrong money moved: Counterfoil **0/14**, no gate **11/14**, the cap **11/14**.
-> 4. **Where it stops:** [What these results show, and what they don't](#what-these-results-show-and-what-they-dont).
+> 4. **From Claude Desktop, Cursor or Claude Code:** add [`counterfoil-mcp`](#use-it-from-any-mcp-client), paste the P6-01 e-mail, and watch PayPal Agent Toolkit's `create_refund` come back `BLOCKED` for USD 60 and `HELD_FOR_APPROVAL` for USD 40.
+> 5. **Where it stops:** [What these results show, and what they don't](#what-these-results-show-and-what-they-dont), and [what ran on a real rail](#what-ran-on-a-real-rail-and-what-didnt).
+
+<p align="center">
+  <a href="#results"><img src="docs/brand/results-band.svg" alt="Wrong money moved: 0 of 270 attack runs with Counterfoil, 99 of 270 with no gate; 82% of genuine requests still handled right; 9 AI models tested" width="100%"></a>
+  <br><sub>Simulation · 1,359 completed runs · 14 attacks × 9 models × 3 repeats · exported 26 Oct 2026 · <a href="#results">how we measured</a></sub>
+</p>
 
 ## The return crew
 
@@ -127,17 +134,20 @@ Every number in this README comes from one of the rows below. Rows marked **real
 
 Other benchmarks for agent-payment guards run a scripted agent against a mocked rail and report how often the guard fires. We publish that run too: it is the worst case above, and it is the floor, not the headline. The 270 runs are real models deciding, and the Braintree rows are real sandbox money.
 
-## What else guards agent payments, and where it stops
+## The cost of the alternatives
 
 The guards we found for agent payments sit on the **buyer's** side: an agent spends on a customer's behalf, and the guard limits how much and where. A returns agent works on the **seller's** side, giving the store's money back, and the question there is different: *does this refund match what this store's record says is owed?*
 
-| | Side | What it checks | The record of this order and its return |
-|---|---|---|---|
-| Spend caps, allowlists, kill switches (agent-payment SDKs and guard projects) | buyer | how much, to whom | no |
-| Signed intent ([IntentGuard](https://hackquest.io/projects/IntentBinding)) | buyer | the payment matches what the user signed | no |
-| Human approval over a cap ([Countersign](https://lablab.ai/submissions/p4iic6ylqcqd0hw5utigsqiz)) | buyer | amount above a threshold | no |
-| [n8n refund gateway](https://community.n8n.io/t/deterministic-human-in-the-loop-gateway-for-ai-agent-refunds/315643) | seller | nothing: every refund goes to a manager | no |
-| **Counterfoil** | **seller** | owner, return record, refunds already made, catalog price × quantity | **yes** |
+| | Side | What it checks | Reads this order's return record | Wrong money in our 270 attack runs |
+|---|---|---|---|---|
+| Spend caps, allowlists, kill switches (agent-payment SDKs and guard projects) | buyer | how much, to whom | <img src="docs/brand/mark-short.svg" width="14" height="14" alt="falls short"> no | <img src="docs/brand/mark-short.svg" width="14" height="14" alt="falls short"> 100/270 as a $200 cap |
+| Signed intent ([IntentGuard](https://hackquest.io/projects/IntentBinding)) | buyer | the payment matches what the user signed | <img src="docs/brand/mark-short.svg" width="14" height="14" alt="falls short"> no | not tested by us |
+| Human approval over a cap ([Countersign](https://lablab.ai/submissions/p4iic6ylqcqd0hw5utigsqiz)) | buyer | amount above a threshold | <img src="docs/brand/mark-short.svg" width="14" height="14" alt="falls short"> no | not tested by us |
+| [n8n refund gateway](https://community.n8n.io/t/deterministic-human-in-the-loop-gateway-for-ai-agent-refunds/315643) | seller | nothing: every refund goes to a manager | <img src="docs/brand/mark-tradeoff.svg" width="14" height="14" alt="trade-off"> a person does | not tested by us |
+| No gate | — | nothing | <img src="docs/brand/mark-short.svg" width="14" height="14" alt="falls short"> no | <img src="docs/brand/mark-short.svg" width="14" height="14" alt="falls short"> 99/270 |
+| **Counterfoil** | **seller** | owner, return record, refunds already made, catalog price × quantity, Braintree's line items | <img src="docs/brand/mark-strong.svg" width="14" height="14" alt="strong"> **yes** | <img src="docs/brand/mark-strong.svg" width="14" height="14" alt="strong"> **0/270** |
+
+<sub><img src="docs/brand/mark-strong.svg" width="12" height="12" alt=""> strong &nbsp; <img src="docs/brand/mark-tradeoff.svg" width="12" height="12" alt=""> trade-off &nbsp; <img src="docs/brand/mark-short.svg" width="12" height="12" alt=""> falls short. The live dashboard shows the same table with the measured columns.</sub>
 
 A cap can't tell a USD 60 refund that is owed from one that isn't, so it lets through what Counterfoil holds: the $200 cap moved wrong money in 100 of 270 attack runs. Sending every refund to a person stops the harm but does no work: Counterfoil completes the same genuine requests as no gate (102 of 183) and sends to a person only what its record checks or the store's rules flag. This is what we found in October 2026, not a full survey ([our scan](docs/arastirma/2026-10-23-rakipler.md)).
 
@@ -196,7 +206,7 @@ Where and when each run happened, how long it took and what the cloud runs cost 
 
 ```bash
 python -m venv .venv && .venv/bin/pip install -r requirements.txt
-.venv/bin/python -m pytest                      # gate rules, mechanics, invariants, scoring; no LLM, no network
+.venv/bin/python -m pytest                      # 449 tests: gate rules, mechanics, webhooks, MCP, scoring; no LLM, no network
 .venv/bin/python docs/senaryolar/validate.py    # checks the scenario and store fixtures
 ```
 
@@ -274,6 +284,7 @@ Security: [`docs/threat-model.md`](docs/threat-model.md) (assets, trust boundari
 - **Astropods** and its **Astro AI Gateway** for the cloud models (GPT-5.6 Terra, GPT-5.6 Sol, Claude Haiku 4.5, Claude Sonnet 5, Claude Opus 5.5).
 - **Ollama** for the local models (qwen2.5, qwen3, llama3.1, hermes3, each with an 8k context).
 - **AG Studio** for the results dashboard and its case agent.
+- **Meshy** for the wool Counterfoil in the dashboard's hero and the characters in the live demo's 3D store; **Blender** for the HOMI store, the 3D story and the renders. The felt portraits and buttons are image-model renders from Codex's prompts.
 - **Claude Code** and **OpenAI Codex** as coding agents. Sena Köse set the problem, the design and every decision. Claude Code wrote most of the code (gate, rails, agents, evaluation, dashboard, demo, 3D store scenes). Codex wrote the scenario texts, designed HOMI and the dashboard's felt look, and reviewed the code; every review finding was fixed with a test ([`docs/inceleme/`](docs/inceleme/)).
 
 The agent prompts are deliberately ordinary, not hardened against injection: the evaluation measures the gate.
