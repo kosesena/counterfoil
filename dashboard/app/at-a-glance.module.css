@@ -1,0 +1,59 @@
+/* Results at a glance: colour blocks with big numbers, then a comparison table with our column in plum. */
+.band { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: 1180px; margin: 0 auto; padding: 0 28px 56px; }
+.band > div { position: relative; min-height: 190px; padding: 26px 26px 24px; display: flex; flex-direction: column; justify-content: space-between; gap: 24px; color: #392432; }
+/* felt stitch inside each block */
+.band > div::after { content: ''; position: absolute; inset: 7px; border: 2px dashed rgba(255, 255, 255, .45); pointer-events: none; }
+.band strong { font: 500 clamp(44px, 5.4vw, 72px)/1 var(--cf-font); letter-spacing: -.05em; }
+.band small { font-size: .42em; letter-spacing: -.02em; opacity: .75; }
+.band span { font-size: 15px; line-height: 1.4; max-width: 230px; }
+.plum { background: #6d1f5e; color: #fbf1f6 !important; }
+.salmon { background: #f2b8a6; }
+.pink { background: #efbfe0; }
+.sky { background: #c3d2e6; }
+.bandNote { grid-column: 1 / -1; margin: 14px 0 0; font-size: 12px; color: #796773; }
+.bandNote a { color: #6d1f5e; margin-left: 6px; }
+
+.compare { max-width: 1120px; margin: 0 auto; padding: 24px 28px 64px; }
+.compare h2 { font: 500 clamp(28px, 4vw, 44px)/1.15 Georgia, serif; margin: 16px 0 28px; color: #392432; }
+.scroll { overflow-x: auto; }
+.table { width: 100%; min-width: 760px; border-collapse: collapse; background: #fdfaf6; font-size: 15px; color: #392432; }
+.table thead th, .table thead td { text-align: left; font-weight: 600; padding: 18px 20px; border-bottom: 2px solid #392432; }
+.table tbody th { text-align: left; font-weight: 600; }
+.table thead td:first-child { width: 22%; }
+.table tbody th, .table tbody td { padding: 18px 20px; border-bottom: 1px solid #e6dad6; vertical-align: middle; }
+.table tbody tr:nth-child(even) { background: #f4ece8; }
+.table td + td, .table th + td, .table th + th, .table td + th { border-left: 1px solid #e6dad6; }
+.table { table-layout: fixed; }
+.cell { display: flex; align-items: flex-start; gap: 10px; }
+.table i { flex: none; display: inline-block; width: 18px; height: 18px; margin-top: 1px; border-radius: 50%; }
+.table .ours { background: #4f1645; color: #fbf1f6; border-left-color: #4f1645; }
+.table tbody tr:nth-child(even) .ours { background: #5d1a52; }
+.table thead .ours { border-bottom-color: #4f1645; }
+
+/* marks: the site's pass / hold / block colours */
+.strong { background: #e48fc4 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cpath d='M5 9.4l2.6 2.6L13 6.6' fill='none' stroke='%234f1645' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 100%; }
+.tradeoff { background: #f1d3a0 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cpath d='M5.5 9h7' stroke='%238a5a0e' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") center / 100%; }
+.short { background: #d97a62 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cpath d='M6.5 6.5l5 5M11.5 6.5l-5 5' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") center / 100%; }
+.ours .strong { background-color: #f2b3dc; }
+
+.legend { display: flex; gap: 24px; margin: 16px 0 0; font-size: 14px; color: #392432; }
+.legend i { display: inline-block; width: 18px; height: 18px; margin-right: 8px; vertical-align: -4px; border-radius: 50%; }
+.compareNote { margin: 14px 0 0; max-width: 760px; font-size: 13px; line-height: 1.6; color: #796773; }
+
+@media (max-width: 760px) {
+  .band { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 0 16px 40px; }
+  .band > div { min-height: 150px; padding: 20px 18px; }
+  .band span { font-size: 13px; }
+  .compare { padding: 16px 16px 48px; }
+  /* phone: one card per row, Counterfoil first, each answer labelled with its column */
+  .table { min-width: 0; display: block; background: none; }
+  .table thead { display: none; }
+  .table tbody { display: grid; gap: 12px; }
+  .table tbody tr, .table tbody tr:nth-child(even) { display: flex; flex-direction: column; background: #fdfaf6; }
+  .table tbody th { width: auto; padding: 14px 16px 10px; border-bottom: 2px solid #392432; }
+  .table tbody td { display: grid; grid-template-columns: 112px 1fr; gap: 10px; padding: 10px 16px; border-left: 0; font-size: 14px; }
+  .table tbody td::before { content: attr(data-col); font-size: 12px; color: #796773; padding-top: 1px; }
+  .table tbody td.ours { order: -1; }
+  .table tbody td.ours::before { color: #e9cfe0; }
+  .table tbody th { order: -2; }
+}
