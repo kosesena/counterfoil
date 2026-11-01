@@ -199,7 +199,7 @@
 .productCopy p { font-size: clamp(15px,1.5vw,20px); line-height: 1.65; color: #796773; }
 .productActions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 30px; }
 .productActions a { padding: 14px 22px; border: 1px solid #bba1ad; border-radius: 40px; color: #392432; text-decoration: none; font-size: 13px; }
-.productActions a:first-child { background: #542b43; border-color: #542b43; color: #fff8ef; }
+.productActions a:first-child { background: var(--dw-ink); border-color: var(--dw-ink); color: var(--dw-cream); }
 .productActions a:hover { transform: translateY(-2px); }
 .productActions a:focus-visible,.productScroll:focus-visible { outline: 2px solid #803c61; outline-offset: 4px; }
 .productActions a span { margin-left: 14px; }
