@@ -115,7 +115,7 @@ export function Store3D() {
     <div className="store3d" ref={mount}>
       {state === 'still' && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src="3d/homi-return-station.png?v=20261024-three-checkouts" alt="HOMI self-service return station" />
+        <img src="3d/homi-return-station.webp?v=20261024-three-checkouts" alt="HOMI self-service return station" />
       )}
       {state === 'loading' && <span className="store3d-note">Loading the store…</span>}
       {state === 'error' && <span className="store3d-note">The 3D store could not be loaded.</span>}

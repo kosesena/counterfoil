@@ -3,13 +3,13 @@ type Props = { view: 'review' | 'calls'; onContinue: () => void };
 export function StoryContinuation({ view, onContinue }: Props) {
   const review = view === 'review';
   const steps = review ? [
-    { image: 'manager-record-v1.png', name: 'Compare the records', title: '$30 owed, $80 requested', text: 'The manager checks the customer, the original order and earlier refunds. The store record allows only $30.' },
-    { image: 'manager-decline-v1.png', name: 'Reject the wrong request', title: 'Do not send the $80', text: 'In this example, the manager chooses to reject the extra amount. The original request stays unsent; reviewing it does not move money.' },
-    { image: 'runner-wait-v1.png', name: 'Prepare a new request', title: 'Ask for $30 instead', text: 'Runner prepares a separate $30 refund request. Counterfoil must check it again before it can reach PayPal.' },
+    { image: 'manager-record-v1.webp', name: 'Compare the records', title: '$30 owed, $80 requested', text: 'The manager checks the customer, the original order and earlier refunds. The store record allows only $30.' },
+    { image: 'manager-decline-v1.webp', name: 'Reject the wrong request', title: 'Do not send the $80', text: 'In this example, the manager chooses to reject the extra amount. The original request stays unsent; reviewing it does not move money.' },
+    { image: 'runner-wait-v1.webp', name: 'Prepare a new request', title: 'Ask for $30 instead', text: 'Runner prepares a separate $30 refund request. Counterfoil must check it again before it can reach PayPal.' },
   ] : [
-    { image: 'runner-wait-v1.png', name: 'Runner requests', title: 'A new $30 refund', text: 'This is a separate request after human review. The original $80 request was rejected and is never sent.' },
-    { image: 'counterfoil-allow-v1.png', name: 'Counterfoil checks', title: 'Allowed to proceed', text: 'The new request matches the store’s records and passes the checks. It can now be sent to Braintree.' },
-    { image: 'paypal-wave-v1.png', name: 'PayPal / Braintree processes', title: '$30 refunded', text: 'In this illustrated success case, Braintree processes the refund and returns the result. The customer gets the correct amount.' },
+    { image: 'runner-wait-v1.webp', name: 'Runner requests', title: 'A new $30 refund', text: 'This is a separate request after human review. The original $80 request was rejected and is never sent.' },
+    { image: 'counterfoil-allow-v1.webp', name: 'Counterfoil checks', title: 'Allowed to proceed', text: 'The new request matches the store’s records and passes the checks. It can now be sent to Braintree.' },
+    { image: 'paypal-wave-v1.webp', name: 'PayPal / Braintree processes', title: '$30 refunded', text: 'In this illustrated success case, Braintree processes the refund and returns the result. The customer gets the correct amount.' },
   ];
   return <section className="story-continuation" aria-label={review?'Review the illustrated refund':'Follow the illustrated payment'}>
     <span className="review-eyebrow">{review?'CHAPTER 2 / HUMAN REVIEW':'CHAPTER 3 / PAYMENT RESULT'} · ILLUSTRATION</span>

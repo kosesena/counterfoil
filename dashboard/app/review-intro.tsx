@@ -15,7 +15,7 @@ export function ReviewIntro({ data, onContinue }: { data: CounterfoilData; onCon
       <small>Illustrated story · recorded cases in Technical details</small>
     </div>
     <figure className="review-manager">
-      <img src="crew/manager-review-v1.png" alt="Store manager examining a held request on a tablet" width="1127" height="1400"/>
+      <img src="crew/manager-review-v1.webp" alt="Store manager examining a held request on a tablet" width="1127" height="1400"/>
       <figcaption><strong>“I check before I decide.”</strong><span>The store manager · human review</span></figcaption>
     </figure>
     <div className="review-simple"><StoryContinuation view="review" onContinue={onContinue} /></div>
