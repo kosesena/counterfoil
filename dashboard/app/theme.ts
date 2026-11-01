@@ -1,6 +1,6 @@
 // AG Studio theme. Every value points at a token in ./globals.css, so Studio's widgets, grids and
 // charts share the page's paper, ink and soft palette. The chart palette is ordered by meaning:
-// amber (agent misled), terracotta (harm), green (stopped / safe); see ./report.ts.
+// amber (agent misled), terracotta (harm), pink (stopped / safe); see ./report.ts.
 
 import { studioTheme } from 'ag-studio';
 import { ROW_HEIGHT } from './report';

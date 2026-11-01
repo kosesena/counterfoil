@@ -79,7 +79,7 @@ const filter = (id: string, text: string, minWidth?: number) => ({
 });
 
 // Colours come from the theme palette in series/category order: 1 amber (agent misled, APPROVAL),
-// 2 terracotta (harm, BLOCK), 3 green (stopped, PASS). The order below is what makes them mean something.
+// 2 terracotta (harm, BLOCK), 3 pink (stopped, PASS). The order below is what makes them mean something.
 const guardLevel = { id: 'guardLevel' };
 const bottomLegend = { theme: { common: { legend: { enabled: true, position: 'bottom' as const } } } };
 
@@ -208,14 +208,14 @@ function review(compact: boolean): AgPageState {
         'tally-attack',
         'Attack e-mails: what happened to the money calls',
         ['attackBlocked', 'attackHeld', 'attackMoneyCalls'],
-        'Other calls may pass when they match the store record. See each call’s decision and payment result below.',
+        'The rest matched the store record and passed.',
         'harm',
       ),
       'tally-genuine': tally(
         'tally-genuine',
         'Genuine e-mails',
         ['genuineCompleted', 'genuineToReview', 'genuineRuns'],
-        'Expected review includes the $300 return above the automatic limit, new charges requiring basket confirmation, and returns needing a store return record.',
+        'Review is expected for some: a $300 return, new charges, returns with no record.',
         'green',
       ),
       pending: {
@@ -239,7 +239,7 @@ function review(compact: boolean): AgPageState {
         format: {
           ...title('Recorded held and blocked calls'),
           // one row per call; a total would add the same refund up once per model and repeat
-          style: { columnAutoSize: false, columnWidth: 140, grandTotalRow: { enabled: false } },
+          style: { columnAutoSize: false, columnWidth: 180, grandTotalRow: { enabled: false } },
         },
       },
       case: {
@@ -272,15 +272,18 @@ function review(compact: boolean): AgPageState {
           [['pending'], [24], 30],
           [['tally-attack'], [24], 11],
           [['tally-genuine'], [24], 12],
-          [['checks'], [24], 20],
+          [['checks'], [24], 34],
           [['mix'], [24], 20],
         ])
       : rows([
           [['condition', 'decision'], [12, 12], 8],
-          [['model'], [24], 8],
-          [['case', 'pending'], [14, 10], 53],
-          [['tally-attack', 'tally-genuine'], [12, 12], 11],
-          [['checks', 'mix'], [15, 9], 20],
+          // nine model patches wrap to a second line
+          [['model'], [24], 11],
+          // one wide column: side by side, the case file and the call list were too narrow to read
+          [['case'], [24], 44],
+          [['pending'], [24], 30],
+          [['tally-attack', 'tally-genuine'], [12, 12], 12],
+          [['checks', 'mix'], [15, 9], 34],
         ]),
   };
 }

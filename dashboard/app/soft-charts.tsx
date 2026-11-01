@@ -16,7 +16,7 @@ type SoftWidget = AgWidgetData<Mapping, AgWidgetDataFormat<unknown>>;
 const TONES = [
   { fill: '#f1d3a0', edge: '#d9a94f' }, // amber: agent misled, APPROVAL
   { fill: '#f2b8a6', edge: '#cf7a62' }, // terracotta: harm, BLOCK
-  { fill: '#b4dcc8', edge: '#5fa986' }, // green: stopped, PASS
+  { fill: '#efbfe0', edge: '#c45f9f' }, // pink: stopped, PASS
 ];
 
 type Row = Record<string, unknown>;
