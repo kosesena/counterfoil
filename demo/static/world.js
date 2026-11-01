@@ -27,7 +27,7 @@ async function load(){
   camera=new THREE.OrthographicCamera(-5,5,5,-5,.05,300);
   home={position:fromBlender(meta.position),target:fromBlender(meta.target),scale:meta.scale};
   camera.position.copy(home.position);camera.lookAt(home.target);
-  r.domElement.setAttribute('aria-label','Interactive HOMI store with Nella, Counterfoil and PayPal. Drag to rotate; scroll to zoom.');
+  r.domElement.setAttribute('aria-label','Interactive HOMI store with Nella, Reader, Runner, Counterfoil, the store manager and PayPal. Drag to rotate; scroll to zoom.');
   stage.append(r.domElement);
   controls=new OrbitControls(camera,r.domElement);controls.target.copy(home.target);controls.minZoom=.6;controls.maxZoom=3;controls.maxPolarAngle=Math.PI*.48;controls.enablePan=false;controls.addEventListener('change',draw);controls.update();
   resize=()=>{const w=stage.clientWidth,h=stage.clientHeight;camera.left=-home.scale/2;camera.right=home.scale/2;camera.top=home.scale*h/w/2;camera.bottom=-home.scale*h/w/2;camera.updateProjectionMatrix();r.setSize(w,h);draw();};

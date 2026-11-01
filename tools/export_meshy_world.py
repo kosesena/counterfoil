@@ -1,7 +1,8 @@
 """Export a disposable browser copy of the approved Meshy store.
 Usage: blender -b --python tools/export_meshy_world.py -- source.blend output-directory
 Source is never saved. Procedural wool strands are omitted for browser performance.
-Meshy UV textures and corrected PayPal label objects are retained.
+Meshy UV textures and corrected PayPal label objects are retained. The Meshy characters (Nella, PayPal,
+Reader, Runner, the manager) stay separate objects; the store and the felt Counterfoil are batched.
 """
 import bpy, json, numpy as np, sys
 from pathlib import Path
@@ -71,7 +72,7 @@ bpy.ops.object.select_all(action='SELECT')
 bpy.context.view_layer.objects.active=next(iter(s.objects))
 bpy.ops.object.convert(target='MESH')
 # Batch static geometry, retaining separate materials and textures.
-chars=[o for o in s.objects if o.name.startswith(('Nella |','PayPal |'))]
+chars=[o for o in s.objects if o.name.startswith(('Nella |','PayPal |','Reader |','Runner |','Manager |'))]
 env=[o for o in s.objects if o not in chars and o.type=='MESH']
 bpy.ops.object.select_all(action='DESELECT')
 for o in env:o.select_set(True)
@@ -79,5 +80,6 @@ if env:
  bpy.context.view_layer.objects.active=env[0];bpy.ops.object.join();bpy.context.object.name='HOMI store and Counterfoil'
 bpy.ops.object.select_all(action='SELECT')
 print('EXPORT',len(s.objects),flush=True)
-bpy.ops.export_scene.gltf(filepath=str(out/'homi-meshy.glb'),export_format='GLB',use_selection=True,export_animations=False,export_cameras=False,export_lights=False,export_apply=True,export_draco_mesh_compression_enable=True,export_draco_mesh_compression_level=6)
+# Textures as WebP (EXT_texture_webp; three.js reads it): five Meshy characters as PNG doubled the file.
+bpy.ops.export_scene.gltf(filepath=str(out/'homi-meshy.glb'),export_format='GLB',use_selection=True,export_animations=False,export_cameras=False,export_lights=False,export_apply=True,export_image_format='WEBP',export_image_quality=85,export_draco_mesh_compression_enable=True,export_draco_mesh_compression_level=6)
 print('DONE', (out/'homi-meshy.glb').stat().st_size,flush=True)
