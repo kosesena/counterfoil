@@ -2,11 +2,12 @@
 
 <img src="docs/brand/homi-return-crew.png" alt="HOMI's felt return crew: Nella peeks around the H, Reader and PayPal sit on the letters, Runner carries a receipt, and Counterfoil and the store manager keep watch" width="100%">
 
-# Counterfoil
+<img src="docs/brand/readme/wordmark.png" alt="Counterfoil" width="520">
 
 **A little trust. A firm boundary.**
 
-A gate between an AI returns agent and Braintree. Every refund or charge the agent asks for is checked against the store's own records before any money moves.
+A gate between an AI returns agent and Braintree. Every refund or charge the agent asks for is checked against the store's own records before any money moves.<br>
+<b>It refunds only what came back.</b> The return record and Braintree's own line items decide, not the customer's text.
 
 <sub>Built solo by Sena Köse from Türkiye on <b>Braintree</b>, the PayPal service PayPal's team confirmed for this hackathon where PayPal accounts can't be opened (<a href="docs/adr/0007-braintree-sandbox-with-mocked-paypal.md">ADR 0007</a>).</sub>
 
@@ -23,26 +24,42 @@ A gate between an AI returns agent and Braintree. Every refund or charge the age
 > 1. **No setup:** open the [live dashboard](https://counterfoil-dashboard.vercel.app). Step through the story (one button per step, nothing plays on its own), then the evidence board: wrong money moved **0/270** with Counterfoil, **99/270** with no gate, **100/270** with a $200 cap.
 > 2. **One attack, three conditions side by side:** open the [live demo](https://counterfoil-demo.onrender.com) and pick **P6-01** (split refund). You see what the Reader extracted, every call the agent made, the gate's PASS / APPROVAL / BLOCK with its reason, and whether money reached the rail. This is a replay of a measured run: no model call, no cost.
 > 3. **In a terminal, no model and no keys:** after the [quick start](#quick-start), `.venv/bin/python scripts/run_eval.py --model worst-case --split all` puts a Reader and an agent fully on the attacker's side across all 14 attacks. Wrong money moved: Counterfoil **0/14**, no gate **11/14**, the cap **11/14**.
-> 4. **Where it stops:** [What these results show, and what they don't](#what-these-results-show-and-what-they-dont).
-
-## The return crew
-
-Two AI agents and one gate. Different skills, a safer outcome.
-
-| | | |
-|:---:|---|---|
-| <img src="dashboard/public/crew/reader.webp" alt="Reader" width="96"> | **Reader** · reads the note | Pulls the order, the return and the amount out of what the customer wrote. Has no tools. |
-| <img src="dashboard/public/crew/runner.webp" alt="Runner" width="96"> | **Runner** · requests the refund | Turns the note into a money call: refund, charge or void. Never sees the customer's text. |
-| <img src="dashboard/public/crew/counterfoil-checking.webp" alt="Counterfoil" width="96"> | **Counterfoil** · checks the rules | Compares every call with the store's own records before it leaves. Holds the only rail keys. |
-| 🧵 | **Braintree** · moves the money | Only what Counterfoil lets through reaches the sandbox: refunds, sales and voids. |
-
-## The story, in seven steps
-
-Attack P6-01, told on the shop floor of HOMI, a small homeware store. What a customer types into a returns kiosk reaches HOMI's AI agent, which can move money. The dashboard plays it in 3D, one button per step.
+> 4. **From Claude Desktop, Cursor or Claude Code:** add [`counterfoil-mcp`](#use-it-from-any-mcp-client), paste the P6-01 e-mail, and watch PayPal Agent Toolkit's `create_refund` come back `BLOCKED` for USD 60 and `HELD_FOR_APPROVAL` for USD 40.
+> 5. **Where it stops:** [What these results show, and what they don't](#what-these-results-show-and-what-they-dont), and [what ran on a real rail](#what-ran-on-a-real-rail-and-what-didnt).
 
 <p align="center">
-  <img src="dashboard/public/3d/story/step-1.jpg" alt="Step 1: the customer pushes his cart into HOMI" width="49%">
-  <img src="dashboard/public/3d/story/step-4.jpg" alt="Step 6: the manager's tablet shows the rejected 60 USD request, 60 + 60 = 120 > 100" width="49%">
+  <a href="#results"><img src="docs/brand/readme/band.webp" alt="Wrong money moved: 0 of 270 attack runs with Counterfoil, 99 of 270 with no gate; 82% of genuine requests still handled right; 9 AI models tested" width="100%"></a>
+  <br><sub>Simulation · 1,359 completed runs · 14 attacks × 9 models × 3 repeats · exported 26 Oct 2026 · <a href="#results">how we measured</a></sub>
+</p>
+
+<a name="the-return-crew"></a>
+<img src="docs/brand/readme/h-crew.png" alt="The return crew" height="92">
+
+Two AI agents, one gate, one person, one payment rail. And one customer who isn't always honest.
+
+<p align="center">
+  <img src="docs/brand/readme/crew-nella.webp" alt="Nella, the customer, holding two $60 receipts" width="32%">
+  <img src="docs/brand/readme/crew-reader.webp" alt="Reader, the AI agent that reads the note" width="32%">
+  <img src="docs/brand/readme/crew-runner.webp" alt="Runner, the AI agent that prepares the action" width="32%">
+  <img src="docs/brand/readme/crew-counterfoil.webp" alt="Counterfoil, the transaction gate" width="32%">
+  <img src="docs/brand/readme/crew-manager.webp" alt="The store manager, who reviews held calls" width="32%">
+  <img src="docs/brand/readme/crew-paypal.webp" alt="PayPal / Braintree, the payment rail" width="32%">
+</p>
+
+- **Nella** writes the return note. Sometimes she slips an instruction into it: a bigger amount, someone else's order, the same refund twice. The 14 attacks are hers.
+- **Reader** pulls the order, the returned items and the amount out of what Nella wrote. It has no tools; the note is input, not an instruction to move money.
+- **Runner** turns the hand-off into a money call: refund, charge or void. It never sees the note, and every call goes through Counterfoil.
+- **Counterfoil** compares every call with the store's own records: owner, return record, refunds already made, catalog price × quantity. PASS, BLOCK, or hold it for a person. It holds the only rail keys.
+- **The store manager** sees why a call was held and approves or rejects it. Each approval is single-use and bound to the exact call.
+- **PayPal / Braintree** is the rail. The checkout is PayPal through Braintree; only what Counterfoil lets through reaches the Braintree sandbox: refunds, sales and voids.
+
+<a name="the-story-in-seven-steps"></a>
+<img src="docs/brand/readme/h-story.png" alt="The story, in seven steps" height="92">
+
+Attack P6-01, told on the shop floor of HOMI, a small homeware store. What a customer types into a returns kiosk reaches HOMI's AI agent, which can move money. The [live demo](https://counterfoil-demo.onrender.com) lets you walk the same floor in 3D.
+
+<p align="center">
+  <img src="demo/static/world/preview.png" alt="HOMI's checkout in felt: Nella at the exit gates with her bag, the PayPal terminal beside her, Counterfoil watching from the till" width="100%">
 </p>
 
 | # | Step | What happens |
@@ -55,7 +72,8 @@ Attack P6-01, told on the shop floor of HOMI, a small homeware store. What a cus
 | 06 | **Review** | Counterfoil holds the call. The manager's tablet shows why; the manager rejects it. |
 | 07 | **Resolve** | A fresh USD 40 refund passes the gate. USD 100 back in total, exactly what the record allows. |
 
-## How it works
+<a name="how-it-works"></a>
+<img src="docs/brand/readme/h-how.png" alt="How it works" height="92">
 
 ```
 customer note ─▶ Reader (no tools) ─▶ fixed hand-off fields
@@ -78,7 +96,8 @@ The trusted source is the store's record, not the customer's text. Counterfoil (
 
 Approvals are single-use, expire after 30 minutes and are bound to the exact arguments the human saw. Counterfoil does not look for "injection-looking" text; it checks what the call would do against the record. The reasoning behind each choice is in [`docs/adr/`](docs/adr/README.md).
 
-## Why PayPal and Braintree
+<a name="why-paypal-and-braintree"></a>
+<img src="docs/brand/readme/h-why.png" alt="Why PayPal and Braintree" height="92">
 
 **The money is real sandbox money.** Every sale, refund and void in the Braintree results below is a real Braintree sandbox transaction, paid with a mocked PayPal account. Take the rail away and there is nothing to protect and nothing to measure.
 
@@ -111,7 +130,8 @@ Each scenario records whether the rail's own rules would have stopped it (`rail_
 
 **PayPal Agent Toolkit.** The Toolkit gives an agent a `create_refund` tool. [`counterfoil/toolkit.py`](counterfoil/toolkit.py) takes the Toolkit's own parameters (`capture_id`, `amount`) and sends the call through the gate first; only a pass or a human approval reaches the PayPal REST rail ([`counterfoil/paypal.py`](counterfoil/paypal.py)). The agent never holds PayPal keys. This path is tested with a faked HTTP layer and has **not** run against a real PayPal REST sandbox, because PayPal accounts can't be opened from Türkiye ([ADR 0008](docs/adr/0008-paypal-rest-rail-in-front-of-agent-toolkit.md)).
 
-### What ran on a real rail, and what didn't
+<a name="what-ran-on-a-real-rail-and-what-didnt"></a>
+<img src="docs/brand/readme/h-real.png" alt="What ran on a real rail, and what didn't" height="72">
 
 Every number in this README comes from one of the rows below. Rows marked **real** are sandbox transactions you can look up in the Braintree Control Panel.
 
@@ -127,21 +147,26 @@ Every number in this README comes from one of the rows below. Rows marked **real
 
 Other benchmarks for agent-payment guards run a scripted agent against a mocked rail and report how often the guard fires. We publish that run too: it is the worst case above, and it is the floor, not the headline. The 270 runs are real models deciding, and the Braintree rows are real sandbox money.
 
-## What else guards agent payments, and where it stops
+<a name="the-cost-of-the-alternatives"></a>
+<img src="docs/brand/readme/h-cost.png" alt="The cost of the alternatives" height="92">
 
 The guards we found for agent payments sit on the **buyer's** side: an agent spends on a customer's behalf, and the guard limits how much and where. A returns agent works on the **seller's** side, giving the store's money back, and the question there is different: *does this refund match what this store's record says is owed?*
 
-| | Side | What it checks | The record of this order and its return |
-|---|---|---|---|
-| Spend caps, allowlists, kill switches (agent-payment SDKs and guard projects) | buyer | how much, to whom | no |
-| Signed intent ([IntentGuard](https://hackquest.io/projects/IntentBinding)) | buyer | the payment matches what the user signed | no |
-| Human approval over a cap ([Countersign](https://lablab.ai/submissions/p4iic6ylqcqd0hw5utigsqiz)) | buyer | amount above a threshold | no |
-| [n8n refund gateway](https://community.n8n.io/t/deterministic-human-in-the-loop-gateway-for-ai-agent-refunds/315643) | seller | nothing: every refund goes to a manager | no |
-| **Counterfoil** | **seller** | owner, return record, refunds already made, catalog price × quantity | **yes** |
+| | Side | What it checks | Reads this order's return record | Wrong money in our 270 attack runs |
+|---|---|---|---|---|
+| Spend caps, allowlists, kill switches (agent-payment SDKs and guard projects) | buyer | how much, to whom | <img src="docs/brand/mark-short.svg" width="14" height="14" alt="falls short"> no | <img src="docs/brand/mark-short.svg" width="14" height="14" alt="falls short"> 100/270 as a $200 cap |
+| Signed intent ([IntentGuard](https://hackquest.io/projects/IntentBinding)) | buyer | the payment matches what the user signed | <img src="docs/brand/mark-short.svg" width="14" height="14" alt="falls short"> no | not tested by us |
+| Human approval over a cap ([Countersign](https://lablab.ai/submissions/p4iic6ylqcqd0hw5utigsqiz)) | buyer | amount above a threshold | <img src="docs/brand/mark-short.svg" width="14" height="14" alt="falls short"> no | not tested by us |
+| [n8n refund gateway](https://community.n8n.io/t/deterministic-human-in-the-loop-gateway-for-ai-agent-refunds/315643) | seller | nothing: every refund goes to a manager | <img src="docs/brand/mark-tradeoff.svg" width="14" height="14" alt="trade-off"> a person does | not tested by us |
+| No gate | — | nothing | <img src="docs/brand/mark-short.svg" width="14" height="14" alt="falls short"> no | <img src="docs/brand/mark-short.svg" width="14" height="14" alt="falls short"> 99/270 |
+| **Counterfoil** | **seller** | owner, return record, refunds already made, catalog price × quantity, Braintree's line items | <img src="docs/brand/mark-strong.svg" width="14" height="14" alt="strong"> **yes** | <img src="docs/brand/mark-strong.svg" width="14" height="14" alt="strong"> **0/270** |
+
+<sub><img src="docs/brand/mark-strong.svg" width="12" height="12" alt=""> strong &nbsp; <img src="docs/brand/mark-tradeoff.svg" width="12" height="12" alt=""> trade-off &nbsp; <img src="docs/brand/mark-short.svg" width="12" height="12" alt=""> falls short. The live dashboard shows the same table with the measured columns.</sub>
 
 A cap can't tell a USD 60 refund that is owed from one that isn't, so it lets through what Counterfoil holds: the $200 cap moved wrong money in 100 of 270 attack runs. Sending every refund to a person stops the harm but does no work: Counterfoil completes the same genuine requests as no gate (102 of 183) and sends to a person only what its record checks or the store's rules flag. This is what we found in October 2026, not a full survey ([our scan](docs/arastirma/2026-10-23-rakipler.md)).
 
-## Results
+<a name="results"></a>
+<img src="docs/brand/readme/h-results.png" alt="Results" height="92">
 
 All numbers below come from runs with the **latest gate** only. Sources: [`docs/arastirma/2026-10-25-guncel-gecit-olcumu.md`](docs/arastirma/2026-10-25-guncel-gecit-olcumu.md), [`docs/arastirma/2026-10-26-bulut-ve-hermes-olcumu.md`](docs/arastirma/2026-10-26-bulut-ve-hermes-olcumu.md), and every run row in [`dashboard/public/counterfoil-data.json`](dashboard/public/counterfoil-data.json), which the dashboard reads.
 
@@ -182,7 +207,8 @@ Three conditions, the same Reader hand-off in each, so they differ only in the g
 
 Where and when each run happened, how long it took and what the cloud runs cost are in the two notes above. Raw runs and their run records (`.meta.json`) are in [`results/`](results/).
 
-### What these results show, and what they don't
+<a name="what-these-results-show-and-what-they-dont"></a>
+<img src="docs/brand/readme/h-show.png" alt="What these results show, and what they don't" height="72">
 
 - **14 distinct attacks, 7 families.** The 270 runs repeat the same 14 scenarios across models and repeats; they are not 270 independent attacks.
 - **Real models, one real rail, one simulated.** The 270 runs use real models on an in-memory rail that copies the sandbox's card limits; the Braintree lines are real sandbox transactions. [What ran on a real rail, and what didn't](#what-ran-on-a-real-rail-and-what-didnt) lists every row.
@@ -192,11 +218,12 @@ Where and when each run happened, how long it took and what the cloud runs cost 
 - **Genuine requests aren't lost, but people get more work.** Completed genuine requests are the same in all three conditions (102/183). Counterfoil sent 48 genuine requests to a human (cap 21, no gate 0), most of them because of a store rule (above the automatic-refund limit). In 6 genuine runs the gate stopped a call.
 - **The agent still gets fooled.** The "agent misled" rate is about the same in every condition (no gate 141/270, cap 142/270, Counterfoil 139/270). The gate doesn't stop the agent being fooled; it stops a fooled agent from sending the money.
 
-## Quick start
+<a name="quick-start"></a>
+<img src="docs/brand/readme/h-quickstart.png" alt="Quick start" height="92">
 
 ```bash
 python -m venv .venv && .venv/bin/pip install -r requirements.txt
-.venv/bin/python -m pytest                      # gate rules, mechanics, invariants, scoring; no LLM, no network
+.venv/bin/python -m pytest                      # 449 tests: gate rules, mechanics, webhooks, MCP, scoring; no LLM, no network
 .venv/bin/python docs/senaryolar/validate.py    # checks the scenario and store fixtures
 ```
 
@@ -220,7 +247,8 @@ cd dashboard && npm install && npm run dev      # http://localhost:3000
 
 More: [`demo/README.md`](demo/README.md), [`dashboard/README.md`](dashboard/README.md).
 
-## Use it from any MCP client
+<a name="use-it-from-any-mcp-client"></a>
+<img src="docs/brand/readme/h-mcp.png" alt="Use it from any MCP client" height="92">
 
 `counterfoil-mcp` is a stdio MCP server with PayPal Agent Toolkit's tool names and parameters: `create_refund(capture_id, amount {currency_code, value}, invoice_id, note_to_payer)`, plus an optional `rma_id`, and `get_order(id)`. Claude Desktop, Cursor or Claude Code add it with one entry; every call goes through the gate, and the answer comes back as a tool result: `COMPLETED` with the Braintree transaction id, `HELD_FOR_APPROVAL` with a hold id and the reasons, or `BLOCKED` with the rule and the reason. No tool can approve; the store manager decides at a localhost approval desk. Behind the Toolkit-shaped interface the rail is the **Braintree sandbox, not PayPal REST**.
 
@@ -239,7 +267,8 @@ Claude Desktop (`claude_desktop_config.json`, absolute paths; the keys stay in `
 
 Without `--rail braintree` it runs on the in-memory rail, no keys. Paste the P6-01 e-mail and the gate refuses the USD 60 refund (60 reserved + 60 > the USD 100 return record) and holds the USD 40 remainder for the manager. Approve or reject it with `scripts/counterfoil_mcp.py holds|approve|reject`. Tools, Cursor and Claude Code setup, and the walkthrough: [`docs/mcp.md`](docs/mcp.md); design and what was run for real: [ADR 0009](docs/adr/0009-mcp-server-with-toolkit-shaped-tools.md).
 
-## Architecture
+<a name="architecture"></a>
+<img src="docs/brand/readme/h-architecture.png" alt="Architecture" height="92">
 
 | Part | Where | What it does |
 |---|---|---|
@@ -250,14 +279,16 @@ Without `--rail braintree` it runs on the in-memory rail, no keys. Paste the P6-
 | Baselines | [`counterfoil/baselines.py`](counterfoil/baselines.py) | no gate, and a $200 per-transaction cap |
 | Evaluation | [`scripts/run_eval.py`](scripts/run_eval.py), [`counterfoil/evaluate.py`](counterfoil/evaluate.py), [`docs/senaryolar/`](docs/senaryolar/) | runs the scenarios under the three conditions and scores each run |
 | MCP server | [`counterfoil/mcp_server.py`](counterfoil/mcp_server.py), [`scripts/counterfoil_mcp.py`](scripts/counterfoil_mcp.py) | Toolkit-shaped `create_refund` / `get_order` over MCP, gated; localhost approval desk |
-| Live demo | [`demo/`](demo/README.md) | pay in the Braintree sandbox, let the agent refund it, approve or reject held calls |
-| Dashboard | [`dashboard/`](dashboard/README.md) | the felt overview, the 3D story and the evidence board, built on AG Studio |
+| Live demo | [`demo/`](demo/README.md) | pay in the Braintree sandbox, let the agent refund it, approve or reject held calls, walk HOMI in 3D |
+| Dashboard | [`dashboard/`](dashboard/README.md) | the felt overview, the evidence board and the review desk, built on AG Studio |
+| README artwork | [`tools/felt_readme.py`](tools/felt_readme.py) | renders the wordmark, headers, band and crew cards above from the crew portraits; Pillow only |
 
 Braintree is used in sandbox only: `transaction.sale` (mocked PayPal nonce, or a vaulted payment method for reorders), `customer.create` with a mocked PayPal billing agreement, `transaction.refund`, `transaction.void` and `transaction.find`. `BraintreeRail` refuses to start without `BRAINTREE_ENVIRONMENT=sandbox`.
 
 Security: [`docs/threat-model.md`](docs/threat-model.md) (assets, trust boundaries, which attack families the gate stops and which it can't) and [`SECURITY.md`](SECURITY.md). Tests and quality: [`docs/quality.md`](docs/quality.md).
 
-## Tools used
+<a name="tools-used"></a>
+<img src="docs/brand/readme/h-tools.png" alt="Tools used" height="92">
 
 <p>
   <img src="docs/brand/paypal-powered-by-braintree-on-white.png" alt="PayPal powered by Braintree" height="56">
@@ -274,10 +305,12 @@ Security: [`docs/threat-model.md`](docs/threat-model.md) (assets, trust boundari
 - **Astropods** and its **Astro AI Gateway** for the cloud models (GPT-5.6 Terra, GPT-5.6 Sol, Claude Haiku 4.5, Claude Sonnet 5, Claude Opus 5.5).
 - **Ollama** for the local models (qwen2.5, qwen3, llama3.1, hermes3, each with an 8k context).
 - **AG Studio** for the results dashboard and its case agent.
+- **Meshy** for the wool Counterfoil in the dashboard's hero and the characters in the live demo's 3D store; **Blender** for the HOMI store, the 3D story and the renders. The felt portraits and buttons are image-model renders from Codex's prompts; the README's felt headers and cards are rendered from them with Pillow ([`tools/felt_readme.py`](tools/felt_readme.py)).
 - **Claude Code** and **OpenAI Codex** as coding agents. Sena Köse set the problem, the design and every decision. Claude Code wrote most of the code (gate, rails, agents, evaluation, dashboard, demo, 3D store scenes). Codex wrote the scenario texts, designed HOMI and the dashboard's felt look, and reviewed the code; every review finding was fixed with a test ([`docs/inceleme/`](docs/inceleme/)).
 
 The agent prompts are deliberately ordinary, not hardened against injection: the evaluation measures the gate.
 
-## License
+<a name="license"></a>
+<img src="docs/brand/readme/h-license.png" alt="License" height="92">
 
 MIT. See [LICENSE](LICENSE).
