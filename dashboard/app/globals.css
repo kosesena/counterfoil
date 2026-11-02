@@ -548,6 +548,10 @@ main.studio-off { height: 0 !important; min-height: 0; padding: 0; margin: 0; ov
 .crew-header nav button.active { color: #392432; }
 .crew-header nav button.active::after { border-bottom: 1px solid #803c61; border-radius: 0; }
 .crew-sandbox { border: 1px solid #b99ca9; padding: 7px 16px; border-radius: 999px; font-size: 10px; }
+.crew-header .places { display: flex; gap: 4px; margin-left: auto; }
+.crew-header .places a { text-decoration: none; color: #392432; font-size: 13px; padding: 7px 13px; border-radius: 999px; }
+.crew-header .places a:hover { background: #eadfe6; }
+.crew-header .places a[aria-current] { background: var(--dw-espresso); color: var(--dw-cream); }
 .crew-results { padding: 60px 0 25px; scroll-margin-top: 90px; }
 .crew-results-kicker { display: block; text-align: center; font-size: 10px; letter-spacing: .2em; color: #796773; }
 .crew-results > h2 { text-align: center; font: 400 38px var(--cf-serif); color: #392432; margin: 12px 0 32px; }
@@ -561,6 +565,7 @@ main.studio-off { height: 0 !important; min-height: 0; padding: 0; margin: 0; ov
   .crew-header nav { display: flex; gap: 14px; }
   .crew-header nav button { font-size: 10px; }
   .crew-sandbox { display: none; }
+  .crew-header .places a { font-size: 12px; padding: 6px 9px; }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 

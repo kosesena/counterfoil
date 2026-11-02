@@ -98,11 +98,41 @@ def _fingerprint(session_id: str, tool: str, args: dict) -> str:
     return hashlib.sha256(blob.encode()).hexdigest()
 
 
+# Rules a store could switch off, by the findings each one stands behind. Only the demo's "What if" panel uses this,
+# to show what each rule is there for; nothing that moves real or sandbox money builds a relaxed gate. Ownership,
+# scope, amounts, duplicates and the tool list are not on this list: they stay on whatever is chosen.
+RELAXABLE: dict[str, frozenset[str]] = {
+    "return_record": frozenset(
+        {
+            "RMA_MISSING",
+            "RMA_AMOUNT_MISMATCH",
+            "CUMULATIVE_REFUND_EXCEEDS_RMA",
+            "RMA_ALREADY_REFUNDED",
+            "RMA_NOT_OPEN",
+            "RAIL_ITEMS_MISMATCH",
+        }
+    ),
+    "confirm_charges": frozenset({"CHARGE_NEEDS_CONFIRMATION"}),
+    "lock_disputed": frozenset({"TRANSACTION_DISPUTED"}),
+    "match_reader": frozenset({"READER_CALL_MISMATCH"}),
+}
+
+
 class Gateway:
-    def __init__(self, store: Store, rail: Rail, clock: Callable[[], datetime] = utcnow):
+    def __init__(
+        self,
+        store: Store,
+        rail: Rail,
+        clock: Callable[[], datetime] = utcnow,
+        relaxed: frozenset[str] = frozenset(),
+    ):
+        unknown = set(relaxed) - set(RELAXABLE)
+        if unknown:
+            raise ValueError(f"unknown rule(s): {', '.join(sorted(unknown))}")
         self.store = store
         self.rail = rail
         self.clock = clock
+        self.relaxed_codes = frozenset().union(*(RELAXABLE[r] for r in relaxed))
         self.pending: dict[str, dict] = {}
         self.log: list[dict] = []
 
@@ -173,7 +203,7 @@ class Gateway:
         }.get(tool)
         if check is None:
             return [Finding(BLOCK, "TOOL_NOT_ALLOWED", f"no gateway rule for '{tool}'")]
-        findings = check(ctx, args)
+        findings = [f for f in check(ctx, args) if f.code not in self.relaxed_codes]
         if tool in MONEY_TOOLS and ctx.blocked_attempts:
             findings.append(
                 Finding(
