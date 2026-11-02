@@ -304,7 +304,7 @@ Security: [`docs/threat-model.md`](docs/threat-model.md) (assets, trust boundari
 - **Braintree sandbox** with mocked PayPal accounts. PayPal accounts can't be opened from Türkiye; PayPal's team confirmed Braintree for the hackathon ([ADR 0007](docs/adr/0007-braintree-sandbox-with-mocked-paypal.md)).
 - **Astropods** and its **Astro AI Gateway** for the cloud models (GPT-5.6 Terra, GPT-5.6 Sol, Claude Haiku 4.5, Claude Sonnet 5, Claude Opus 5.5).
 - **Ollama** for the local models (qwen2.5, qwen3, llama3.1, hermes3, each with an 8k context).
-- **AG Studio** for the results dashboard and its case agent.
+- **AG Studio** for the results dashboard and its review desk (the case panel is rule-based, not an LLM).
 - **Meshy** for the wool Counterfoil in the dashboard's hero and the characters in the live demo's 3D store; **Blender** for the HOMI store, the 3D story and the renders. The felt portraits and buttons are image-model renders from Codex's prompts; the README's felt headers and cards are rendered from them with Pillow ([`tools/felt_readme.py`](tools/felt_readme.py)).
 - **Claude Code** and **OpenAI Codex** as coding agents. Sena Köse set the problem, the design and every decision. Claude Code wrote most of the code (gate, rails, agents, evaluation, dashboard, demo, 3D store scenes). Codex wrote the scenario texts, designed HOMI and the dashboard's felt look, and reviewed the code; every review finding was fixed with a test ([`docs/inceleme/`](docs/inceleme/)).
 

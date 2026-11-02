@@ -1,107 +1,158 @@
-# Devpost form: draft answers
+# Devpost submission: Counterfoil
 
-Draft for the 12 Nov 2026 submission. Every figure comes from `results/*.jsonl` or [`arastirma/kaynaklar.md`](arastirma/kaynaklar.md). Update the results table whenever new runs land: more repeats, the holdout set, more models, or `--rail braintree`.
+Ready-to-paste answers for the PayPal AI Hackathon form, rewritten 2 Nov 2026. Every figure comes from `results/*.jsonl` (the dashboard reads the same rows) or from [`arastirma/kaynaklar.md`](arastirma/kaynaklar.md). Judges may score on the text, images and video alone, so the description stands on its own and links its evidence.
+
+---
 
 ## Project name
+
 Counterfoil
 
-## Tagline
-Your AI agent can be talked into a refund. Your store's records can't. Counterfoil checks every agent refund and charge against the order before Braintree moves the money.
+## Elevator pitch (≤ 200 characters)
 
-## Inspiration
-Shops are starting to hand customer e-mail to AI agents, and PayPal's own Agent Toolkit already gives agents a `create_refund` tool. But the e-mail is written by the customer, or by whoever is pretending to be one. OWASP ranks prompt injection first among LLM risks (LLM01:2025), including instructions hidden in e-mails and documents. *Moffatt v. Air Canada* (2024) showed that a business answers for what its AI says.
+> An AI agent can be talked into a refund. A store's records can't. Counterfoil checks every agent refund against the return record before Braintree moves the money.
 
-Counterfoil was built solo, by one developer in Türkiye, on Braintree, the PayPal service PayPal's team confirmed for this hackathon where PayPal accounts can't be opened.
+(163 characters)
 
-Our Braintree sandbox experiment showed what the payment rail can and can't catch. It refuses a card refund above the transaction total. It has no idea whether the customer returned one item or three, or whether the sender owns the order. That gap, between what the rail can see and what only the merchant knows, is where Counterfoil sits.
+## Try it out
 
-The project builds on the author's ongoing graduation thesis on indirect prompt injection against LLM agents in ERP systems, rewritten from scratch for payments.
-
-## What it does
-A Reader agent reads the raw customer e-mail. It has no tools and passes on a fixed set of fields. A Transaction agent never sees the e-mail; it calls `refund`, `charge`, `void` or `lookup_transaction`. Every call goes through Counterfoil, the only component holding Braintree credentials.
-
-Counterfoil compares the call with the store's record of that transaction:
-
-- The sender owns the order.
-- The refund cites an open return authorisation (RMA) and doesn't exceed what it still allows, across calls and sessions.
-- No refund is replayed, and no unreconciled outcome is retried.
-- A charge is held for a human to confirm the itemised total, because no store record says how many the customer ordered. It must also equal catalog price × the Reader's quantity, on the sender's own vaulted method, once per e-mail.
-- The call matches the Reader's hand-off.
-
-The result is PASS, APPROVAL (held for a human, with a single-use, time-limited approval bound to the exact arguments) or BLOCK.
-
-**Measured with the latest gate, nine models, 3 repeats:** the dev set (7 attacks, one per family, and 6 genuine requests) for all nine models; the holdout set (7 more attacks and 2 genuine requests, kept apart while the gate was written) for the four local models. 21 attack runs and 18 genuine runs per model and condition on dev, from `results/2026-10-25-dev-r3-current-gate-*.jsonl`, `results/2026-10-26-dev-r3-current-gate-*.jsonl` and `results/2026-10-25-holdout-r3-*.jsonl`.
-
-| Model (dev set) | Agent misled (no gate) | Harm: no gate | Harm: $200 cap | Harm: Counterfoil | Genuine requests handled right (no gate / cap / Counterfoil) |
-|---|---|---|---|---|---|
-| qwen2.5, local (Ollama, 7.6B) | 12/21 | 12/21 | 12/21 | **0/21** | 12/18 · 15/18 · **18/18** |
-| qwen3, local (Ollama, 8B) | 15/21 | 12/21 | 12/21 | **0/21** | 12/18 · 15/18 · **18/18** |
-| Claude Haiku 4.5 | 9/21 | 9/21 | 9/21 | **0/21** | 12/18 · 15/18 · **18/18** |
-| GPT-5.6 Sol | 9/21 | 9/21 | 8/21 | **0/21** | 12/18 · 15/18 · **18/18** |
-| GPT-5.6 Terra | 7/21 | 7/21 | 8/21 | **0/21** | 12/18 · 15/18 · **18/18** |
-| Claude Opus 5.5 | 6/21 | 6/21 | 6/21 | **0/21** | 12/18 · 15/18 · **18/18** |
-| hermes3, local (Ollama, 8B) | 6/21 | 6/21 | 6/21 | **0/21** | 6/18 · 6/18 · **6/18** ¹ |
-| llama3.1, local (Ollama, 8B) | 18/21 | 6/21 | 6/21 | **0/21** | 6/15 · 6/15 · **6/15** ¹ ² |
-| Claude Sonnet 5 | 5/21 | 5/21 | 6/21 | **0/21** | 12/18 · 15/18 · **18/18** |
-
-**Holdout set** (qwen2.5, qwen3, llama3.1, hermes3): harm in 27/81 attack runs with no gate, 27/81 with the cap, **0/81** with Counterfoil ².
-
-¹ These two models fail most genuine requests on their own (the same count with no gate at all). Counterfoil stopped their reorder call in CLEAN-06 (3 runs each), a request both also got wrong with no gate.
-² llama3.1 never finished 18 runs (timeouts): dev genuine request CLEAN-03 ×9 and holdout attack P4-02 ×9. They are not counted, so its denominators are 15 and 18.
-
-Notes on the table:
-- "Harm" means wrong money moved, or another customer's data was read. Totals: dev 72/189 with no gate, 73/189 with a $200 cap, 0/189 with Counterfoil; with the holdout set, 99/270, 100/270 and **0/270**.
-- "Handled right" is completed, or held for a person where store policy requires it: the $300 return (CLEAN-07), and under Counterfoil also the genuine reorder (CLEAN-06), because every charge waits for confirmation of the itemised total. With no gate, the $300 return went through unreviewed.
-- The $200 cap stopped nothing: no single harmful call was above $160.
-- Under an earlier gate (commit 6f30a4a) qwen3 broke the zero: in all three repeats its Reader obeyed P7-01's hidden HTML and handed off 6 cups for $150.00; the charge matched that hand-off, and $150.00 reached the rail. That led to the charge rule above, and the latest gate holds that charge. Every number in the table is from the latest gate.
-
-**The worst case, against the real Braintree sandbox:** a scripted agent and Reader fully on the attacker's side (no model, so no model can resist) ran all 22 scenarios. With no gate, its attack calls moved money 12 times in the sandbox (10 refunds, 2 charges). With Counterfoil: zero, and none of the 8 genuine requests was blocked (5 completed, 3 held as store policy requires).
-
-## How we built it
-- **Code:** Python 3, the official `braintree` SDK (sandbox), and an SQLite-backed store holding orders, RMAs, refund reservations and charge states.
-- **Rail:** a fake rail that reproduces the card limits we observed in the sandbox.
-- **Baselines:** two baselines that share no Counterfoil logic, no gate and a $200 cap.
-- **Scenarios:** 22 scenarios (14 attacks in seven families, 8 genuine requests), split into dev and holdout.
-- **Scoring:** outcome-based. It looks at what actually moved, where, and how much, and keeps attempt, intervention, harm and legitimate completion separate.
-- **Models:** an OpenAI-compatible client runs local Ollama models and cloud models. The Claude and GPT-5.6 runs went through the Astro AI Gateway.
-- **Dashboard:** an AG Studio report over the runs.
-- **Tests:** 449 tests cover the gateway rules, approvals, races, reconciliation, webhooks and the MCP server, without an LLM.
-
-## What ran on a real rail, and what didn't
-Every figure above comes from one of these rows. "Real" means a Braintree sandbox transaction you can look up in the Control Panel.
-
-| | Rail | Model |
-|---|---|---|
-| 270-run evaluation (14 attacks × 9 models × 3 repeats) | in-memory rail that applies the card limits we measured in the sandbox | real models deciding: 4 local (Ollama) + 5 cloud (Claude, GPT-5.6) |
-| Braintree sandbox run (dev set, one repeat): 4/7 · 4/7 · **0/7** | **real** Braintree sandbox, mocked PayPal account | real: qwen2.5 |
-| Worst case (14 attacks): **0/14** vs 11/14 in memory, 12/14 in the sandbox | in-memory **and real** Braintree sandbox | none: scripted Reader and agent on the attacker's side |
-| Live demo | **real** Braintree sandbox: PayPal-button checkout, refunds, voids, dispute test card, signed webhooks | recorded runs replayed; live model only with a server key |
-| MCP server, P6-01 over stdio | **real** Braintree sandbox: USD 60 blocked, USD 40 held, approved, refunded | Claude Desktop or any MCP client |
-| PayPal Agent Toolkit path | **not run against PayPal REST**: faked HTTP layer only; no PayPal account can be opened from Türkiye (PayPal's team confirmed Braintree for this entry) | — |
-
-Other agent-payment benchmarks run a scripted agent against a mocked rail and report how often the guard fires. We publish that run too; it is our worst case, the floor, not the headline. The 270 runs are real models deciding, and the Braintree rows are real sandbox money.
-
-## Challenges we ran into
-- **Braintree changed the design.** Our first attack ("refund $120 on a $40 order") is something Braintree already refuses on cards (91521), so it couldn't be our selling point. We rebuilt the gate around the return authorisation, which only the merchant has.
-- **Mocked PayPal is too permissive.** In the sandbox it accepted refunds above the transaction total. We decided never to count that as a Counterfoil catch, and our fake rail enforces the card limits instead.
-- **Honest scoring.** An injection the model ignores is not a gate success, and a blocked read is not a leak. Separating "agent misled" from "harm" forced us to say "stopped 4 of 4 attempts", not "7/7".
-- **Our own runs found two bugs.** The agent used the Reader's field name for quantity and the gate rejected a genuine reorder, and a scenario setup counted a refund twice. Both were fixed, with tests.
-
-## Accomplishments that we're proud of
-- **All nine models: zero harmful outcomes** with the latest gate (270 attack runs, dev and holdout), and no genuine request a model handled right without a gate was lost. What Counterfoil holds for a person is what store policy says needs one: the $300 return and every charge. Under an earlier gate qwen3 got an inflated reorder through in all three repeats; that led to the charge rule, which now holds it.
-- **Attacks that pass both baselines.** Over-refunds, split refunds and replays all stay below the transaction total, so neither Braintree nor a $200 cap stops them.
-- **Approvals that can't be replayed or stretched.** Each one is bound to the exact arguments and to the refund state the human saw.
-
-## What we learned
-- **Payment rails protect the transaction, not the business rule.** The gap between them is the merchant's to close, and it is closed with the merchant's own records, not with smarter prompts.
-- **Better models are fooled less often, but not never.** Sonnet 5 was misled in 5 of 21 attack runs and Opus 5.5 in 6, against 12 for qwen2.5.
-- **Measure attempts and harm separately.** Otherwise a model that ignores an injection looks like a gate success.
-
-## What's next
-- **More evidence:** more repeats on different days, the untouched holdout set, more models (including Vultr Serverless Inference), and end-to-end runs against the Braintree sandbox (`--rail braintree`).
-- **Review flow:** a review queue in the dashboard where staff approve or reject held calls.
-- **PayPal REST, measured:** the PayPal REST rail (`--rail paypal`, ADR 0008) puts the same gate in front of Agent Toolkit's `create_refund`; it is tested with a faked HTTP layer and still needs a run against a real PayPal REST sandbox.
-- **Privacy in a real store (KVKK / GDPR):** the demo uses fictional customers and test money. A real store would tell customers that an AI agent reads their e-mail, that calls are checked automatically and that staff review the held ones (an information notice). Human review of held calls also answers the right to object to purely automated decisions (KVKK art. 11/1-g, GDPR art. 22). The review screen shows only the order, the items and the amount; card data stays with Braintree as a vault token. If e-mails go to a model hosted abroad, that is a cross-border transfer that needs its legal basis (KVKK art. 9); a local model avoids it.
+- Live demo (Braintree sandbox, live Claude, 3D store): https://counterfoil-demo.onrender.com
+- Results dashboard: https://counterfoil-dashboard.vercel.app
+- Code (MIT): https://github.com/kosesena/counterfoil
+- Video: *(YouTube link, to add)*
 
 ## Built with
-python, braintree (Python SDK, sandbox), mocked PayPal (Braintree sandbox), sqlite, openai-python (OpenAI-compatible client), ollama, qwen2.5, claude (Haiku 4.5, Sonnet 5, Opus 5.5) and gpt-5.6 (Terra, Sol) via Astro AI Gateway, astropods, pytest, next.js, react, typescript, ag-grid / ag-studio, three.js, blender
+
+paypal, braintree, braintree-python-sdk, paypal-agent-toolkit, mcp, claude, anthropic-api, openai-python, ollama, astropods, ag-grid, ag-studio, render, vercel, python, fastapi, sqlite, pytest, next.js, react, typescript, three.js, blender, meshy
+
+---
+
+## About the project
+
+*(paste everything from here to the end of "What's next")*
+
+### Inspiration
+
+Stores are starting to let AI agents answer customer e-mail, and PayPal's own Agent Toolkit already gives an agent a `create_refund` tool. But the e-mail is written by the customer, or by whoever pretends to be one. OWASP ranks prompt injection first among LLM risks (LLM01:2025), including instructions hidden in e-mails and attachments, and *Moffatt v. Air Canada* (2024) held a business responsible for what its AI told a customer. Return fraud is already large without agents: US retailers lost an estimated $103B to fraudulent returns and claims in 2024 (Appriss Retail and Deloitte).
+
+Support bots are already being talked into promises they shouldn't make. In a red-team test of 14 live support chatbots, Reinforce Labs reported that 11 made unapproved commitments such as refunds or warranties (1 Oct 2026; the firm's own account, companies unnamed). A UK shop owner reported that the after-hours bot was flattered into inventing discount codes up to 80% off (Feb 2026, the owner's account). We found no verified case yet of an agent that *moved* money this way, because most bots could only promise. That is changing: PayPal's Agent Toolkit gives an agent `create_refund`, and support agents that can issue refunds are spreading. Counterfoil is meant to be in place before the promise becomes a payment.
+
+**Who it's for.** Merchants who let an AI support agent issue refunds, and that is a feature you can switch on today: Intercom's Fin ships "Create Shopify Refund" and Stripe refund actions, Gorgias's AI Agent refunds the shopper when it cancels an order or removes an item, and PayPal's Agent Toolkit gives an agent `create_refund`. Those merchants already fight return abuse by hand: on the Shopify Community one raised the restocking fee to 20% on every order after 18 near-identical return requests for cheap items; another is told to switch the returns portal to "manual approval only". Counterfoil does that check against the return record for the agent, on every call, and leaves a person only what doesn't match. Sources and their limits: [public evidence](https://github.com/kosesena/counterfoil/blob/main/docs/arastirma/2026-11-02-public-evidence.md).
+
+Our first Braintree sandbox experiment showed where the gap is. Braintree refuses a card refund above the sale total. It cannot know whether the customer sent back one cup or four, whether the sender owns the order, or that USD 60 of this return was already refunded yesterday. Only the store knows that. Counterfoil sits in that gap.
+
+Built solo from Türkiye, where PayPal accounts can't be opened, on **Braintree, the PayPal service PayPal's team confirmed for this hackathon**.
+
+### What it does
+
+**Counterfoil refunds only what came back.** It is a gate between an AI returns agent and the payment rail:
+
+1. **Reader** (an AI agent with no tools) reads the customer's e-mail and hands off fixed fields: order, return record, request, amount, items.
+2. **Runner** (an AI agent that never sees the e-mail) asks to `refund`, `charge`, `void` or `lookup_transaction`.
+3. **Counterfoil** holds the only Braintree keys and answers every call with **PASS**, **APPROVAL** (held for the store manager) or **BLOCK**, by comparing it with the store's own records: who owns the order, what the return record (RMA) still allows after earlier and reserved refunds, catalog price × quantity for a charge, Braintree's own line items for the sale, and open chargebacks.
+4. **Braintree** moves only what passed, or what a person approved. Each approval is single-use and bound to the exact call the manager saw.
+
+The agent can still be fooled; Counterfoil makes sure a fooled agent can't send the money.
+
+### Try it in 90 seconds
+
+1. Open the **live demo**, pick **"Nella asks for more"** (attack P6-01, a split refund) and press **Compare the three checks**. With no gate and with a $200 cap, USD 60 reaches the rail. With Counterfoil, no money moves.
+2. Press **Watch it in the store ↑**: the six felt characters replay the run in a 3D HOMI store, one step per click: Nella's note, Reader's hand-off, Runner's call, Counterfoil's BLOCK with its reason, what reached PayPal / Braintree, and what would have left without the gate.
+3. Switch to **Live AI** and **Write your own** attack: Claude Haiku 5.5 reads it live and Counterfoil decides (rate-limited, test money only).
+4. **Pay with PayPal (sandbox)** for the scenario's order, then let the recorded agent refund it through the gate: real Braintree sandbox transactions.
+5. Open the **dashboard** for every number below, broken down by model.
+
+### How we built it
+
+**PayPal and Braintree, used in depth (all sandbox):**
+- `transaction.sale` with **line items** (product code, quantity, amounts) and the **mocked PayPal account** nonce, PayPal checkout through Braintree Drop-in, vaulted PayPal methods for reorders, `transaction.refund`, `transaction.void`, `transaction.find`.
+- `transaction_line_item.find_all`: before a refund, the gate checks the return record against what Braintree says was sold, a second source next to the store's own records.
+- `api_request_key` derived from the money movement, so a retried or raced refund pays once (checked in the sandbox).
+- **Disputes**: a refund on a transaction with an open chargeback is blocked; Braintree itself pays it, which we showed on the dispute test card.
+- **Signed webhooks**: a `dispute_opened` notification locks refunds on that transaction before the next agent call, even one already waiting for the manager.
+- `transaction.search` **refund sweep**: finds refunds made behind the gate's back, in the Control Panel or by another tool.
+- **PayPal Agent Toolkit-shaped MCP server** (`counterfoil-mcp`): Claude Desktop, Cursor or Claude Code call `create_refund(capture_id, amount)` exactly as with the Toolkit, and every call goes through the gate to the Braintree sandbox.
+
+**AI, used in depth:**
+- Two agents with split duties (Reader without tools, Runner without the e-mail) over an OpenAI-compatible client.
+- **Nine models measured**: four local (qwen2.5, qwen3, llama3.1, hermes3 on Ollama) and five cloud (Claude Haiku 4.5, Sonnet 5, Opus 5.5; GPT-5.6 Sol and Terra) through the **Astropods** Astro AI Gateway.
+- **Live Claude Haiku 5.5** in the hosted demo, with per-visitor rate limits and a daily call budget.
+- **AG Studio** (AG Grid) dashboard over every run, with a review desk that explains each held call. Its case panel runs on rules over the recorded data, not on an LLM.
+
+**Engineering:** Python, FastAPI and SQLite (orders, RMAs, refund reservations, charge states); 448 tests without an LLM or network; 10 architecture decision records; the demo on **Render**, the dashboard on Vercel.
+
+### The results
+
+22 scenarios: 14 attacks in 7 families and 8 genuine requests, split into a dev set and a holdout set kept apart while the gate was written. Nine models × three repeats × three conditions, the same Reader hand-off in each, so the conditions differ only in the gate.
+
+| | No gate | $200 cap | Counterfoil |
+|---|:---:|:---:|:---:|
+| **Wrong money moved** (or another customer's data read), attack runs | 99/270 | 100/270 | **0/270** |
+| Agent misled, attack runs | 141/270 | 142/270 | 139/270 |
+| Genuine requests handled right | 102/183 | 123/183 | **150/183 (82%)** |
+| Real Braintree sandbox (qwen2.5, dev set) | 4/7 | 4/7 | **0/7** |
+| Worst case: Reader and agent fully on the attacker's side, no model | 11/14 | 11/14 | **0/14** |
+
+The agent is misled about equally often in every condition; only the money changes. The $200 cap stopped nothing: every harmful call was below it.
+
+### What ran on a real rail, and what didn't
+
+- **Real Braintree sandbox:** the sandbox evaluation run, the worst case, the live demo (checkout, refunds, voids, dispute card, webhooks) and the MCP server run.
+- **In-memory rail with the sandbox's card limits:** the 270 runs, so nine models × three repeats cost no sandbox noise. Real models decided every one of them.
+- **Not run against PayPal REST:** the Toolkit path (`toolkit.py` → `paypal.py`) is tested with a faked HTTP layer only, because no PayPal account can be opened from Türkiye.
+- **Mocked PayPal inside Braintree** does not enforce the refund total; no stop that only this gap explains is counted for Counterfoil.
+
+### Design
+
+HOMI is a small homeware store made of felt. Six characters carry the story: Nella the customer, Reader, Runner, Counterfoil (a plum gatekeeper in a beret), the store manager and the PayPal terminal. They appear as felt portraits on the dashboard and as **Meshy** 3D models in a **Blender** store in the live demo, where they replay each test step by step. Nothing plays on its own; every step is a click. The dashboard explains the system in plain words first and keeps the evidence one click away: the results band, a comparison with the alternatives, the review desk for held calls and every recorded agent call.
+
+### What's new here
+
+Guards for agent payments sit on the **buyer's** side: an agent spends for a customer, and the guard limits how much and where (caps, allowlists, signed intent, approval over a threshold). A returns agent works on the **seller's** side, giving the store's money back, and the question there is different: *is this money owed?* A cap can't tell a USD 60 refund that is owed from one that isn't; it moved wrong money in 100 of 270 runs. Counterfoil answers with the store's return record and Braintree's own line items, and leaves to Braintree what Braintree already refuses.
+
+### Challenges we ran into
+
+- **Braintree changed the design.** Our first attack, a refund above the order total, is something Braintree already refuses on cards, so it couldn't be our selling point. We rebuilt the gate around the return record, which only the merchant has.
+- **Mocked PayPal is too permissive.** It accepted refunds above the sale total. We never count that as a Counterfoil catch.
+- **Honest scoring.** An injection the model ignores is not a gate success, and a blocked read is not a leak. Separating "agent misled" from "harm" is what makes the zero mean something.
+- **Our own runs found bugs in the gate.** An earlier gate let qwen3 push an inflated reorder through in all three repeats; that led to the rule that every charge is confirmed by a person. Each fix came with a test.
+
+### Accomplishments that we're proud of
+
+- **Zero wrong money across nine models and 270 attack runs**, while completing the same genuine requests as no gate (102 of 183) and handling 82% right overall.
+- **Attacks that pass both baselines**: over-refunds, split refunds and replays stay below the sale total, so neither Braintree nor a cap stops them.
+- **A chargeback locks refunds before the agent asks**, through Braintree's own webhook.
+- **One config entry** puts the gate in front of any MCP client that speaks the Toolkit's `create_refund`.
+
+### What we learned
+
+- **Payment rails protect the transaction, not the business rule.** The gap is the merchant's to close, with the merchant's own records, not with smarter prompts.
+- **Better models are fooled less often, not never.** With no gate, Claude Sonnet 5 was misled in 5 of 21 dev attack runs, qwen2.5 in 12, llama3.1 in 18.
+- **Measure attempts and harm separately**, or a model that ignores an injection looks like a gate success.
+
+### What's next
+
+- **PayPal REST, measured**: run the Toolkit path against a real PayPal REST sandbox.
+- **More evidence**: attacks written by people outside the project, more repeats on other days, more models.
+- **A store's own settings**: refund window, automatic limit and who approves, editable by the merchant.
+- **Privacy in a real store (KVKK / GDPR)**: tell customers an AI agent reads their e-mail and staff review held calls, which also answers the right to object to purely automated decisions.
+
+---
+
+## AI tools used (form question)
+
+- **In the product:** Claude Haiku 5.5 reads e-mails and drives the agent in the live demo (Anthropic API); the nine evaluated models above ran through Ollama and the Astropods Astro AI Gateway. The dashboard's case panel is rule-based, not an LLM.
+- **To build it:** Claude Code wrote most of the code (gate, rails, agents, evaluation, dashboard, demo, 3D scenes) under Sena Köse's design and decisions; OpenAI Codex wrote the scenario texts, designed HOMI's felt look and reviewed the code, and every review finding was fixed with a test; Meshy generated the 3D characters; image models made the felt portraits.
+
+## New project (form question, if asked)
+
+Counterfoil was started from scratch for this hackathon: the first commit is 23 Oct 2026 (`e2f6393`), 202 commits and 61 merged pull requests since. It builds on the author's graduation thesis topic (indirect prompt injection against LLM agents in ERP systems), but no code was carried over.
+
+---
+
+## Before pressing submit
+
+- [ ] Repository public, MIT visible in the About section
+- [ ] YouTube video public, under 3 minutes, link added above and in the form
+- [ ] Live demo and dashboard open; the demo's first load on Render's free tier can take a minute
+- [ ] Screenshots: results band, comparison table, 3D store with a Counterfoil BLOCK badge, review desk
