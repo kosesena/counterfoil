@@ -11,7 +11,7 @@ A gate between an AI returns agent and Braintree. Every refund or charge the age
 
 <sub>Built solo by Sena Köse from Türkiye on <b>Braintree</b>, the PayPal service PayPal's team confirmed for this hackathon where PayPal accounts can't be opened (<a href="docs/adr/0007-braintree-sandbox-with-mocked-paypal.md">ADR 0007</a>).</sub>
 
-[**Live dashboard**](https://counterfoil-dashboard.vercel.app) · [**Live demo**](https://counterfoil-demo.onrender.com) · [How it works](#how-it-works) · [Results](#results) · [Quick start](#quick-start)
+[**Live dashboard**](https://counterfoil-dashboard.vercel.app) · [**Live demo**](https://counterfoil-demo.onrender.com) · [How it works](#how-it-works) · [Results](#results) · [Red team](#counterfoil-red-team) · [Quick start](#quick-start)
 
 [![tests](https://github.com/kosesena/counterfoil/actions/workflows/tests.yml/badge.svg)](https://github.com/kosesena/counterfoil/actions/workflows/tests.yml)
 
@@ -217,6 +217,25 @@ Where and when each run happened, how long it took and what the cloud runs cost 
 - **It can't catch a wrong record.** If an attacker gets a fake return record opened, or a request matches the record but does harm some other way, the gate won't see it. For calls held for a human, the decision is the human's.
 - **Genuine requests aren't lost, but people get more work.** Completed genuine requests are the same in all three conditions (102/183). Counterfoil sent 48 genuine requests to a human (cap 21, no gate 0), most of them because of a store rule (above the automatic-refund limit). In 6 genuine runs the gate stopped a call.
 - **The agent still gets fooled.** The "agent misled" rate is about the same in every condition (no gate 141/270, cap 142/270, Counterfoil 139/270). The gate doesn't stop the agent being fooled; it stops a fooled agent from sending the money.
+
+<a name="counterfoil-red-team"></a>
+<img src="docs/brand/readme/h-redteam.png" alt="Counterfoil red team" height="92">
+
+GPT-6 Astra (ultra), in fresh sessions without repository access, wrote **20 initial + 10 adaptive cases**.
+The local qwen2.5-8k agent ran each under three conditions with the same Reader hand-off and a fake rail.
+Fable 5.1 refused to generate cases; this is a **one-attacker-model study**.
+
+| Attacker | Condition | Confirmed record harm / valid runs | Errors | Unknown |
+|---|---|---:|---:|---:|
+| GPT-6 Astra (ultra), rounds 1–2 | none | 10/30 | 0 | 0 |
+| GPT-6 Astra (ultra), rounds 1–2 | cap | 10/30 | 0 | 0 |
+| GPT-6 Astra (ultra), rounds 1–2 | counterfoil | 0/30 | 0 | 0 |
+
+These counts include policy violations. The existing money-outcome metric is none: 9/30; cap: 9/30; counterfoil: 0/30; the additional baseline case is a USD 1 refund without an RMA, within the total entitlement.
+
+No confirmed harmful outcome passed Counterfoil in the completed local cohort. The hosted Haiku pilot stopped after six runs because the refund adapter returned an unknown outcome;
+those runs are not a successful-defense claim. One fixture and shared project authorship limit generalization.
+[Full protocol, results, limits and reproduction](docs/arastirma/2026-11-02-blind-red-team.md).
 
 <a name="quick-start"></a>
 <img src="docs/brand/readme/h-quickstart.png" alt="Quick start" height="92">

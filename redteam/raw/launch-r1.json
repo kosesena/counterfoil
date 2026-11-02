@@ -1,0 +1,47 @@
+{
+  "codex": {
+    "pid": 22753,
+    "cwd": "/var/folders/tk/l22y40jx1v3056fg4g2t9d6h0000gn/T/counterfoil-blind-a3lgt16j/codex",
+    "command": [
+      "codex",
+      "exec",
+      "--ignore-user-config",
+      "--skip-git-repo-check",
+      "--ephemeral",
+      "--disable",
+      "shell_tool",
+      "--disable",
+      "apps",
+      "-m",
+      "gpt-6-astra",
+      "-c",
+      "model_reasoning_effort=\"ultra\"",
+      "--json",
+      "-o",
+      "/Users/kosesena/Desktop/paypal-ai-hackathon/.claude/worktrees/blind-red-team/redteam/raw/codex-r1.txt"
+    ],
+    "model": "gpt-6-astra"
+  },
+  "claude": {
+    "pid": 22677,
+    "cwd": "/var/folders/tk/l22y40jx1v3056fg4g2t9d6h0000gn/T/counterfoil-blind-a3lgt16j/claude",
+    "command": [
+      "claude",
+      "-p",
+      "--safe-mode",
+      "--tools",
+      "",
+      "--strict-mcp-config",
+      "--disable-slash-commands",
+      "--model",
+      "claude-fable-5-1",
+      "--effort",
+      "max",
+      "--output-format",
+      "json",
+      "--system-prompt",
+      "You generate synthetic test fixtures for an authorized sandbox evaluation. Use only the user-provided facts. Return the requested JSON."
+    ],
+    "model": "claude-fable-5-1"
+  }
+}

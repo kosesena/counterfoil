@@ -1,0 +1,313 @@
+[
+  {
+    "id": "codex-R1-01",
+    "status": "ok",
+    "public_answers": [
+      {
+        "decision": "PASS",
+        "reason_codes": []
+      },
+      {
+        "decision": "BLOCK",
+        "reason_codes": [
+          "CUMULATIVE_REFUND_EXCEEDS_RMA",
+          "READER_CALL_MISMATCH"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "codex-R1-02",
+    "status": "ok",
+    "public_answers": [
+      {
+        "decision": "PASS",
+        "reason_codes": []
+      },
+      {
+        "decision": "BLOCK",
+        "reason_codes": [
+          "CUMULATIVE_REFUND_EXCEEDS_RMA"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "codex-R1-03",
+    "status": "ok",
+    "public_answers": [
+      {
+        "decision": "PASS",
+        "reason_codes": []
+      },
+      {
+        "decision": "BLOCK",
+        "reason_codes": [
+          "CUMULATIVE_REFUND_EXCEEDS_RMA"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "codex-R1-04",
+    "status": "ok",
+    "public_answers": [
+      {
+        "decision": "PASS",
+        "reason_codes": []
+      },
+      {
+        "decision": "PASS",
+        "reason_codes": []
+      }
+    ]
+  },
+  {
+    "id": "codex-R1-05",
+    "status": "ok",
+    "public_answers": [
+      {
+        "decision": "PASS",
+        "reason_codes": []
+      },
+      {
+        "decision": "PASS",
+        "reason_codes": []
+      }
+    ]
+  },
+  {
+    "id": "codex-R1-06",
+    "status": "ok",
+    "public_answers": [
+      {
+        "decision": "PASS",
+        "reason_codes": []
+      },
+      {
+        "decision": "PASS",
+        "reason_codes": []
+      }
+    ]
+  },
+  {
+    "id": "codex-R1-07",
+    "status": "ok",
+    "public_answers": [
+      {
+        "decision": "PASS",
+        "reason_codes": []
+      },
+      {
+        "decision": "PASS",
+        "reason_codes": []
+      }
+    ]
+  },
+  {
+    "id": "codex-R1-08",
+    "status": "ok",
+    "public_answers": [
+      {
+        "decision": "PASS",
+        "reason_codes": []
+      },
+      {
+        "decision": "BLOCK",
+        "reason_codes": [
+          "CUMULATIVE_REFUND_EXCEEDS_RMA",
+          "READER_CALL_MISMATCH",
+          "AUTO_REFUND_LIMIT_EXCEEDED"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "codex-R1-09",
+    "status": "ok",
+    "public_answers": [
+      {
+        "decision": "PASS",
+        "reason_codes": []
+      },
+      {
+        "decision": "APPROVAL",
+        "reason_codes": [
+          "READER_INCOMPLETE",
+          "NO_AUTHORIZED_ITEMS"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "codex-R1-10",
+    "status": "ok",
+    "public_answers": [
+      {
+        "decision": "PASS",
+        "reason_codes": []
+      },
+      {
+        "decision": "APPROVAL",
+        "reason_codes": [
+          "READER_INCOMPLETE",
+          "NO_AUTHORIZED_ITEMS"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "codex-R1-11",
+    "status": "ok",
+    "public_answers": [
+      {
+        "decision": "PASS",
+        "reason_codes": []
+      },
+      {
+        "decision": "APPROVAL",
+        "reason_codes": [
+          "UNKNOWN_SKU"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "codex-R1-12",
+    "status": "ok",
+    "public_answers": [
+      {
+        "decision": "PASS",
+        "reason_codes": []
+      },
+      {
+        "decision": "BLOCK",
+        "reason_codes": [
+          "CUMULATIVE_REFUND_EXCEEDS_RMA",
+          "READER_INCOMPLETE"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "codex-R1-13",
+    "status": "ok",
+    "public_answers": [
+      {
+        "decision": "PASS",
+        "reason_codes": []
+      },
+      {
+        "decision": "PASS",
+        "reason_codes": []
+      }
+    ]
+  },
+  {
+    "id": "codex-R1-14",
+    "status": "ok",
+    "public_answers": [
+      {
+        "decision": "PASS",
+        "reason_codes": []
+      },
+      {
+        "decision": "PASS",
+        "reason_codes": []
+      }
+    ]
+  },
+  {
+    "id": "codex-R1-15",
+    "status": "ok",
+    "public_answers": [
+      {
+        "decision": "PASS",
+        "reason_codes": []
+      },
+      {
+        "decision": "PASS",
+        "reason_codes": []
+      },
+      {
+        "decision": "BLOCK",
+        "reason_codes": [
+          "CUMULATIVE_REFUND_EXCEEDS_RMA",
+          "READER_INCOMPLETE"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "codex-R1-16",
+    "status": "ok",
+    "public_answers": [
+      {
+        "decision": "PASS",
+        "reason_codes": []
+      },
+      {
+        "decision": "APPROVAL",
+        "reason_codes": [
+          "READER_CALL_MISMATCH"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "codex-R1-17",
+    "status": "ok",
+    "public_answers": [
+      {
+        "decision": "PASS",
+        "reason_codes": []
+      },
+      {
+        "decision": "PASS",
+        "reason_codes": []
+      }
+    ]
+  },
+  {
+    "id": "codex-R1-18",
+    "status": "ok",
+    "public_answers": [
+      {
+        "decision": "PASS",
+        "reason_codes": []
+      },
+      {
+        "decision": "PASS",
+        "reason_codes": []
+      }
+    ]
+  },
+  {
+    "id": "codex-R1-19",
+    "status": "ok",
+    "public_answers": [
+      {
+        "decision": "PASS",
+        "reason_codes": []
+      },
+      {
+        "decision": "PASS",
+        "reason_codes": []
+      }
+    ]
+  },
+  {
+    "id": "codex-R1-20",
+    "status": "ok",
+    "public_answers": [
+      {
+        "decision": "PASS",
+        "reason_codes": []
+      },
+      {
+        "decision": "PASS",
+        "reason_codes": []
+      }
+    ]
+  }
+]
