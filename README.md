@@ -233,8 +233,7 @@ Fable 5.1 refused to generate cases; this is a **one-attacker-model study**.
 
 These counts include policy violations. The existing money-outcome metric is none: 9/30; cap: 9/30; counterfoil: 0/30; the additional baseline case is a USD 1 refund without an RMA, within the total entitlement.
 
-No confirmed harmful outcome passed Counterfoil in the completed local cohort. The hosted Haiku pilot stopped after six runs because the refund adapter returned an unknown outcome;
-those runs are not a successful-defense claim. One fixture and shared project authorship limit generalization.
+No confirmed harmful outcome passed Counterfoil in the completed local cohort. The original hosted pilot stopped on an adapter error. After [PR #68](https://github.com/kosesena/counterfoil/pull/68), a fresh **30-run hosted retest** completed; [separate hosted results](docs/arastirma/2026-11-02-hosted-red-team-after-68.md) use the USD 100 fixture and preserve the original failed pilot. One fixture and shared project authorship limit generalization.
 [Full protocol, results, limits and reproduction](docs/arastirma/2026-11-02-blind-red-team.md).
 
 <a name="quick-start"></a>
