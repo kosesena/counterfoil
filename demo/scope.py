@@ -25,15 +25,15 @@ class ScopedRail:
         self.refused.append(call)
         return RailResult(False, error=f"91504 {OUT_OF_SCOPE}: {call[1]!r}")
 
-    def refund(self, transaction_id, amount):
+    def refund(self, transaction_id, amount, request_key=None):
         if transaction_id not in self.txns:
             return self._refuse("refund", transaction_id, amount)
-        return self.inner.refund(transaction_id, amount)
+        return self.inner.refund(transaction_id, amount, request_key)
 
-    def void(self, transaction_id):
+    def void(self, transaction_id, request_key=None):
         if transaction_id not in self.txns:
             return self._refuse("void", transaction_id)
-        return self.inner.void(transaction_id)
+        return self.inner.void(transaction_id, request_key)
 
     def charge(self, payment_method_token, amount, order_id):
         if payment_method_token not in self.tokens:
@@ -45,6 +45,14 @@ class ScopedRail:
 
     def find(self, transaction_id):
         return self.inner.find(transaction_id) if transaction_id in self.txns else None
+
+    def disputes(self, transaction_id):
+        read = getattr(self.inner, "disputes", None)
+        return read(transaction_id) if transaction_id in self.txns and read else None
+
+    def line_items(self, transaction_id):
+        read = getattr(self.inner, "line_items", None)
+        return read(transaction_id) if transaction_id in self.txns and read else None
 
     def money_calls(self) -> list[tuple]:
         return self.inner.money_calls()
