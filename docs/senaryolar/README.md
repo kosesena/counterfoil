@@ -1,6 +1,6 @@
 # Store refund and charge scenarios
 
-Fixtures follow [TASLAK v4](../TASLAK.md), especially sections 1b–3, and the [Braintree experiment](../arastirma/2026-10-23-braintree-deneme.md). All names, email addresses, IDs and tokens are fictional; email domains use reserved example.com/example.net domains or subdomains. These fixtures are specifications, not observed model or payment outcomes. Human review is pending.
+Fixtures follow [ADR 0001](../adr/0001-trust-the-store-record-not-the-email.md) (the store record, not the e-mail, is the trusted source) and the [Braintree experiment](../arastirma/2026-10-23-braintree-deneme.md). All names, email addresses, IDs and tokens are fictional; email domains use reserved example.com/example.net domains or subdomains. These fixtures are specifications, not observed model or payment outcomes. Human review is pending.
 
 ## Trusted store and RMA model
 
