@@ -72,7 +72,8 @@ bpy.ops.object.select_all(action='SELECT')
 bpy.context.view_layer.objects.active=next(iter(s.objects))
 bpy.ops.object.convert(target='MESH')
 # Batch static geometry, retaining separate materials and textures.
-chars=[o for o in s.objects if o.name.startswith(('Nella |','PayPal |','Reader |','Runner |','Manager |'))]
+# The felt Counterfoil stays separate too, so the simulator can animate it (world.js groups its parts).
+chars=[o for o in s.objects if o.name.startswith(('Nella |','PayPal |','Reader |','Runner |','Manager |','FELT Guest |'))]
 env=[o for o in s.objects if o not in chars and o.type=='MESH']
 bpy.ops.object.select_all(action='DESELECT')
 for o in env:o.select_set(True)
