@@ -83,6 +83,6 @@ The opening P7-01 story and every result figure come from `results/*.jsonl`, not
   - Any claim that Shopify Sidekick or Salesforce Agentforce issue refunds autonomously. Not confirmed.
 - **Confirm by hand before submission:** all INDEXED ONLY quotes in (a), (b) and (d2). The blocked hosts were apprissretail.com, businesswire.com, retaildive.com, civilresolutionbc.ca, canlii.org, developer.paypal.com and genai.owasp.org.
 - **Opening story in the brief:** "an AI agent refunded $90 against a $30 return authorisation" is not in any measured run, so it is dropped.
-  - The $90/$30 case exists only as the planned video storyboard in `TASLAK.md` §5.
+  - The $90/$30 case exists only as a planned video storyboard in an early planning note (not kept in the repository).
   - The nearest scenario, P1-01, asks for $60 against $30, and it misled none of the three models.
   - The README opens with P7-01 instead: a measured hidden-HTML attack that charged $150 instead of $25 with qwen2.5.
