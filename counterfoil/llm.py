@@ -22,6 +22,9 @@ class LLMConfig:
     seed: int | None = 7
     timeout: float = 300.0
     reasoning_effort: str | None = None  # GPT-5.6 on chat completions only allows tools with "none"
+    # Anthropic's OpenAI-compatible endpoint rejects response_format json_object (it wants json_schema); there the
+    # Reader's prompt asks for the object and read_email() also accepts a ```json fence.
+    json_object: bool = True
 
     @classmethod
     def from_env(cls) -> LLMConfig:
@@ -79,6 +82,7 @@ def preset(name: str) -> LLMConfig:
         seed=7 if send_seed else None,
         temperature=None if fixed_sampling else 0.0,
         reasoning_effort="none" if model.startswith("gpt-5-6") else None,
+        json_object="api.anthropic.com" not in base_url,
     )
 
 
@@ -97,6 +101,6 @@ class LLM:
             kw["seed"] = self.config.seed
         if tools:
             kw["tools"] = tools
-        if json_mode:
+        if json_mode and self.config.json_object:
             kw["response_format"] = {"type": "json_object"}
         return self.client.chat.completions.create(**kw).choices[0].message

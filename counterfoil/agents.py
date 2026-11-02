@@ -129,7 +129,12 @@ def read_email(llm: LLM, email: dict) -> tuple[dict | None, str]:
     try:
         data = json.loads(body)
     except json.JSONDecodeError:
-        return None, raw
+        # without response_format (Anthropic's endpoint) a model may put a sentence around the object
+        start, end = body.find("{"), body.rfind("}")
+        try:
+            data = json.loads(body[start : end + 1]) if 0 <= start < end else None
+        except json.JSONDecodeError:
+            data = None
     if not isinstance(data, dict):
         return None, raw
     out = {k: data.get(k) for k in READER_FIELDS}

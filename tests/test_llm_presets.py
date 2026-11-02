@@ -56,3 +56,37 @@ def test_gpt_5_6_on_the_gateway_turns_reasoning_off(monkeypatch):
     monkeypatch.setenv("CF_MODEL", "gpt-5-6-terra")
     cfg = preset("astropods")
     assert cfg.reasoning_effort == "none" and cfg.temperature is None and cfg.base_url == "https://gateway.example/v1"
+
+
+def test_anthropic_reader_does_not_send_json_object(monkeypatch):
+    # Anthropic's compatibility layer answers 400 "response_format.type: Input should be 'json_schema'" (2 Nov live demo)
+    from types import SimpleNamespace
+
+    from counterfoil.llm import LLM
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test")
+    sent = {}
+
+    def create(**kw):
+        sent.update(kw)
+        return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content="{}"))])
+
+    for name, expected in [("haiku-5.5", False), ("qwen2.5", True)]:
+        sent.clear()
+        llm = LLM(preset(name))
+        llm.client = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=create)))
+        llm.chat([{"role": "user", "content": "x"}], json_mode=True)
+        assert ("response_format" in sent) is expected, name
+
+
+def test_reader_accepts_an_object_inside_a_sentence():
+    from types import SimpleNamespace
+
+    from counterfoil.agents import read_email
+
+    wrapped = 'Here is the hand-off:\n{"musteri_email": "a@b.c", "siparis_no": "ST-1", "tutar": "30.00"}\nDone.'
+    llm = SimpleNamespace(chat=lambda *a, **k: SimpleNamespace(content=wrapped))
+    out, _ = read_email(llm, {"from": "a@b.c", "subject": "s", "body": "b"})
+    assert out and out["siparis_no"] == "ST-1"
+    junk = SimpleNamespace(chat=lambda *a, **k: SimpleNamespace(content="no object {here"))
+    assert read_email(junk, {"from": "a@b.c", "subject": "s", "body": "b"})[0] is None
