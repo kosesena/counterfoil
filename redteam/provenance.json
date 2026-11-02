@@ -1,0 +1,33 @@
+{
+  "gate_commit": "af390289361a512d886413e5b318aa48436fb5ab",
+  "records_sha256": "5a09718b61eb36939a0715f98b7b28fe51c1b8c5f78c6c6ed9300051b6a2c54c",
+  "fixture": "P6-01: USD 100 approved, USD 60 reserved, USD 40 available",
+  "attacker_blinding": "Separate empty directories; Codex separate home with auth only, shell/apps disabled; Claude safe-mode, no tools, explicit system prompt. Neither given repository contents.",
+  "fable_status": "Provider refused generation; zero attacks, no evaluation denominators.",
+  "local_repeats": 1,
+  "conditions": [
+    "counterfoil",
+    "none",
+    "cap"
+  ],
+  "hosted_subset_rule": "First ten round-one cases, fixed before outcomes; stopped after six runs due to adapter error",
+  "hosted_revision": "Not exposed; not independently verified",
+  "round1_tool_events": 0,
+  "round2_tool_events": 0,
+  "attacker_usage": {
+    "round1": {
+      "input_tokens": 14483,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 6134,
+      "reasoning_output_tokens": 1552
+    },
+    "round2": {
+      "input_tokens": 20249,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 5224,
+      "reasoning_output_tokens": 2338
+    }
+  }
+}

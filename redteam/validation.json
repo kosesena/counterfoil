@@ -1,0 +1,16 @@
+{
+  "pytest": {
+    "passed": 477,
+    "skipped": 2,
+    "xfailed": 1,
+    "warnings": 603,
+    "coverage_percent": 94.74,
+    "required_coverage_percent": 90,
+    "python": "3.14.5",
+    "command": "python -W ignore::ResourceWarning -m pytest -q --cov --cov-report=term --cov-fail-under=90"
+  },
+  "ruff_check": "passed",
+  "ruff_format_check": "100 files already formatted",
+  "mypy": "Success: no issues found in 18 source files",
+  "evidence_integrity": "passed: 30 cases, 90 paired local rows, 6 hosted pilot rows, 1 hosted unknown, no attacker tool calls"
+}

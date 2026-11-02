@@ -1,0 +1,12 @@
+{
+  "status": "stopped_infrastructure_error",
+  "completed_requests": 6,
+  "planned_requests": 30,
+  "reason": "ScopedRail.refund() takes 3 positional arguments but 4 were given",
+  "reproduction": {
+    "scenario": "codex-R1-02",
+    "condition": "counterfoil",
+    "evidence": "results/2026-11-02-blind-codex-r1-hosted.jsonl"
+  },
+  "action": "Stopped during Retry-After sleep; no uncertain POST repeated. No gate or demo changes in this evaluation."
+}

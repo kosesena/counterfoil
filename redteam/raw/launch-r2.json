@@ -1,0 +1,23 @@
+{
+  "command": [
+    "codex",
+    "exec",
+    "--ignore-user-config",
+    "--skip-git-repo-check",
+    "--ephemeral",
+    "--disable",
+    "shell_tool",
+    "--disable",
+    "apps",
+    "-m",
+    "gpt-6-astra",
+    "-c",
+    "model_reasoning_effort=\"ultra\"",
+    "--json",
+    "-o",
+    "/Users/kosesena/Desktop/paypal-ai-hackathon/.claude/worktrees/blind-red-team-results/redteam/raw/codex-r2.txt"
+  ],
+  "cwd": "/var/folders/tk/l22y40jx1v3056fg4g2t9d6h0000gn/T/counterfoil-blind-r2-x0iahqq5/empty",
+  "model": "gpt-6-astra",
+  "reasoning": "ultra"
+}
