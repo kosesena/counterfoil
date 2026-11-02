@@ -165,8 +165,24 @@ button { border-radius:24px; padding:12px 20px; } button:focus-visible,a:focus-v
 .world-stage canvas { position:absolute; inset:0; touch-action:none; }
 .world-stage.is-ready > img { visibility:hidden; }
 .world-toolbar { padding:16px 0; } .world-toolbar p { color:var(--muted);font-size:13px;margin:0; }
-.world-result { padding:12px 16px; border-left:3px solid var(--accent); background:#eadfe6; margin:0 0 10px; }
-@media(max-width:700px) { .world-heading h2 { font-size:27px; } .world-stage { aspect-ratio:1; } .world-stage > img { object-fit:contain; } .world-toolbar { align-items:flex-start;flex-direction:column; } }
+.world-result { padding:12px 16px; border-left:3px solid var(--accent); background:#eadfe6; margin:0 0 10px; display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; }
+.world-result button { padding:9px 16px; font-size:13px; }
+.world-steps { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; padding:4px 0 12px; }
+.world-steps span { font-size:14px; font-weight:600; color:var(--ink); }
+.world-badges { position:absolute; inset:0; pointer-events:none; z-index:2; }
+/* felt patch: wool cream, a running stitch inside the edge, a tail pointing at the character */
+.world-badge { position:absolute; transform:translate(-50%,calc(-100% - 14px)); max-width:min(300px,46%); padding:12px 16px 13px; border-radius:16px; background:#fbf7f2; color:#2d1e19;
+  box-shadow:0 3px 0 #d9c9b8,0 10px 24px rgba(45,30,25,.18); outline:2px dashed rgba(45,30,25,.38); outline-offset:-7px; font-size:13px; line-height:1.4; opacity:0; transition:opacity .25s,transform .25s; }
+.world-badge.show { opacity:1; transform:translate(-50%,calc(-100% - 18px)); }
+.world-badge::after { content:""; position:absolute; left:50%; bottom:-9px; width:16px; height:16px; background:inherit; transform:translateX(-50%) rotate(45deg); border-radius:0 0 4px 0; box-shadow:3px 3px 0 #d9c9b8; }
+.world-badge b { display:block; font-size:11px; letter-spacing:.12em; text-transform:uppercase; margin-bottom:4px; opacity:.75; }
+.world-badge code { background:rgba(45,30,25,.07); padding:1px 5px; border-radius:5px; font-size:12px; }
+.world-badge.BLOCK { background:#e98a3a; } .world-badge.APPROVAL { background:#f6d98a; } .world-badge.PASS { background:#e4a1f5; }
+.world-badge.harm { background:#2d1e19; color:#fbf7f2; outline-color:rgba(251,247,242,.45); box-shadow:0 3px 0 #120a08,0 10px 24px rgba(45,30,25,.25); }
+.world-caption { display:none; }
+@media(max-width:700px) { .world-badge { font-size:0; padding:7px 12px 8px; max-width:62%; } .world-badge b { font-size:11px; margin:0; } .world-badge code,.world-badge small { display:none; }
+  .world-caption { display:block; order:3; width:100%; padding:12px 14px; border-radius:14px; background:#fbf7f2; outline:2px dashed rgba(45,30,25,.3); outline-offset:-6px; font-size:14px; line-height:1.5; }
+  .world-caption b { display:block; font-size:11px; letter-spacing:.12em; text-transform:uppercase; opacity:.7; } .world-caption code { background:rgba(45,30,25,.07); padding:1px 5px; border-radius:5px; font-size:12px; } .world-heading h2 { font-size:27px; } .world-stage { aspect-ratio:1; } .world-stage > img { object-fit:contain; } .world-toolbar { align-items:flex-start;flex-direction:column; } }
 </style>
 </head>
 <body>
@@ -181,7 +197,8 @@ button { border-radius:24px; padding:12px 20px; } button:focus-visible,a:focus-v
     <div id="worldStage" class="world-stage"><img src="/static/world/preview.png" alt="The HOMI store in felt: Nella at the exit gates, PayPal beside her, Reader and Runner at the returns kiosk and the till, the manager by the office door, Counterfoil behind the checkout."></div>
     <div class="world-toolbar"><p id="worldStatus" role="status">Explore the store with the whole crew: Nella, Reader, Runner, Counterfoil, the manager and PayPal.</p><div class="row"><button id="worldLoad">Explore in 3D</button><button id="worldReset" class="ghost" disabled>Reset view</button></div></div>
     <p class="world-result" id="worldResult" aria-live="polite">Choose a request below to test what Counterfoil allows.</p>
-    <p class="note">The 3D scene illustrates the store. Test results appear below; the characters do not move money by themselves.</p>
+    <div class="world-steps" id="worldSteps" hidden><span id="worldStepLabel" aria-live="polite"></span><div class="world-caption" id="worldCaption"></div><div class="row"><button id="worldPrev" class="ghost">‹ Back</button><button id="worldNext">Next step ›</button><button id="worldClose" class="ghost">Close</button></div></div>
+    <p class="note">The 3D scene replays what the test below recorded, one step per click. The characters do not move money by themselves; only the gate's decisions do.</p>
   </section>
   <details class="walkthrough"><summary>Recorded example · Five-step refund walkthrough</summary>
   <section class="panel story" id="story" aria-label="HOMI story">
@@ -377,6 +394,7 @@ function clearComparison() {
   $("cols").replaceChildren();
   $("resultNote").classList.add("hidden");
   $("worldResult").textContent = "Choose a request below to test what Counterfoil allows.";
+  window.dispatchEvent(new CustomEvent("homi:clear"));
 }
 
 function setMode(v) {
@@ -560,6 +578,7 @@ async function runAll() {
   const cols = CONDITIONS.map(column);
   $("cols").replaceChildren(...cols.map((c) => c.col));
   $("runAll").disabled = true;
+  const rows = {};
   try {
     // One after another: the first live run fills the server's Reader cache, the other two reuse it.
     for (const c of cols) {
@@ -569,6 +588,7 @@ async function runAll() {
       try { row = await api("/api/run", { ...base, condition: c.key }); }
       catch (e) { wait.replaceChildren(h("span", { class: "err" }, e.message)); continue; }
       wait.remove();
+      rows[c.key] = row;
       const items = [readerItem(row, contract), ...(row.steps || []).map(stepItem)];
       if (!(row.steps || []).length && row.status === "ok") items.push(h("li", {}, h("span", { class: "note" }, "The agent made no tool call.")));
       if (row.agent_error) items.push(h("li", { class: "BLOCK" }, h("span", { class: "err" }, row.agent_error)));
@@ -579,6 +599,7 @@ async function runAll() {
       for (const item of items) item.classList.add("shown");
       await reveal(c.tl, [verdict, h("li", {}, h("details", {}, h("summary", {}, "Agent calls & technical evidence"), h("ul", {class:"tl"}, ...items)))]);
     }
+    if (rows.counterfoil) window.dispatchEvent(new CustomEvent("homi:run", { detail: { scenario: state.input === "scenario" ? state.scenario : null, kind, rows, mode: state.mode } }));
   } finally {
     $("runAll").disabled = false;
     if (state.mode === "live") api("/api/config").then((c) => { state.config = c; }).catch(() => {});
