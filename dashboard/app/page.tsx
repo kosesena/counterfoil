@@ -99,7 +99,12 @@ export default function Page() {
             <button key={id} className={id === pageId ? 'active' : ''} aria-current={id === pageId ? 'page' : undefined} onClick={() => openPage(id)}>{text}</button>
           ))}
         </nav>
-        <span className="crew-sandbox">Sandbox</span>
+        {/* the same three places as the store and its Settings page (demo/static/settings.html) */}
+        <nav className="places" aria-label="HOMI">
+          <a href="https://counterfoil-demo.onrender.com/">Store</a>
+          <a href="./" aria-current="page">Evidence</a>
+          <a href="https://counterfoil-demo.onrender.com/settings">Settings</a>
+        </nav>
       </header>
 
       {pageId === 'overview' && data && (

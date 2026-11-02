@@ -27,10 +27,11 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from counterfoil.gateway import RELAXABLE, Gateway
 from counterfoil.llm import LLM
 from counterfoil.paypal import PayPalSandboxRail
 from counterfoil.rail import SandboxRail
-from counterfoil.scenarios import load_records, load_scenarios
+from counterfoil.scenarios import attempt, build, load_records, load_scenarios
 from counterfoil.webhooks import Unverified
 from scripts.run_eval import CONDITIONS, run_one
 
@@ -96,6 +97,18 @@ class ApproveIn(BaseModel):
     purchase_id: str = Field(min_length=8, max_length=64)
     approval_id: str = Field(pattern=r"^[0-9a-f]{32}$")
     decision: Literal["approve", "reject"]
+
+
+class WhatIfIn(BaseModel):
+    """The Settings page's question: this scenario's call, under these store rules. No model, no rail, no money."""
+
+    model_config = ConfigDict(extra="forbid")
+    scenario_id: str = Field(max_length=32)
+    auto_refund_limit: str = Field("200.00", pattern=r"^\d{1,5}(\.\d{1,2})?$")
+    window_days: int = Field(30, ge=0, le=365)
+    relaxed: list[Literal["return_record", "confirm_charges", "lock_disputed", "match_reader"]] = Field(
+        default_factory=list, max_length=4
+    )
 
 
 class RunIn(BaseModel):
@@ -165,6 +178,26 @@ def create_app(settings: Settings | None = None, llm_factory=None, results: Path
     @app.get("/", include_in_schema=False)
     def index():
         return FileResponse(STATIC / "index.html")
+
+    @app.get("/settings", include_in_schema=False)
+    def settings_page():
+        """Store settings: the rules the gate applies, a What-if over them, how a real store connects."""
+        return FileResponse(STATIC / "settings.html")
+
+    @app.post("/api/whatif")
+    def whatif(body: WhatIfIn):
+        scenario = scenarios.get(body.scenario_id)
+        if scenario is None or "ground_truth" not in scenario:
+            raise HTTPException(404, "unknown scenario")
+        chosen = {"auto_refund_limit": f"{float(body.auto_refund_limit):.2f}", "window_days": body.window_days}
+        return {
+            "scenario_id": scenario["id"],
+            "kind": scenario["kind"],
+            "call": dict(zip(("tool", "args"), attempt(scenario), strict=True)),
+            "owed": scenario["ground_truth"].get("correct_amount"),
+            "defaults": _gate_answer(scenario, records, {}, frozenset()),
+            "yours": _gate_answer(scenario, records, chosen, frozenset(body.relaxed)),
+        }
 
     @app.get("/pay", include_in_schema=False)
     def pay_page():
@@ -435,6 +468,20 @@ def _pasted(email: EmailIn, records: dict) -> dict:
             "authenticated_customer_id": sender,
             "allowed_tools": ALL_TOOLS,
         },
+    }
+
+
+def _gate_answer(scenario: dict, records: dict, policy: dict, relaxed: frozenset[str]) -> dict:
+    """One gate decision on the scenario's own call, on the in-memory rail, under the given rules."""
+    store, rail, ctx = build(scenario, json.loads(json.dumps(records)))
+    store.policy = {**store.policy, **policy}
+    tool, args = attempt(scenario)
+    out = Gateway(store, rail, relaxed=relaxed).handle(ctx, tool, args)
+    return {
+        "decision": out.decision,
+        "rail_state": out.rail_state,
+        "findings": [{"severity": f.severity, "code": f.code, "detail": f.detail} for f in out.findings],
+        "relaxable": {code: rule for rule, codes in RELAXABLE.items() for code in codes},
     }
 
 
