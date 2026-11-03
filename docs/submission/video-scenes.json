@@ -1,10 +1,37 @@
 [
- {"image":"01-dashboard.png","title":"Counterfoil","label":"A merchant-record gate for AI payments","text":"An AI returns agent can ask for a refund that the store does not owe. Counterfoil checks the request against the merchant's records before it reaches Braintree. This walkthrough uses screenshots of the deployed application and recorded evidence."},
- {"image":"07-store.png","title":"Meet the store","label":"HOMI · fictional fixtures · sandbox only","text":"HOMI is our fictional homeware store. A Reader extracts fields from the customer's email. A separate Runner asks for payment tools. Counterfoil checks ownership, return entitlement, reservations, item prices and disputes. The decision is pass, hold for a person, or block."},
- {"image":"06-recorded-comparison.png","title":"Same request. Three checks.","label":"Recorded P6-01 replay · no new model or payment call","text":"In this recorded split-refund example, the agent asks for sixty dollars while only forty remain available. A two-hundred-dollar cap is not enough. Counterfoil checks the return record and stops the request. The comparison on screen replays saved outcomes; it does not create a new payment."},
- {"image":"05-review-desk.png","title":"A person decides exceptions","label":"Illustrated review desk · not a live approval queue","text":"A held request waits for the manager. The approval is bound to the exact call, expires, and can be used only once. The dashboard illustrates that review. The separate checkout flow can execute an approved refund on Braintree sandbox."},
- {"image":"02-results-band.png","title":"Measure harm, not just persuasion","label":"October simulation · completed runs per condition","text":"In the October simulation, harmful outcomes occurred in ninety-nine of two hundred seventy attack runs with no gate, one hundred with a cap, and zero with Counterfoil. Harm includes wrong money movement or another customer's data being read. These are measured runs, not a guarantee."},
- {"image":"04-november-evidence.png","title":"Keep experiments separate","label":"November follow-ups · inspect each protocol and denominator","text":"The newer experiments stay separate. The dashboard shows local attacks, hosted attacks, clean requests and repeated decisions with their own denominators. It preserves the stopped pilot and unknown outcome. Downloadable scored rows make each result inspectable."},
- {"image":null,"title":"What happens after a lost response?","label":"12 of 12 Braintree sandbox checks passed · 3 November 2026","text":"We also tested approvals and locally injected payment failures against Braintree sandbox. All twelve cases passed. After reopening the ledger, retries did not create a second payment. Unknown outcomes still need reconciliation. The demo rejects old checkout IDs after restart; it does not resume those sessions automatically."},
- {"image":"03-comparison.png","title":"Try Counterfoil","label":"counterfoil-demo.onrender.com  ·  counterfoil-dashboard.vercel.app","text":"The complete offline suite passes five hundred thirty-three tests. Explore the recorded demo without an account, inspect the evidence dashboard, or try the separate sandbox checkout. Counterfoil asks a concrete question before money moves: does the merchant's record support this payment?"}
+  {
+    "title": "Counterfoil",
+    "start": 0,
+    "duration": 11.89,
+    "narration": "An AI returns agent can request money the store does not owe. Counterfoil checks every payment call against the merchant's records before it reaches Braintree. Here is the working sandbox flow.",
+    "uncutOriginal": null
+  },
+  {
+    "title": "Watch the complete sandbox flow",
+    "start": 11.89,
+    "duration": 76,
+    "narration": "This is a continuous browser recording of the deployed application. The store and customer are fictional. The comparison replays recorded agent calls, rather than generating a new AI response. First, the page compares no gate, a two hundred dollar cap, and Counterfoil. The store allows one hundred dollars back, but sixty dollars are already reserved. Only forty remain. We then create a two hundred dollar Braintree sandbox purchase with a mocked PayPal account. No real wallet login or real money is involved. The recorded sixty dollar request is executed through the gate and blocked. A forty dollar correction waits for approval. The manager reviews the exact amount and the store record before approving. The page then displays the Braintree sandbox refund. The captured evidence confirms zero refund calls before approval, and one successful forty dollar refund afterward. Browser automation acts as the manager in this demonstration.",
+    "uncutOriginal": "live-demo/continuous-browser-demo.mp4"
+  },
+  {
+    "title": "Why the boundary holds",
+    "start": 87.89,
+    "duration": 16.35,
+    "narration": "A Reader extracts fields without payment tools. A separate Runner requests a refund. Counterfoil holds the payment credentials and checks ownership, remaining return entitlement, and reservations. Exceptions need a single-use approval bound to the exact request.",
+    "uncutOriginal": null
+  },
+  {
+    "title": "Measured evidence, with limits",
+    "start": 104.23,
+    "duration": 20.29,
+    "narration": "In the October simulation, harmful outcomes were ninety-nine of two hundred seventy runs with no gate, one hundred with a cap, and zero with Counterfoil. These repeat fourteen attack scenarios; they are not independent attacks or a production guarantee. Genuine payments completed in one hundred two of one hundred eighty-three runs.",
+    "uncutOriginal": null
+  },
+  {
+    "title": "Inspect it. Try it.",
+    "start": 124.52,
+    "duration": 16.89,
+    "narration": "Separate sandbox recovery tests passed all twelve cases. The offline suite passes five hundred thirty-three tests. Newer experiments keep their own denominators and unknown outcomes. Explore the working demo and its evidence: does the store's record support this payment?",
+    "uncutOriginal": null
+  }
 ]

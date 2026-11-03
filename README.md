@@ -100,7 +100,7 @@ Approvals are single-use, expire after 30 minutes and are bound to the exact arg
 <a name="why-paypal-and-braintree"></a>
 <img src="docs/brand/readme/h-why.png" alt="Why PayPal and Braintree" height="92">
 
-**Why Braintree, and not the PayPal REST API.** PayPal has not offered accounts in Türkiye since 2016, so the author could not open one, and without a PayPal account there is no PayPal developer app and no REST sandbox: no Orders, Payments or Disputes calls, and no live Agent Toolkit. We asked PayPal's developer team on the hackathon Discord on 22 Oct; the answer was "Braintree works!", and the official rules count Braintree as a PayPal service. So instead:
+**Why Braintree, and not the PayPal REST API.** [PayPal's Türkiye notice](https://www.paypal.com/tr/home?locale.x=en_TR) states that local operations stopped in June 2016. The author could not obtain a PayPal account for this project, so the PayPal REST path was not exercised against a real REST sandbox. The [official hackathon rules](https://paypalaihackathon.devpost.com/rules) explicitly include Braintree as a qualifying PayPal service. So instead:
 
 1. **The payment rail is the Braintree sandbox**, through the official Python SDK, with Braintree's mocked PayPal account as the PayPal payment method (checkout, refunds, voids, vaulted reorders).
 2. **We used Braintree well beyond a checkout**: line items read back with `transaction_line_item.find_all`, `api_request_key` against double refunds, dispute checks, signed webhooks and the `transaction.search` refund sweep, all described below.
