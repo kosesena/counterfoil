@@ -1,6 +1,8 @@
 # Devpost submission: Counterfoil
 
-Ready-to-paste answers for the PayPal AI Hackathon form, rewritten 2 Nov 2026. Every figure comes from `results/*.jsonl` (the dashboard reads the same rows) or from [`arastirma/kaynaklar.md`](arastirma/kaynaklar.md). Judges may score on the text, images and video alone, so the description stands on its own and links its evidence.
+Ready-to-paste answers for the PayPal AI Hackathon form, updated 3 Nov 2026. Every figure comes from `results/*.jsonl`
+or from [`arastirma/kaynaklar.md`](arastirma/kaynaklar.md). The dashboard keeps the October multi-model results and
+November follow-up cohorts separate. This file is a draft; it does not confirm submission or publication.
 
 ---
 
@@ -79,11 +81,24 @@ The agent can still be fooled; Counterfoil makes sure a fooled agent can't send 
 - **Live Claude Haiku 5.5** in the hosted demo, with per-visitor rate limits and a daily call budget.
 - **AG Studio** (AG Grid) dashboard over every run, with a review desk that explains each held call. Its case panel runs on rules over the recorded data, not on an LLM.
 
-**Engineering:** Python, FastAPI and SQLite (orders, RMAs, refund reservations, charge states); 448 tests without an LLM or network; 10 architecture decision records; the demo on **Render**, the dashboard on Vercel.
+**Engineering:** Python, FastAPI and SQLite (orders, RMAs, refund reservations, charge states); **519 passing tests**,
+2 skipped and 1 expected failure, **94.74% coverage** (3 Nov 2026), without an LLM or network; 10 architecture decision
+records; the demo configured on **Render Starter**, the dashboard on Vercel. Mutation results remain dated to their
+24 Oct run; see [quality evidence](quality.md).
 
 ### The results
 
-22 scenarios: 14 attacks in 7 families and 8 genuine requests, split into a dev set and a holdout set kept apart while the gate was written. Nine models × three repeats × three conditions, the same Reader hand-off in each, so the conditions differ only in the gate.
+The table below is the **October multi-model experiment**. November experiments are separate in the dashboard:
+30 blind attacker cases on the local rail, a repaired 30-run hosted attack cohort, 36 clean-control sandbox runs,
+and 12 repeated executions. The original six-run hosted pilot remains archived with one unknown outcome.
+These datasets have different fixtures and denominators and are not pooled into the table below.
+
+In the repeated clean cohort, Counterfoil completed both valid refunds and held both USD 120 reorders for human
+confirmation; no gate and the USD 200 cap each charged both reorders without that confirmation. Reader outputs
+were cached and identical across repeats, so this is not independent end-to-end sampling. Detailed protocols,
+limits and downloadable scored rows accompany each experiment on the dashboard.
+
+22 scenarios: 14 attacks in 7 families and 8 genuine requests, split into a dev set and a holdout set kept apart while the gate was written. The evaluation spans nine models, three repeats and three conditions with paired Reader hand-offs. Model coverage differs between dev and holdout; the table reports completed runs per condition, not a full Cartesian product of every model and scenario.
 
 | | No gate | $200 cap | Counterfoil |
 |---|:---:|:---:|:---:|
@@ -146,7 +161,8 @@ Guards for agent payments sit on the **buyer's** side: an agent spends for a cus
 
 ## New project (form question, if asked)
 
-Counterfoil was started from scratch for this hackathon: the first commit is 23 Oct 2026 (`e2f6393`), 202 commits and 61 merged pull requests since. It builds on the author's graduation thesis topic (indirect prompt injection against LLM agents in ERP systems), but no code was carried over.
+Counterfoil was started from scratch for this hackathon: the first commit is 23 Oct 2026 (`e2f6393`). It builds on the
+author's graduation thesis topic (indirect prompt injection against LLM agents in ERP systems), but no code was carried over.
 
 ---
 
@@ -154,5 +170,5 @@ Counterfoil was started from scratch for this hackathon: the first commit is 23 
 
 - [ ] Repository public, MIT visible in the About section
 - [ ] YouTube video public, under 3 minutes, link added above and in the form
-- [ ] Live demo and dashboard open; the demo's first load on Render's free tier can take a minute
+- [ ] Live demo and dashboard open; verify `/healthz` and the Starter deployment before submission
 - [ ] Screenshots: results band, comparison table, 3D store with a Counterfoil BLOCK badge, review desk

@@ -17,6 +17,7 @@ import { ClosingBand, Crew, Hero, ResultBand, StoryAside, useFeltConditions } fr
 import { CrewJourney, ProductIntro } from './crew-journey';
 import { EvidenceBoard } from './evidence';
 import { RailChecksBoard } from './rail-checks';
+import { RecentEvidence } from './recent-evidence';
 import { ReviewIntro } from './review-intro';
 import { SimpleStory } from './simple-story';
 import { CallsWorkspace } from './calls-workspace';
@@ -113,6 +114,7 @@ export default function Page() {
           <StatBand data={data} />
           <SimpleStory />
           <CompareTable data={data} />
+          <RecentEvidence />
           <div className="story-next-wrap"><button className="continuation-next" onClick={() => { openPage('review'); window.scrollTo({ top: 0 }); }}>Next: see how the manager reviews $80 →</button></div>
           <details className="simple-disclosure"><summary>Meet the crew and explore Nella’s other tricks</summary><p className="evidence-context">A separate teaching story using $60 and $40, plus examples of other attacks. These scenes are illustrations, not transaction replays.</p><CrewJourney /></details>
           <details id="crew-results" className="simple-disclosure"><summary>Technical details · test results and evidence</summary>

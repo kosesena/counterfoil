@@ -17,7 +17,8 @@ A gate between an AI returns agent and Braintree. Every refund or charge the age
 
 </div>
 
-> The live demo runs on Render's free tier, so the first load can take about a minute.
+> The demo is configured on Render's paid Starter plan (`render.yaml`), with Braintree sandbox payments.
+> The dashboard separates the October multi-model comparison from the November follow-up experiments.
 
 > ### Judge this in 90 seconds
 >
@@ -137,7 +138,7 @@ Every number in this README comes from one of the rows below. Rows marked **real
 
 | | Rail | Model | Record |
 |---|---|---|---|
-| **270-run evaluation** (14 attacks × 9 models × 3 repeats, dev + holdout) | in-memory rail that applies the card limits we measured in the sandbox | **real models deciding:** qwen2.5, qwen3, llama3.1, hermes3 (Ollama), Claude Haiku 4.5 / Sonnet 5 / Opus 5.5, GPT-5.6 Sol / Terra | [`results/`](results/), dashboard |
+| **October multi-model evaluation** (270 completed attack runs per condition; 14 distinct attack scenarios, dev + holdout) | in-memory rail that applies the card limits we measured in the sandbox | **real models deciding:** qwen2.5, qwen3, llama3.1, hermes3 (Ollama), Claude Haiku 4.5 / Sonnet 5 / Opus 5.5, GPT-5.6 Sol / Terra | [`results/`](results/), dashboard |
 | **Braintree sandbox run** (dev set, one repeat): 4/7 · 4/7 · **0/7** | **real** Braintree sandbox, mocked PayPal account | real: qwen2.5 | [`results/`](results/), dashboard "Braintree sandbox" line |
 | **Worst case** (14 attacks): **0/14** vs 11/14 in memory, 12/14 in the sandbox | in-memory **and real** Braintree sandbox | none: a scripted Reader and agent fully on the attacker's side | [`results/2026-10-25-all-worst-case.jsonl`](results/2026-10-25-all-worst-case.jsonl) |
 | **Live demo** | **real** Braintree sandbox: PayPal-button checkout, refunds, voids, the dispute test card, signed webhooks | recorded runs replayed; a live model only when a key is set on the server | [counterfoil-demo.onrender.com](https://counterfoil-demo.onrender.com), section 4 |
@@ -145,7 +146,7 @@ Every number in this README comes from one of the rows below. Rows marked **real
 | **PayPal Agent Toolkit path** (`toolkit.py` → `paypal.py`) | **not run against PayPal REST.** Tested with a faked HTTP layer only; no PayPal account can be opened from Türkiye | — | [`tests/test_paypal_rail.py`](tests/test_paypal_rail.py), [ADR 0008](docs/adr/0008-paypal-rest-rail-in-front-of-agent-toolkit.md) |
 | **Mocked PayPal inside Braintree** | real sandbox transactions, but the mock does not enforce the refund total; no stop that only this gap explains is counted for Counterfoil | — | [ADR 0007](docs/adr/0007-braintree-sandbox-with-mocked-paypal.md) |
 
-Other benchmarks for agent-payment guards run a scripted agent against a mocked rail and report how often the guard fires. We publish that run too: it is the worst case above, and it is the floor, not the headline. The 270 runs are real models deciding, and the Braintree rows are real sandbox money.
+Other benchmarks for agent-payment guards run a scripted agent against a mocked rail and report how often the guard fires. We publish that run too: it is the worst case above, and it is the floor, not the headline. The 270 completed attack runs per condition use real models deciding; the Braintree rows use real sandbox transactions.
 
 <a name="the-cost-of-the-alternatives"></a>
 <img src="docs/brand/readme/h-cost.png" alt="The cost of the alternatives" height="92">

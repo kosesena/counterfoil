@@ -53,8 +53,9 @@ export function StatBand({ data }: { data: CounterfoilData }) {
         <span>AI models tested, local and cloud</span>
       </div>
       <p className={styles.bandNote}>
-        Simulation · {runs.length} completed runs · exported {data.asOf.slice(0, 10)}.{' '}
+        October multi-model simulation · {runs.length} completed runs · exported {data.asOf.slice(0, 10)}.{' '}
         <a href="#crew-results" onClick={openResults}>How we measured ↓</a>
+        <a href="#recent-evidence">November follow-up experiments ↓</a>
       </p>
     </section>
   );
