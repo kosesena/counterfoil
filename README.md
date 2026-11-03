@@ -100,6 +100,14 @@ Approvals are single-use, expire after 30 minutes and are bound to the exact arg
 <a name="why-paypal-and-braintree"></a>
 <img src="docs/brand/readme/h-why.png" alt="Why PayPal and Braintree" height="92">
 
+**Why Braintree, and not the PayPal REST API.** [PayPal's Türkiye notice](https://www.paypal.com/tr/home?locale.x=en_TR) states that local operations stopped in June 2016. The author could not obtain a PayPal account for this project, so the PayPal REST path was not exercised against a real REST sandbox. The [official hackathon rules](https://paypalaihackathon.devpost.com/rules) explicitly include Braintree as a qualifying PayPal service. So instead:
+
+1. **The payment rail is the Braintree sandbox**, through the official Python SDK, with Braintree's mocked PayPal account as the PayPal payment method (checkout, refunds, voids, vaulted reorders).
+2. **We used Braintree well beyond a checkout**: line items read back with `transaction_line_item.find_all`, `api_request_key` against double refunds, dispute checks, signed webhooks and the `transaction.search` refund sweep, all described below.
+3. **We kept PayPal's agent interface.** The MCP server offers the Agent Toolkit's `create_refund(capture_id, amount)` unchanged for the agent, and a PayPal REST rail ([`counterfoil/paypal.py`](counterfoil/paypal.py)) sits behind the Toolkit's `create_refund`, gated, ready for a PayPal account. It is the one path we could not run for real: it is tested with a faked HTTP layer ([ADR 0008](docs/adr/0008-paypal-rest-rail-in-front-of-agent-toolkit.md)).
+
+What it costs us: no PayPal REST transaction ids to show, and mocked PayPal does not enforce the refund total, so no stop that only that gap explains is counted for Counterfoil ([ADR 0007](docs/adr/0007-braintree-sandbox-with-mocked-paypal.md)).
+
 **The money is real sandbox money.** Every sale, refund and void in the Braintree results below is a real Braintree sandbox transaction, paid with a mocked PayPal account. Take the rail away and there is nothing to protect and nothing to measure.
 
 **Counterfoil is built around the rail's own checks, not on top of them.** On card transactions Braintree already refuses a refund larger than the sale (`91521`), a refund on a fully refunded transaction (`91512`) and a refund before settlement (`91506`) ([our test](docs/arastirma/2026-10-23-braintree-deneme.md)). Counterfoil does not repeat any of that. It checks what the rail cannot know: whether the items actually came back (the RMA), who owns the order, and whether a charge equals catalog price × quantity.

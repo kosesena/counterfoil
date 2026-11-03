@@ -64,6 +64,10 @@ The agent can still be fooled; Counterfoil makes sure a fooled agent can't send 
 4. **Pay with PayPal (sandbox)** for the scenario's order, then let the recorded agent refund it through the gate: real Braintree sandbox transactions.
 5. Open the **dashboard** for every number below, broken down by model.
 
+### Why Braintree, and not the PayPal REST API
+
+[PayPal's Türkiye notice](https://www.paypal.com/tr/home?locale.x=en_TR) states that local operations stopped in June 2016. The author could not obtain a PayPal account for this project, so the PayPal REST path was not exercised against a real REST sandbox. The [official hackathon rules](https://paypalaihackathon.devpost.com/rules) explicitly include Braintree as a qualifying PayPal service. So instead we built on the **Braintree sandbox** with Braintree's mocked PayPal account, used Braintree well beyond a checkout (below), and **kept PayPal's agent interface**: our MCP server offers the Agent Toolkit's `create_refund` unchanged for the agent, and a gated PayPal REST rail stands behind the Toolkit's `create_refund`, ready for a PayPal account. That rail is the one path we could not run for real; it is tested with a faked HTTP layer.
+
 ### How we built it
 
 **PayPal and Braintree, used in depth (all sandbox):**

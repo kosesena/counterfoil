@@ -1,36 +1,19 @@
-# Judge walkthrough — Counterfoil
+# Counterfoil — English judge walkthrough
 
-## Two-minute path, no accounts or model call needed
-1. Open https://counterfoil-demo.onrender.com and keep **Watch a recorded run** selected.
-2. Choose **Nella asks for more** (P6-01). Press **Compare the three checks**.
-3. Compare the recorded payment calls: the split-refund request reaches the simulated rail with no gate and the USD 200 cap; Counterfoil blocks it against the remaining return entitlement.
-4. Use the store walkthrough to inspect the Reader, Runner and gate decision. The comparison is replayed evidence, not newly generated AI output.
-5. Open https://counterfoil-dashboard.vercel.app. Inspect October results, then the newer-test selector. Keep each cohort's denominator and limitations with its result.
-6. Open **Held for review**. This dashboard section is an illustrated story and recorded evidence, not an operational approval queue.
+1. Download `counterfoil-demo-eve-captioned.mp4` from the [reviewed delivery](https://github.com/kosesena/counterfoil/releases/tag/demo-review-2026-11-03) and watch it. Its 76-second central segment is an uninterrupted browser capture at original speed. It shows executed sandbox payments with recorded agent calls.
+2. Open https://counterfoil-demo.onrender.com. Select “Watch a recorded run”, P6-01, then “Compare the three checks”. Inspect the split-refund attempt and each gate decision.
+3. To test actual sandbox execution, use “Complete the test with PayPal”. Create the USD 200 sandbox purchase, choose the Counterfoil refund path, inspect the blocked USD 60 attempt and the held USD 40 correction, then approve the correction. Inspect the resulting Braintree sandbox refund. This uses a mocked PayPal account, not a wallet login.
+4. Open https://counterfoil-dashboard.vercel.app and inspect the October and November cohorts separately. “Held for review” on this dashboard is an illustrated story, not the operational checkout approval panel.
+5. Fresh model calls are available in the separate “Try live AI” mode. They are not needed to replay the recorded comparison.
 
-## Continuous product capture
+The hosted service currently permits 6 relevant requests per client per 10 minutes and has a daily model budget. Avoid repeated runs; preserve unknown payment outcomes rather than automatically retrying. Local setup is documented in demo/README.md. API credentials must be configured privately, never committed to the public repository.
 
-A separate 76-second browser recording now shows a fresh sandbox purchase, the blocked USD 60 request,
-the held USD 40 correction and one refund after approval. See [controlled validation](../validation/README.md).
-This is an automated product demonstration, not a real-store user study.
+## Evidence
+- Continuous source: live-demo/continuous-browser-demo.mp4 in the reviewed ZIP
+- Capture outcome: sandbox-capture-evidence.json in this review package.
+- October results: dashboard/public/counterfoil-data.json in the source repository.
+- Recovery protocol: docs/arastirma/2026-11-03-approval-recovery.md.
 
-## Optional interactive sandbox
-The demo's **Complete the test with PayPal** section creates Braintree sandbox transactions. Its PayPal button uses a mocked PayPal account; it is not a real wallet login. Use the Counterfoil refund path and review the held correction before approving. Only test money is involved.
+This document is prepared for review. Public source, public YouTube link and a verified free judge-access route are release checks, not completed claims.
 
-The deployed demo has a shared per-client limit of 6 requests per 10 minutes across relevant checkout/live actions.
-Avoid repeated live attempts during a short judging session. An uncertain payment response must not be blindly retried.
-
-The **Try live AI** mode makes new model calls and is rate limited; it is not necessary to verify the recorded evidence. If its daily quota is exhausted, the recorded path remains available.
-
-## Evidence map
-- October aggregate: `dashboard/public/counterfoil-data.json`
-- November cohorts: `dashboard/public/recent-evidence.json` and `dashboard/public/evidence/`
-- Approval/recovery: `results/2026-11-03-approval-recovery.json`
-- Recovery protocol and limitations: `docs/arastirma/2026-11-03-approval-recovery.md`
-- Current test totals: `docs/quality.md`
-
-## Submission gates still requiring completion
-- Upload the delivered video to the chosen video host and confirm a reviewer can open its URL without signing in.
-- Provide reviewer access to the currently private GitHub repository, or intentionally make it public.
-- Check the actual event form's current duration, asset and eligibility requirements before submission; this package does not claim those rules were verified.
-- Paste the text and links into the submission form and submit. No submission or repository-visibility change has been made by preparing this package.
+The live hosted payment route was captured successfully on 3 November. Recheck availability before submission and keep a working hosted route or complete local build instructions available throughout judging. [Official access requirements](https://paypalaihackathon.devpost.com/rules).

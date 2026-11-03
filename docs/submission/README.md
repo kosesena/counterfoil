@@ -1,17 +1,14 @@
-# Counterfoil delivery package · 3 November 2026
+# Counterfoil reviewed delivery · 3 November 2026
 
-- `devpost-ready.md`: concise, paste-ready English submission copy.
-- `judge-walkthrough.md`: recorded-demo route, optional sandbox route and remaining submission gates.
-- `video-scenes.json`: narration and exact screenshot mapping for the eight-part video.
+- `devpost-ready.md`: reviewed English submission copy.
+- `judge-walkthrough.md`: recorded comparison and working sandbox instructions.
+- `REVIEW-BEFORE-PUBLISHING.md`: remaining public-release and submission steps.
+- `video-scenes.json`: current five-scene narrative and timings; the earlier eight-scene script is archived as `video-scenes-initial.json`.
 
-The accompanying local delivery folder contains the 1080p MP4, embedded English captions plus an SRT file,
-narration transcript, eight deployed-UI screenshots, sandbox evidence JSON and capture/verification metadata.
-The video is a narrated screenshot walkthrough with synthetic English speech, not a continuous screen recording
-or a newly measured model run. The October and November results are explicitly separated.
+[Download the reviewed delivery](https://github.com/kosesena/counterfoil/releases/tag/demo-review-2026-11-03). The main video is `counterfoil-demo-eve-captioned.mp4` (2m22s, 1080p), with English synthetic narration and captions. It contains the full 76-second browser capture at original speed: recorded agent calls, but checkout, gate checks, approval and refund executed against Braintree sandbox during capture. Surrounding screenshots explain architecture and measured results. No new model/payment experiment was run for this edit.
 
-Screenshots were captured from the public deployment on 3 November 2026. The 3D store replays P6-01; the review
-desk is an illustrated interface, not a live operational queue. No payment credentials, browser account UI or
-private customer records are part of the media.
+The release ZIP includes the current four documents, MP4/SRT, continuous capture, screenshots and evidence. The earlier [delivery snapshot](https://github.com/kosesena/counterfoil/releases/tag/demo-delivery-2026-11-03) is retained as an archive; use this reviewed package for the final submission.
 
-The package is prepared for review, not submitted or published. The source repository remains private and the
-video needs a reviewer-accessible hosting URL. Check the actual event form's rules before final submission.
+GitHub upload is not YouTube publication or Devpost submission. The repository remains private until the owner completes the public-source step. The release follows repository access restrictions.
+
+The final edit uses the synthetic AssemblyAI Eve voice. Captions occupy a dedicated lower margin so payment controls remain visible.
