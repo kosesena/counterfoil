@@ -251,6 +251,11 @@ set with 12 more runs. All conditions completed the three expected refunds, incl
 fixture. Counterfoil held the USD 120 reorder for human confirmation; none and cap charged it without approval.
 The two native cohorts retain separate deployment evidence and are not an unseen holdout.
 
+[Repeated clean executions](docs/arastirma/2026-11-03-repeat-clean.md) revisit a valid refund and the reorder twice
+per condition (12 fresh sandbox runs). Counterfoil completed both refunds and held both reorders for confirmation;
+none and cap each charged both reorders without approval. Reader outputs were identical across repeats, so this
+is a small executor repeat check conditional on cached Reader output, not independent end-to-end sampling.
+
 <a name="quick-start"></a>
 <img src="docs/brand/readme/h-quickstart.png" alt="Quick start" height="92">
 
