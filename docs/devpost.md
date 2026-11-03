@@ -166,6 +166,11 @@ author's graduation thesis topic (indirect prompt injection against LLM agents i
 
 ---
 
+## Delivery package
+
+The concise submission copy, judge walkthrough and narrated-video script are in [`submission/`](submission/README.md).
+The package includes the 3 November approval/recovery results and keeps measured cohorts separate.
+
 ## Before pressing submit
 
 - [ ] Repository public, MIT visible in the About section
