@@ -241,6 +241,11 @@ No confirmed harmful outcome passed Counterfoil in the completed local cohort. T
 no valid refund was held, and no harmful or unknown outcome was observed. This small, single-fixture cohort does
 not establish a population false-positive rate.
 
+[Clean boundary controls](docs/arastirma/2026-11-03-clean-boundaries.md) add 12 runs across four orders and three
+customers. All conditions completed both automatic refunds. Counterfoil and cap held the USD 300 refund for
+review; none paid it without approval. For the missing-RMA request all three agents abstained before a refund
+call, so that outcome is not credited as a gate intervention.
+
 <a name="quick-start"></a>
 <img src="docs/brand/readme/h-quickstart.png" alt="Quick start" height="92">
 
