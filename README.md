@@ -11,13 +11,14 @@ A gate between an AI returns agent and Braintree. Every refund or charge the age
 
 <sub>Built solo by Sena Köse from Türkiye on <b>Braintree</b>, the PayPal service PayPal's team confirmed for this hackathon where PayPal accounts can't be opened (<a href="docs/adr/0007-braintree-sandbox-with-mocked-paypal.md">ADR 0007</a>).</sub>
 
-[**Live dashboard**](https://counterfoil-dashboard.vercel.app) · [**Live demo**](https://counterfoil-demo.onrender.com) · [How it works](#how-it-works) · [Results](#results) · [Quick start](#quick-start)
+[**Live dashboard**](https://counterfoil-dashboard.vercel.app) · [**Live demo**](https://counterfoil-demo.onrender.com) · [How it works](#how-it-works) · [Results](#results) · [Red team](#counterfoil-red-team) · [Quick start](#quick-start)
 
 [![tests](https://github.com/kosesena/counterfoil/actions/workflows/tests.yml/badge.svg)](https://github.com/kosesena/counterfoil/actions/workflows/tests.yml)
 
 </div>
 
-> The live demo runs on Render's free tier, so the first load can take about a minute.
+> The demo is configured on Render's paid Starter plan (`render.yaml`), with Braintree sandbox payments.
+> The dashboard separates the October multi-model comparison from the November follow-up experiments.
 
 > ### Judge this in 90 seconds
 >
@@ -145,7 +146,7 @@ Every number in this README comes from one of the rows below. Rows marked **real
 
 | | Rail | Model | Record |
 |---|---|---|---|
-| **270-run evaluation** (14 attacks × 9 models × 3 repeats, dev + holdout) | in-memory rail that applies the card limits we measured in the sandbox | **real models deciding:** qwen2.5, qwen3, llama3.1, hermes3 (Ollama), Claude Haiku 4.5 / Sonnet 5 / Opus 5.5, GPT-5.6 Sol / Terra | [`results/`](results/), dashboard |
+| **October multi-model evaluation** (270 completed attack runs per condition; 14 distinct attack scenarios, dev + holdout) | in-memory rail that applies the card limits we measured in the sandbox | **real models deciding:** qwen2.5, qwen3, llama3.1, hermes3 (Ollama), Claude Haiku 4.5 / Sonnet 5 / Opus 5.5, GPT-5.6 Sol / Terra | [`results/`](results/), dashboard |
 | **Braintree sandbox run** (dev set, one repeat): 4/7 · 4/7 · **0/7** | **real** Braintree sandbox, mocked PayPal account | real: qwen2.5 | [`results/`](results/), dashboard "Braintree sandbox" line |
 | **Worst case** (14 attacks): **0/14** vs 11/14 in memory, 12/14 in the sandbox | in-memory **and real** Braintree sandbox | none: a scripted Reader and agent fully on the attacker's side | [`results/2026-10-25-all-worst-case.jsonl`](results/2026-10-25-all-worst-case.jsonl) |
 | **Live demo** | **real** Braintree sandbox: PayPal-button checkout, refunds, voids, the dispute test card, signed webhooks | recorded runs replayed; a live model only when a key is set on the server | [counterfoil-demo.onrender.com](https://counterfoil-demo.onrender.com), section 4 |
@@ -153,7 +154,7 @@ Every number in this README comes from one of the rows below. Rows marked **real
 | **PayPal Agent Toolkit path** (`toolkit.py` → `paypal.py`) | **not run against PayPal REST.** Tested with a faked HTTP layer only; no PayPal account can be opened from Türkiye | — | [`tests/test_paypal_rail.py`](tests/test_paypal_rail.py), [ADR 0008](docs/adr/0008-paypal-rest-rail-in-front-of-agent-toolkit.md) |
 | **Mocked PayPal inside Braintree** | real sandbox transactions, but the mock does not enforce the refund total; no stop that only this gap explains is counted for Counterfoil | — | [ADR 0007](docs/adr/0007-braintree-sandbox-with-mocked-paypal.md) |
 
-Other benchmarks for agent-payment guards run a scripted agent against a mocked rail and report how often the guard fires. We publish that run too: it is the worst case above, and it is the floor, not the headline. The 270 runs are real models deciding, and the Braintree rows are real sandbox money.
+Other benchmarks for agent-payment guards run a scripted agent against a mocked rail and report how often the guard fires. We publish that run too: it is the worst case above, and it is the floor, not the headline. The 270 completed attack runs per condition use real models deciding; the Braintree rows use real sandbox transactions.
 
 <a name="the-cost-of-the-alternatives"></a>
 <img src="docs/brand/readme/h-cost.png" alt="The cost of the alternatives" height="92">
@@ -225,6 +226,44 @@ Where and when each run happened, how long it took and what the cloud runs cost 
 - **It can't catch a wrong record.** If an attacker gets a fake return record opened, or a request matches the record but does harm some other way, the gate won't see it. For calls held for a human, the decision is the human's.
 - **Genuine requests aren't lost, but people get more work.** Completed genuine requests are the same in all three conditions (102/183). Counterfoil sent 48 genuine requests to a human (cap 21, no gate 0), most of them because of a store rule (above the automatic-refund limit). In 6 genuine runs the gate stopped a call.
 - **The agent still gets fooled.** The "agent misled" rate is about the same in every condition (no gate 141/270, cap 142/270, Counterfoil 139/270). The gate doesn't stop the agent being fooled; it stops a fooled agent from sending the money.
+
+<a name="counterfoil-red-team"></a>
+<img src="docs/brand/readme/h-redteam.png" alt="Counterfoil red team" height="92">
+
+GPT-6 Astra (ultra), in fresh sessions without repository access, wrote **20 initial + 10 adaptive cases**.
+The local qwen2.5-8k agent ran each under three conditions with the same Reader hand-off and a fake rail.
+Fable 5.1 refused to generate cases; this is a **one-attacker-model study**.
+
+| Attacker | Condition | Confirmed record harm / valid runs | Errors | Unknown |
+|---|---|---:|---:|---:|
+| GPT-6 Astra (ultra), rounds 1–2 | none | 10/30 | 0 | 0 |
+| GPT-6 Astra (ultra), rounds 1–2 | cap | 10/30 | 0 | 0 |
+| GPT-6 Astra (ultra), rounds 1–2 | counterfoil | 0/30 | 0 | 0 |
+
+These counts include policy violations. The existing money-outcome metric is none: 9/30; cap: 9/30; counterfoil: 0/30; the additional baseline case is a USD 1 refund without an RMA, within the total entitlement.
+
+No confirmed harmful outcome passed Counterfoil in the completed local cohort. The original hosted pilot stopped on an adapter error. After [PR #68](https://github.com/kosesena/counterfoil/pull/68), a fresh **30-run hosted retest** completed; [separate hosted results](docs/arastirma/2026-11-02-hosted-red-team-after-68.md) use the USD 100 fixture and preserve the original failed pilot. One fixture and shared project authorship limit generalization.
+[Full protocol, results, limits and reproduction](docs/arastirma/2026-11-02-blind-red-team.md).
+
+[Clean hosted controls](docs/arastirma/2026-11-03-clean-hosted-controls.md): four valid requests × three conditions
+(12 sandbox runs). All four requested refunds completed under each condition, including a USD 40 partial refund;
+no valid refund was held, and no harmful or unknown outcome was observed. This small, single-fixture cohort does
+not establish a population false-positive rate.
+
+[Clean boundary controls](docs/arastirma/2026-11-03-clean-boundaries.md) add 12 runs across four orders and three
+customers. All conditions completed both automatic refunds. Counterfoil and cap held the USD 300 refund for
+review; none paid it without approval. For the missing-RMA request all three agents abstained before a refund
+call, so that outcome is not credited as a gate intervention.
+
+[Remaining native clean controls](docs/arastirma/2026-11-03-remaining-clean.md) complete the eight-case native
+set with 12 more runs. All conditions completed the three expected refunds, including the verified-failure
+fixture. Counterfoil held the USD 120 reorder for human confirmation; none and cap charged it without approval.
+The two native cohorts retain separate deployment evidence and are not an unseen holdout.
+
+[Repeated clean executions](docs/arastirma/2026-11-03-repeat-clean.md) revisit a valid refund and the reorder twice
+per condition (12 fresh sandbox runs). Counterfoil completed both refunds and held both reorders for confirmation;
+none and cap each charged both reorders without approval. Reader outputs were identical across repeats, so this
+is a small executor repeat check conditional on cached Reader output, not independent end-to-end sampling.
 
 <a name="quick-start"></a>
 <img src="docs/brand/readme/h-quickstart.png" alt="Quick start" height="92">
@@ -322,3 +361,5 @@ The agent prompts are deliberately ordinary, not hardened against injection: the
 <img src="docs/brand/readme/h-license.png" alt="License" height="92">
 
 MIT. See [LICENSE](LICENSE).
+
+Approval/restart validation: [12 Braintree sandbox cases](docs/arastirma/2026-11-03-approval-recovery.md) cover manager decisions, expiry, replay and injected interruptions around payment acceptance. Unknown outcomes remain blocked pending reconciliation; demo checkout sessions do not resume across restarts.

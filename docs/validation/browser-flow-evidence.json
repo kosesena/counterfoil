@@ -1,0 +1,35 @@
+{
+  "date": "2026-11-03",
+  "url": "https://counterfoil-demo.onrender.com/",
+  "mode": "Recorded agent calls, executed now through hosted gate onto Braintree sandbox",
+  "purchaseAmount": "200.00",
+  "requestedRefund": "60.00",
+  "gateDecision": "BLOCK",
+  "heldCorrection": "40.00",
+  "refundCallsBeforeApproval": 0,
+  "refundCallsAfterApproval": 1,
+  "approvedRailState": "succeeded",
+  "events": [
+    {
+      "event": "deployed_demo_loaded",
+      "seconds": 8.76
+    },
+    {
+      "event": "recorded_comparison_visible",
+      "seconds": 34.98
+    },
+    {
+      "event": "sandbox_purchase_created",
+      "seconds": 39.92
+    },
+    {
+      "event": "60_blocked_40_held_no_refund",
+      "seconds": 50.02
+    },
+    {
+      "event": "one_40_dollar_sandbox_refund_confirmed",
+      "seconds": 67.79
+    }
+  ],
+  "limits": "Browser automation acted as demo manager; not a real user study or new model evaluation. Mocked PayPal account, sandbox only."
+}

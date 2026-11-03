@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HOMI · Store settings</title>
+<link rel="icon" href="/static/crew/homi-wordmark.webp">
+<style>
+:root { --bg:#f2e9e4; --panel:#fffbf7; --ink:#392a38; --muted:#796d79; --line:#ddcdd5; --accent:#65425f;
+  --espresso:#2d1e19; --cream:#fbf7f2; --lilac:#e4a1f5; --butter:#f6d98a; --orange:#e98a3a; --powder:#c5d0e6; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
+header,main,footer { max-width:1160px; margin:0 auto; padding:0 32px; }
+a { color:var(--accent); }
+/* shared HOMI bar: the same three places on the demo, here and on the dashboard */
+.topbar { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:22px 0; border-bottom:1px solid var(--line); }
+.topbar img { display:block; }
+.places { display:flex; gap:6px; }
+.places a { text-decoration:none; color:var(--ink); font-size:14px; padding:8px 14px; border-radius:999px; }
+.places a:hover { background:#eadfe6; }
+.places a[aria-current] { background:var(--espresso); color:var(--cream); }
+.sandbox-label { font-size:12px; border:1px solid var(--line); border-radius:30px; padding:8px 14px; }
+.eyebrow { font-size:11px; letter-spacing:.17em; font-weight:650; color:var(--muted); margin:44px 0 0; }
+h1 { font-family:Georgia,serif; font-weight:400; font-size:clamp(36px,4.4vw,56px); line-height:1.08; letter-spacing:-.03em; margin:12px 0 14px; }
+.lede { max-width:640px; font-size:16px; color:var(--muted); margin:0 0 28px; }
+h2 { font-family:Georgia,serif; font-weight:400; font-size:28px; margin:0 0 6px; }
+.panel { background:var(--panel); border:1px solid var(--line); border-radius:20px; padding:26px; margin:22px 0; }
+.panel > p.note { color:var(--muted); margin:0 0 18px; max-width:760px; }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:22px; }
+.field label { display:block; font-weight:600; margin-bottom:6px; }
+.field small { display:block; color:var(--muted); margin-top:6px; }
+.money { display:flex; align-items:center; border:1px solid var(--line); border-radius:12px; background:#fff; overflow:hidden; max-width:240px; }
+.money span { padding:10px 12px; color:var(--muted); background:#f6efea; }
+.money input { border:0; padding:10px 12px; width:100%; font:inherit; background:transparent; }
+.rules { list-style:none; padding:0; margin:22px 0 0; display:grid; gap:10px; }
+.rule { display:flex; align-items:flex-start; gap:14px; padding:14px 16px; border:1px solid var(--line); border-radius:14px; background:#fff; }
+.rule b { display:block; } .rule small { color:var(--muted); }
+.switch { position:relative; flex:none; width:46px; height:26px; margin-top:2px; }
+.switch input { opacity:0; width:0; height:0; position:absolute; }
+.switch i { position:absolute; inset:0; border-radius:999px; background:#d9cdd3; transition:background .15s; cursor:pointer; }
+.switch i::after { content:""; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:#fff; transition:transform .15s; box-shadow:0 1px 2px rgba(0,0,0,.2); }
+.switch input:checked + i { background:var(--espresso); } .switch input:checked + i::after { transform:translateX(20px); }
+.switch input:focus-visible + i { outline:3px solid #2475ad; outline-offset:2px; }
+.always { margin-top:16px; font-size:13px; color:var(--muted); }
+.always b { color:var(--ink); }
+.row { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+select { font:inherit; padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:#fff; max-width:100%; }
+button { font:inherit; font-weight:600; border:0; border-radius:999px; padding:11px 20px; cursor:pointer; background:var(--espresso); color:var(--cream); }
+button.ghost { background:transparent; color:var(--ink); border:1px solid var(--line); }
+button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible { outline:3px solid #2475ad; outline-offset:3px; }
+.answers { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:18px; }
+.answer { border:1px solid var(--line); border-radius:16px; padding:18px; background:#fff; }
+.answer h3 { margin:0 0 10px; font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+.chip { display:inline-block; font-weight:700; font-size:13px; letter-spacing:.06em; padding:6px 12px; border-radius:999px; outline:2px dashed rgba(45,30,25,.35); outline-offset:-5px; }
+.chip.PASS { background:var(--lilac); } .chip.APPROVAL { background:var(--butter); } .chip.BLOCK { background:var(--orange); }
+.answer ul { list-style:none; padding:0; margin:12px 0 0; display:grid; gap:8px; font-size:14px; }
+.answer li small { display:block; color:var(--muted); font-size:12px; }
+.verdict { margin:16px 0 0; padding:12px 16px; border-left:3px solid var(--accent); background:#eadfe6; border-radius:0 10px 10px 0; }
+.call { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:13px; background:#f6efea; padding:2px 6px; border-radius:6px; }
+dl.kv { display:grid; grid-template-columns:auto 1fr; gap:8px 18px; margin:0; }
+dl.kv dt { color:var(--muted); } dl.kv dd { margin:0; }
+.ok { color:#3c6b3c; font-weight:600; } .no { color:#9a4a1f; font-weight:600; }
+pre { background:var(--espresso); color:var(--cream); padding:16px; border-radius:14px; overflow:auto; font-size:12.5px; line-height:1.5; }
+.copy { float:right; margin:-6px 0 0 10px; padding:7px 14px; font-size:13px; }
+footer { color:var(--muted); font-size:13px; padding:20px 32px 48px; }
+@media (max-width:760px) {
+  header,main,footer { padding-left:16px; padding-right:16px; }
+  .topbar { flex-wrap:wrap; gap:12px; } .topbar img { width:110px; height:auto; } .sandbox-label { display:none; }
+  .grid2, .answers { grid-template-columns:1fr; }
+  .panel { padding:20px; border-radius:16px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <nav class="topbar" aria-label="HOMI">
+    <a href="https://counterfoil-dashboard.vercel.app" aria-label="HOMI home"><img src="/static/crew/homi-wordmark.webp" alt="HOMI" width="150" height="55"></a>
+    <div class="places"><a href="/">Store</a><a href="https://counterfoil-dashboard.vercel.app">Evidence</a><a href="/settings" aria-current="page">Settings</a></div>
+    <span class="sandbox-label">Sandbox · test money only</span>
+  </nav>
+  <p class="eyebrow">COUNTERFOIL · STORE SETTINGS</p>
+  <h1>Your store's rules.</h1>
+  <p class="lede">The rules Counterfoil applies before HOMI's money moves, and how a real store plugs it in. Change them here to see what each one does. Your changes stay in this browser and only drive the <b>What if</b> test below; the shared store keeps HOMI's defaults so every visitor sees the same results.</p>
+</header>
+
+<main>
+  <section class="panel" aria-labelledby="rulesTitle">
+    <h2 id="rulesTitle">1 · The rules</h2>
+    <p class="note">Two numbers the store chooses, and four rules it could switch off. Everything else stays on, whatever you choose.</p>
+    <div class="grid2">
+      <div class="field"><label for="limit">Automatic refund limit</label>
+        <div class="money"><span>USD</span><input id="limit" inputmode="decimal" value="200.00" aria-describedby="limitHelp"></div>
+        <small id="limitHelp">Refunds above it wait for a person, even when everything else checks out.</small></div>
+      <div class="field"><label for="window">Refund window</label>
+        <div class="money"><input id="window" inputmode="numeric" value="30" aria-describedby="windowHelp"><span>days</span></div>
+        <small id="windowHelp">Refunds on older orders wait for a person.</small></div>
+    </div>
+    <ul class="rules">
+      <li class="rule"><label class="switch"><input type="checkbox" data-rule="return_record" checked><i></i></label><div><b>Refunds must match an open return record</b><small>What actually came back: the amount the return allows, minus what is already refunded or reserved, checked against Braintree's own line items.</small></div></li>
+      <li class="rule"><label class="switch"><input type="checkbox" data-rule="match_reader" checked><i></i></label><div><b>The call must match what the Reader read</b><small>Amount, order, return record and currency in the agent's call equal the Reader's hand-off from the e-mail.</small></div></li>
+      <li class="rule"><label class="switch"><input type="checkbox" data-rule="confirm_charges" checked><i></i></label><div><b>A person confirms every charge</b><small>The store holds no record of how many the customer wants, so a reorder waits for the itemised total to be confirmed.</small></div></li>
+      <li class="rule"><label class="switch"><input type="checkbox" data-rule="lock_disputed" checked><i></i></label><div><b>A chargeback locks refunds</b><small>While a dispute the store hasn't won is open on a sale, no refund goes out on it; Braintree's webhook sets the lock.</small></div></li>
+    </ul>
+    <p class="always"><b>Always on:</b> who owns the order · what data a sender may read · the agent's tool list · catalog price × quantity · the store's currency · repeated or unknown refunds · the refund ledger at the moment of payment.</p>
+  </section>
+
+  <section class="panel" aria-labelledby="whatifTitle">
+    <h2 id="whatifTitle">2 · What if</h2>
+    <p class="note">Pick a request and send its call through the gate twice: with HOMI's defaults and with your rules. No model and no money: the store's records and the gate only.</p>
+    <div class="row">
+      <select id="scenario" aria-label="Request"></select>
+      <button id="runWhatif">Run it through the gate</button>
+      <button id="reset" class="ghost">Back to HOMI's defaults</button>
+    </div>
+    <div id="whatifOut" aria-live="polite"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="whoTitle">
+    <h2 id="whoTitle">3 · Who decides held calls</h2>
+    <dl class="kv">
+      <dt>Who</dt><dd>The store manager</dd>
+      <dt>Approval</dt><dd>Single use, expires after 30 minutes, bound to the exact call the manager saw; every check runs again before the money moves.</dd>
+      <dt>Where</dt><dd>The review step in the <a href="/#payBox">store</a>, the <a href="https://counterfoil-dashboard.vercel.app">evidence</a> review desk, or the approval desk the MCP server opens for Claude Desktop.</dd>
+    </dl>
+  </section>
+
+  <section class="panel" aria-labelledby="connectTitle">
+    <h2 id="connectTitle">4 · Connect</h2>
+    <dl class="kv" id="connectList">
+      <dt>Payment rail</dt><dd id="railState">…</dd>
+      <dt>Webhooks</dt><dd id="hookState">…</dd>
+      <dt>PayPal REST</dt><dd><span class="no">Needs a PayPal account.</span> PayPal accounts can't be opened from Türkiye; the gated PayPal REST rail behind the Agent Toolkit's <span class="call">create_refund</span> is ready and tested with a faked HTTP layer.</dd>
+      <dt>Your AI agent</dt><dd>Any MCP client (Claude Desktop, Cursor, Claude Code) calls the Agent Toolkit's <span class="call">create_refund(capture_id, amount)</span> through Counterfoil. Add this entry to the client's config; the keys stay in your <span class="call">.env</span>:</dd>
+    </dl>
+    <pre id="mcpConfig"><button class="copy ghost" id="copyConfig">Copy</button>{
+  "mcpServers": {
+    "counterfoil": {
+      "command": "/path/to/counterfoil/.venv/bin/python",
+      "args": ["/path/to/counterfoil/scripts/counterfoil_mcp.py", "serve",
+               "--scenario", "P6-01", "--rail", "braintree"]
+    }
+  }
+}</pre>
+  </section>
+
+  <section class="panel" aria-labelledby="recordsTitle">
+    <h2 id="recordsTitle">5 · Your records</h2>
+    <p class="note">Counterfoil decides from the store's own records, never from the customer's e-mail.</p>
+    <dl class="kv">
+      <dt>In this demo</dt><dd id="recordsHere">…</dd>
+      <dt>In a real store</dt><dd>Orders and their payments from your order system, return requests from your returns tool, and the sale's line items from Braintree. The gate reads them; it never edits them.</dd>
+    </dl>
+  </section>
+</main>
+<footer>Fictional store · Braintree sandbox · No real funds</footer>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const LABEL = {
+  RMA_MISSING: "No return record cited", RMA_AMOUNT_MISMATCH: "Amount differs from the return record",
+  CUMULATIVE_REFUND_EXCEEDS_RMA: "More than the return record still allows", RMA_ALREADY_REFUNDED: "Return record already refunded",
+  RMA_NOT_OPEN: "Return record not open", RMA_UNKNOWN: "Unknown return record", RAIL_ITEMS_MISMATCH: "Return record disagrees with Braintree's line items",
+  READER_CALL_MISMATCH: "Call differs from what the Reader read", READER_INCOMPLETE: "Reader hand-off incomplete",
+  CHARGE_NEEDS_CONFIRMATION: "Charge needs a person to confirm", TRANSACTION_DISPUTED: "Open chargeback on this sale",
+  AUTO_REFUND_LIMIT_EXCEEDED: "Above the automatic refund limit", OUTSIDE_REFUND_WINDOW: "Outside the refund window",
+  CUSTOMER_ORDER_MISMATCH: "Order belongs to another customer", SCOPE_NOT_ALLOWED: "Outside what this sender may read",
+  TOOL_NOT_ALLOWED: "Tool not on the agent's list", CURRENCY_MISMATCH: "Currency differs from the order",
+  ITEMS_MISMATCH: "Items differ from the Reader's", CHARGE_AMOUNT_MISMATCH: "Charge ≠ catalog price × quantity",
+  CONCURRENT_REFUND: "Refund ledger at payment time", REFUND_OUTCOME_UNKNOWN: "An earlier refund's outcome is unknown",
+  PRIOR_BLOCKED_ATTEMPT: "An earlier call in this session was blocked",
+};
+const WORD = { PASS: "PASS", APPROVAL: "HOLD", BLOCK: "BLOCK" };
+const KEY = "homi-settings-v1";
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function read() {
+  return {
+    auto_refund_limit: (parseFloat($("limit").value) || 0).toFixed(2),
+    window_days: Math.max(0, Math.min(365, parseInt($("window").value, 10) || 0)),
+    relaxed: [...document.querySelectorAll("[data-rule]")].filter((x) => !x.checked).map((x) => x.dataset.rule),
+  };
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(read())); } catch {} }
+function load(s) {
+  $("limit").value = s.auto_refund_limit ?? "200.00"; $("window").value = s.window_days ?? 30;
+  document.querySelectorAll("[data-rule]").forEach((x) => { x.checked = !(s.relaxed || []).includes(x.dataset.rule); });
+}
+try { const s = JSON.parse(localStorage.getItem(KEY) || "null"); if (s) load(s); } catch {}
+document.querySelectorAll("#limit,#window,[data-rule]").forEach((x) => x.addEventListener("change", save));
+$("reset").addEventListener("click", () => { load({}); save(); $("whatifOut").replaceChildren(); });
+
+function answerHTML(title, a, relaxedCodes) {
+  const items = a.findings.filter((f) => f.severity !== "PASS").map((f) =>
+    `<li>${esc(LABEL[f.code] || f.code)}<small>${esc(f.severity === "APPROVAL" ? "HOLD" : f.severity)} · ${esc(f.detail)}</small></li>`).join("");
+  return `<div class="answer"><h3>${title}</h3><span class="chip ${a.decision}">${WORD[a.decision]}</span>
+    ${a.rail_state === "succeeded" ? `<p style="margin:10px 0 0">The money would move.</p>` : `<p style="margin:10px 0 0">No money would move.</p>`}
+    <ul>${items || "<li>Every check passed.</li>"}</ul></div>`;
+}
+function verdict(r, mine) {
+  const d = r.defaults, y = r.yours;
+  if (r.kind === "attack") {
+    if (y.decision === "PASS") return `With your rules this attack <b>gets through</b>. HOMI's defaults stop it.`;
+    const still = y.findings.filter((f) => f.severity !== "PASS").map((f) => LABEL[f.code] || f.code);
+    return mine.relaxed.length
+      ? `Still caught. With ${mine.relaxed.length} rule${mine.relaxed.length > 1 ? "s" : ""} off, the gate still ${WORD[y.decision] === "BLOCK" ? "blocks" : "holds"} it on: ${esc(still.join(" · "))}. The checks overlap on purpose.`
+      : `Caught by: ${esc(still.join(" · "))}. Switch a rule off above and run it again to see what still catches it.`;
+  }
+  if (d.decision !== y.decision) return y.decision === "PASS"
+    ? `A genuine request: with your rules it goes through <b>without a person</b>. HOMI's defaults send it to the manager.`
+    : `A genuine request: with your rules it <b>waits for a person</b>. HOMI's defaults let it through automatically.`;
+  return `A genuine request: same answer with both. ${r.owed ? `The record owes USD ${esc(r.owed)}.` : ""}`;
+}
+async function run() {
+  const mine = read(); save();
+  $("whatifOut").innerHTML = `<p class="note" style="margin-top:16px">Checking…</p>`;
+  try {
+    const res = await fetch("/api/whatif", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scenario_id: $("scenario").value, ...mine }) });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || res.status);
+    const r = await res.json();
+    const args = Object.entries(r.call.args).filter(([k]) => ["order_no", "amount", "currency", "rma_id"].includes(k)).map(([k, v]) => `${k}: ${v}`).join(", ");
+    $("whatifOut").innerHTML = `<p style="margin:18px 0 0">The call: <span class="call">${esc(r.call.tool)}(${esc(args)})</span>${r.owed ? ` · owed by the record: <b>USD ${esc(r.owed)}</b>` : ""}</p>
+      <div class="answers">${answerHTML("HOMI's defaults", r.defaults)}${answerHTML("Your rules", r.yours)}</div>
+      <p class="verdict">${verdict(r, mine)}</p>`;
+  } catch (e) { $("whatifOut").innerHTML = `<p class="no" style="margin-top:16px">${esc(e.message)}</p>`; }
+}
+$("runWhatif").addEventListener("click", run);
+$("copyConfig").addEventListener("click", async () => {
+  const text = $("mcpConfig").innerText.replace(/^Copy/, "").trim();
+  try { await navigator.clipboard.writeText(text); $("copyConfig").textContent = "Copied"; } catch { $("copyConfig").textContent = "Select and copy"; }
+});
+
+(async () => {
+  try {
+    const [config, list] = await Promise.all([fetch("/api/config").then((r) => r.json()), fetch("/api/scenarios").then((r) => r.json())]);
+    const tidy = (s) => (s.kind === "attack" ? "Attack · " : "Genuine · ") + s.technique + ` (${s.id})`;
+    const pick = list.filter((s) => s.id).sort((a, b) => (a.kind === b.kind ? a.id.localeCompare(b.id) : a.kind === "attack" ? -1 : 1));
+    $("scenario").innerHTML = pick.map((s) => `<option value="${esc(s.id)}"${s.id === "P6-01" ? " selected" : ""}>${esc(tidy(s))}</option>`).join("");
+    $("railState").innerHTML = config.rail === "braintree-sandbox" ? `<span class="ok">Braintree sandbox · connected</span> (official Python SDK; PayPal paid through Braintree's mocked PayPal account)` : esc(config.rail);
+    $("hookState").innerHTML = config.braintree_webhooks ? `<span class="ok">Signed Braintree webhooks · on</span> at <span class="call">${esc(location.origin)}/api/braintree/webhook</span>` : "Off on this server";
+    const st = config.store || {};
+    $("recordsHere").textContent = `${(st.orders || []).length} orders, ${(st.customers || []).length} customers and their return records, from docs/senaryolar/store_records.json.`;
+  } catch { $("railState").textContent = "Could not reach the store."; }
+})();
+</script>
+</body>
+</html>

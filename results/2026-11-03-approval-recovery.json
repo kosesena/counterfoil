@@ -1,0 +1,173 @@
+{
+  "recordedAt": "2026-11-03T16:03:22.955759+00:00",
+  "rail": "braintree",
+  "faults": "locally injected",
+  "restart": "SQLite close/reopen and new Gateway; not a hosted process restart",
+  "cases": [
+    {
+      "case": "approve",
+      "heldBeforeMoney": true,
+      "providerRefundTotal": "30.00",
+      "passed": true,
+      "moneyCalls": 1,
+      "replayBlocked": true
+    },
+    {
+      "case": "reject",
+      "heldBeforeMoney": true,
+      "providerRefundTotal": "0.00",
+      "passed": true,
+      "moneyCalls": 0,
+      "replayBlocked": true
+    },
+    {
+      "case": "expire",
+      "heldBeforeMoney": true,
+      "providerRefundTotal": "0.00",
+      "passed": true,
+      "moneyCalls": 0,
+      "replayBlocked": true
+    },
+    {
+      "case": "pending-restart",
+      "heldBeforeMoney": true,
+      "providerRefundTotal": "0.00",
+      "passed": true,
+      "moneyCalls": 0,
+      "replayBlocked": true
+    },
+    {
+      "case": "refund-timeout-before",
+      "heldBeforeMoney": true,
+      "retryCodes": [
+        "REFUND_OUTCOME_UNKNOWN",
+        "PRIOR_BLOCKED_ATTEMPT"
+      ],
+      "ledgerState": [
+        [
+          "settled"
+        ]
+      ],
+      "providerRefundTotal": "0.00",
+      "passed": true,
+      "moneyCalls": 0,
+      "replayBlocked": true
+    },
+    {
+      "case": "refund-timeout-after",
+      "heldBeforeMoney": true,
+      "retryCodes": [
+        "REFUND_OUTCOME_UNKNOWN",
+        "PRIOR_BLOCKED_ATTEMPT"
+      ],
+      "ledgerState": [
+        [
+          "settled"
+        ]
+      ],
+      "providerRefundTotal": "30.00",
+      "passed": true,
+      "moneyCalls": 1,
+      "replayBlocked": true
+    },
+    {
+      "case": "refund-crash-before",
+      "heldBeforeMoney": true,
+      "retryCodes": [
+        "CUMULATIVE_REFUND_EXCEEDS_RMA",
+        "PRIOR_BLOCKED_ATTEMPT"
+      ],
+      "ledgerState": [
+        [
+          "active"
+        ]
+      ],
+      "providerRefundTotal": "0.00",
+      "passed": true,
+      "moneyCalls": 0,
+      "replayBlocked": true
+    },
+    {
+      "case": "refund-crash-after",
+      "heldBeforeMoney": true,
+      "retryCodes": [
+        "UNRECONCILED_RAIL_REFUNDS",
+        "CUMULATIVE_REFUND_EXCEEDS_RMA",
+        "PRIOR_BLOCKED_ATTEMPT"
+      ],
+      "ledgerState": [
+        [
+          "active"
+        ]
+      ],
+      "providerRefundTotal": "30.00",
+      "passed": true,
+      "moneyCalls": 1,
+      "replayBlocked": true
+    },
+    {
+      "case": "charge-timeout-before",
+      "heldBeforeMoney": true,
+      "retryCodes": [
+        "CHARGE_OUTCOME_UNKNOWN",
+        "PRIOR_BLOCKED_ATTEMPT"
+      ],
+      "ledgerState": [
+        [
+          "unknown"
+        ]
+      ],
+      "passed": true,
+      "moneyCalls": 0,
+      "replayBlocked": true
+    },
+    {
+      "case": "charge-timeout-after",
+      "heldBeforeMoney": true,
+      "retryCodes": [
+        "CHARGE_OUTCOME_UNKNOWN",
+        "PRIOR_BLOCKED_ATTEMPT"
+      ],
+      "ledgerState": [
+        [
+          "unknown"
+        ]
+      ],
+      "passed": true,
+      "moneyCalls": 1,
+      "replayBlocked": true
+    },
+    {
+      "case": "charge-crash-before",
+      "heldBeforeMoney": true,
+      "retryCodes": [
+        "DUPLICATE_CHARGE",
+        "PRIOR_BLOCKED_ATTEMPT"
+      ],
+      "ledgerState": [
+        [
+          "requested"
+        ]
+      ],
+      "passed": true,
+      "moneyCalls": 0,
+      "replayBlocked": true
+    },
+    {
+      "case": "charge-crash-after",
+      "heldBeforeMoney": true,
+      "retryCodes": [
+        "DUPLICATE_CHARGE",
+        "PRIOR_BLOCKED_ATTEMPT"
+      ],
+      "ledgerState": [
+        [
+          "requested"
+        ]
+      ],
+      "passed": true,
+      "moneyCalls": 1,
+      "replayBlocked": true
+    }
+  ]
+}

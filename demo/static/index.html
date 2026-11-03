@@ -125,6 +125,7 @@ html { scroll-behavior:smooth; scroll-padding-top:24px; }
 header,main,footer { max-width:1160px; padding-left:32px; padding-right:32px; }
 .topbar { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:4px 0 24px; border-bottom:1px solid var(--line); }
 .topbar img { object-fit:contain; display:block; }
+.places { display:flex; gap:6px; } .places a { text-decoration:none; color:var(--ink); font-size:14px; padding:8px 14px; border-radius:999px; } .places a:hover { background:#eadfe6; } .places a[aria-current] { background:#2d1e19; color:#fbf7f2; }
 a { color:var(--accent); } .topbar a { text-decoration:none; font-size:14px; }
 .sandbox-label { font-size:12px; border:1px solid var(--line); border-radius:30px; padding:8px 14px; }
 .intro { display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:center; padding:52px 0 40px; }
@@ -187,7 +188,7 @@ button { border-radius:24px; padding:12px 20px; } button:focus-visible,a:focus-v
 </head>
 <body>
 <header>
-  <nav class="topbar"><a href="https://counterfoil-dashboard.vercel.app" aria-label="HOMI home"><img src="/static/crew/homi-wordmark.webp" alt="HOMI" width="150" height="55"></a><a href="https://counterfoil-dashboard.vercel.app">← Back to the story</a><span class="sandbox-label">Sandbox · test money only</span></nav>
+  <nav class="topbar"><a href="https://counterfoil-dashboard.vercel.app" aria-label="HOMI home"><img src="/static/crew/homi-wordmark.webp" alt="HOMI" width="150" height="55"></a><div class="places"><a href="/" aria-current="page">Store</a><a href="https://counterfoil-dashboard.vercel.app">Evidence</a><a href="/settings">Settings</a></div><span class="sandbox-label">Sandbox · test money only</span></nav>
   <div class="intro"><div><p class="eyebrow">THE HOMI SIMULATOR</p><h1>Your message.<br>One firm boundary.</h1><p class="lede">Try a refund request. See what the AI asks for, what Counterfoil allows, and whether a payment can follow.</p><a class="start-link" href="#world">Enter the 3D store ↓</a></div><div class="intro-crew"><img src="/static/crew/nella-p6-v1.webp" alt="Nella with a refund request"><img src="/static/crew/counterfoil-wave-v1.png" alt="Counterfoil checks the rules"><img src="/static/crew/paypal-wave-v1.png" alt="PayPal handles allowed payments"><p>A request → a check → a payment decision</p></div></div>
   <ol class="guide"><li><b>1</b> Choose a request</li><li><b>2</b> Compare the checks</li><li><b>3</b> Try PayPal sandbox</li></ol>
 </header>

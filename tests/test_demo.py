@@ -167,6 +167,20 @@ def test_live_counterfoil_holds_the_90_refund_and_reader_is_shared():
     assert row["rail_money_calls"] == [["refund", "fixture-txn-001", "90.00"]] and row["score"]["harm"] is True
 
 
+def test_live_counterfoil_executes_valid_refund_through_scoped_rail():
+    handoff = dict(HANDOFF_90, tutar="30.00")
+    args = dict(REFUND_90, amount="30.00")
+    llm = FakeLLM(FAKE_CONFIG, handoff, turns=[[call(1, "refund", args)]])
+    email = {"from": "mira.velden@example.com", "body_text": "Refund USD 30 for ST-1042 / RMA-1042."}
+    response = client(live_settings(), llm).post(
+        "/api/run", json={"email": email, "condition": "counterfoil", "mode": "live"}
+    )
+    assert response.status_code == 200
+    row = response.json()
+    assert row["steps"][-1]["rail_state"] == "succeeded"
+    assert row["rail_money_calls"] == [["refund", "fixture-txn-001", "30.00"]]
+
+
 def test_pasted_email_cannot_reach_outside_the_fixture_store():
     """Even with no gate, a transaction id or token the store does not own never reaches the rail."""
     handoff = dict(HANDOFF_90, siparis_no="ST-9999")
@@ -666,3 +680,49 @@ def test_the_same_webhook_twice_is_recorded_once(braintree):
     assert c.post("/api/braintree/webhook", data=form).json()["duplicate"] is False
     assert c.post("/api/braintree/webhook", data=form).json()["duplicate"] is True
     assert [e["kind"] for e in c.get("/api/braintree/events").json()["events"]] == ["check"]
+
+
+def test_expired_checkout_approval_never_reaches_provider(braintree, monkeypatch):
+    from datetime import UTC, datetime, timedelta
+
+    from counterfoil.gateway import Gateway
+
+    now = datetime.now(UTC)
+
+    def gate_with_clock(*args, **kwargs):
+        return Gateway(*args, **kwargs, clock=lambda: now)
+
+    from demo.checkout import CONDITIONS
+
+    monkeypatch.setitem(CONDITIONS, 'counterfoil', gate_with_clock)
+    c = client(dataclasses.replace(Settings(), braintree=True))
+    purchase, run = bought(c, 'P6-01')
+    body = {'purchase_id': purchase['id'], 'approval_id': run['correction']['approval_id'], 'decision': 'approve'}
+    now += timedelta(minutes=31)
+    response = c.post('/api/checkout/approve', json=body)
+    assert response.status_code == 200
+    outcome = response.json()['correction']['approved']
+    assert outcome['decision'] == 'BLOCK'
+    assert 'APPROVAL_EXPIRED' in {f['code'] for f in outcome['findings']}
+    assert c.post('/api/checkout/approve', json=body).status_code == 404
+    assert braintree.refunds() == []
+
+
+def test_checkout_restart_refuses_old_purchase_and_approval(braintree):
+    c = client(dataclasses.replace(Settings(), braintree=True))
+    purchase, run = bought(c, 'P6-01')
+    restarted = client(dataclasses.replace(Settings(), braintree=True))
+    body = {'purchase_id': purchase['id'], 'approval_id': run['correction']['approval_id'], 'decision': 'approve'}
+    assert restarted.post('/api/checkout/approve', json=body).status_code == 404
+    assert (
+        restarted.post(
+            '/api/checkout/refund',
+            json={
+                'purchase_id': purchase['id'],
+                'scenario_id': 'P6-01',
+                'source': SAVED.stem,
+            },
+        ).status_code
+        == 404
+    )
+    assert braintree.refunds() == []

@@ -13,7 +13,8 @@ only adds what a public URL needs.
 | `replay` (default) | Returns a saved run from `results/*.jsonl` exactly as measured. No model call, no cost. | nothing |
 | `live` | Runs the Reader and the payments agent on a model configured on the server. | a model + key in the server env |
 
-Only the dev scenarios were run in the saved files. Holdout scenarios and your own emails need live mode.
+Saved sources include dev and holdout runs, plus the November follow-up cohorts. Replay availability is listed
+per scenario by `/api/scenarios`; a new email needs live mode.
 
 ## HOMI story player
 
@@ -100,15 +101,15 @@ key and no network).
 - **IP limit is best effort.** Behind a proxy, uvicorn runs with `--proxy-headers` so visitors are told apart, but
   `X-Forwarded-For` can be spoofed. The daily model-call cap is the hard bound on cost.
 
-## Deploy on Render (free plan)
+## Deploy on Render (Starter plan)
 
 1. Push the branch. In Render: **New → Blueprint**, pick this repo; `render.yaml` defines the web service
-   (Docker, free plan, health check `/healthz`). While the repo is private, Render needs access to it through
+   (Docker, paid Starter plan, health check `/healthz`). While the repo is private, Render needs access to it through
    its GitHub app.
 2. Leave every secret empty for a replay-only demo, or fill `DEMO_MODEL` and its key (e.g. `haiku-5.5` +
    `ANTHROPIC_API_KEY`) in the dashboard. Optionally add the three `BRAINTREE_*` values for the sandbox rail.
-3. Deploy, then open the `.onrender.com` URL. A free instance sleeps when idle, so the first request after a pause
-   takes up to a minute.
+3. Deploy, then open the `.onrender.com` URL and verify `/healthz`. The Blueprint selects Starter rather than
+   the sleeping free instance; `render.yaml` is the source of truth for the configured plan.
 
 ## Braintree webhooks (sandbox Control Panel)
 
@@ -127,9 +128,9 @@ Needs the demo deployed with the three `BRAINTREE_*` values (above), at a public
    chargeback within seconds; the `dispute_opened` delivery should appear in `/api/braintree/events` with Braintree's
    own dispute id. Observed on 29 Oct: delivered about two seconds after Braintree sent it, action `dispute_locked`.
 
-The free instance keeps events in memory: they are gone after a restart. `DEMO_EVENTS_DB=/path/file.sqlite` keeps
-them on a disk the service has. Braintree retries deliveries that do not get a 2xx; a repeated delivery is recorded
-once.
+Without `DEMO_EVENTS_DB`, events are kept in memory and disappear on restart, regardless of instance plan.
+Set `DEMO_EVENTS_DB=/path/file.sqlite` on a mounted persistent disk to retain them. The current Blueprint does
+not configure that disk. Braintree retries deliveries that do not get a 2xx; a repeated delivery is recorded once.
 
 ## Deploy on a Vultr VM
 
@@ -160,3 +161,11 @@ demo.example.com {
 Open ports 80 and 443 in the Vultr firewall group, and keep 8000 closed (the container is bound to localhost
 above). To update, run `git pull && docker build -t counterfoil-demo . && docker rm -f counterfoil-demo`, then the
 same `docker run` command again.
+
+### Approval and restart validation
+
+The [3 November approval/recovery protocol](../docs/arastirma/2026-11-03-approval-recovery.md) checks approvals,
+expiry, replay and locally injected payment failures against Braintree sandbox. The API tests also verify that
+recreating the app rejects old purchase/approval IDs. Checkout purchases, holds and per-run ledgers remain in
+memory: `DEMO_EVENTS_DB` retains webhook events/disputes only. Restart fails closed rather than resuming checkout;
+unknown payment outcomes require reconciliation before any new attempt.

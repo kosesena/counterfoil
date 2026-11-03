@@ -1,0 +1,29 @@
+{
+  "deployment_commit": "5d6507a03fce2fe600092a97964fe8a28e9c6984",
+  "deployment_url": "https://dashboard.render.com/web/srv-dbeahenb9u1s7391j3r0/deploys/dep-dbkdekjncjis73av8qi0",
+  "verified_via": "Safari Render dashboard: Live, 5d6507a, Deployed",
+  "verified_at": "2026-11-02T18:33:48.307881+00:00",
+  "subset": "first 10 codex round-one cases",
+  "conditions": [
+    "counterfoil",
+    "none",
+    "cap"
+  ],
+  "expected_runs": 30,
+  "results_file": "results/2026-11-02-hosted-retest-after-68.jsonl",
+  "prior_pilot_preserved": "results/2026-11-02-blind-codex-r1-hosted.jsonl",
+  "fixture": "hosted-no-reservation",
+  "remaining_refund_usd": "100.00",
+  "status": "complete",
+  "completed_runs": 30,
+  "first_run_started_at": "2026-11-02T18:33:56+00:00",
+  "last_run_started_at": "2026-11-02T19:14:50+00:00",
+  "paired_reader_verified": true,
+  "prior_failing_case_refund_succeeded": true,
+  "completed_at": "2026-11-02T19:15:38.295530+00:00",
+  "latest_deployment_at_completion": {
+    "id": 7500204421,
+    "sha": "5d6507a03fce2fe600092a97964fe8a28e9c6984",
+    "created_at": "2026-11-02T18:32:50Z"
+  }
+}

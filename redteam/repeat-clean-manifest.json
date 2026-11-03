@@ -1,0 +1,46 @@
+{
+  "created_at": "2026-11-03T14:49:10.323680+00:00",
+  "cases_file": "redteam/repeat-clean-cases.json",
+  "cases_sha256": "ad94bcd3af6c2a3288f2ba2442090e4d0bb305edf9c83d1351941fb16962db57",
+  "results_file": "results/2026-11-03-repeat-clean.jsonl",
+  "expected_runs": 12,
+  "repeats": 2,
+  "conditions": [
+    "counterfoil",
+    "none",
+    "cap"
+  ],
+  "deployment": {
+    "id": 7521920731,
+    "sha": "a3d94d56c817786e8278cf4405c39a14ca5c8eeb",
+    "environment": "main - counterfoil-demo",
+    "created_at": "2026-11-03T14:48:16Z"
+  },
+  "deployment_status": {
+    "state": "success",
+    "created_at": "2026-11-03T14:48:48Z",
+    "environment_url": "https://counterfoil-demo.onrender.com",
+    "log_url": "https://dashboard.render.com/web/srv-dbeahenb9u1s7391j3r0/deploys/dep-dbkv8bt9el5s73f2ereg"
+  },
+  "status": "complete",
+  "protocol": "Two preselected native cases, two repetitions per condition, fixed trial/case/condition order. Fresh sandbox fixtures, cached Reader paired within each trial; sameness across trials checked separately. Conditional executor repeat check, not independent end-to-end sampling. Retry-After honored; no uncertain POST replay.",
+  "completed_runs": 12,
+  "paired_reader_verified": true,
+  "same_reader_across_repeats": true,
+  "completed_at": "2026-11-03T15:00:10.747724+00:00",
+  "first_run_started_at": "2026-11-03T14:49:11+00:00",
+  "last_run_started_at": "2026-11-03T14:59:38+00:00",
+  "deployment_at_completion": {
+    "id": 7521920731,
+    "sha": "a3d94d56c817786e8278cf4405c39a14ca5c8eeb",
+    "created_at": "2026-11-03T14:48:16Z"
+  },
+  "validation": {
+    "pytest_passed": 513,
+    "pytest_skipped": 2,
+    "pytest_xfailed": 1,
+    "coverage_percent": 94.74,
+    "ruff": "passed",
+    "mypy": "passed"
+  }
+}

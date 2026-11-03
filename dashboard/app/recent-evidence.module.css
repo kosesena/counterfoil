@@ -1,0 +1,48 @@
+.section { max-width: 1120px; margin: 0 auto; padding: 32px 28px 64px; color: #392432; scroll-margin-top: 110px; }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .12em; color: #735b6c; }
+.section h2 { font: 500 clamp(28px, 4vw, 44px)/1.15 Georgia, serif; margin: 12px 0 18px; }
+.intro { max-width: 760px; font-size: 16px; line-height: 1.65; }
+.selector { display: flex; flex-direction: column; gap: 8px; margin: 26px 0 18px; }
+.selector label { font-size: 14px; font-weight: 600; }
+.selector select { width: min(100%, 600px); padding: 14px 38px 14px 14px; border: 1px solid #96788b; border-radius: 6px; background: #fffaf6; color: #392432; font: inherit; }
+.selector select:focus-visible, .scroll:focus-visible, .download:focus-visible, .notes summary:focus-visible { outline: 3px solid #805478; outline-offset: 3px; }
+.card { background: #fdfaf6; border: 1px solid #d9c8d1; border-radius: 12px; padding: 26px; box-shadow: 0 8px 28px #39243208; }
+.heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.heading h3 { font: 500 26px/1.25 Georgia, serif; margin: 8px 0; }
+.meta { font-size: 12px; margin: 0; color: #735b6c; }
+.complete, .incomplete { font-size: 12px; font-weight: 600; border-radius: 20px; padding: 8px 12px; flex-shrink: 0; }
+.complete { background: #eee4ed; color: #51334b; }
+.incomplete { background: #f9dfb4; color: #653e0b; }
+.description { line-height: 1.6; max-width: 850px; }
+.facts { display: flex; flex-wrap: wrap; gap: 12px 24px; padding: 15px 0 22px; font-size: 14px; }
+.facts strong { font-size: 22px; padding-right: 4px; }
+.scroll { overflow-x: auto; }
+.scroll table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 580px; }
+.scroll caption { text-align: left; font-size: 12px; color: #735b6c; margin-bottom: 12px; }
+.scroll th, .scroll td { padding: 14px 12px; border-bottom: 1px solid #e5d9df; text-align: center; }
+.scroll th:first-child { width: 46%; text-align: left; }
+.scroll thead th { border-bottom: 2px solid #735b6c; font-weight: 600; }
+.scroll tbody th { font-weight: 600; }
+.scroll small { display: block; font-size: 12px; line-height: 1.4; font-weight: 400; color: #735b6c; margin-top: 5px; }
+.scroll td { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ours { background: #eee4ed; font-weight: 600; }
+.notes { margin: 22px 0; font-size: 14px; line-height: 1.6; }
+.notes summary { cursor: pointer; font-weight: 600; }
+.notes p { max-width: 850px; }
+.download { display: inline-flex; gap: 16px; align-items: center; color: #51334b; font-size: 14px; font-weight: 600; text-underline-offset: 4px; padding: 8px 0; }
+@media (max-width: 760px) {
+  .section { padding: 24px 16px 40px; }
+  .card { padding: 18px 14px; }
+  .heading { flex-direction: column; gap: 8px; }
+  .heading h3 { font-size: 24px; }
+  .intro { font-size: 15px; }
+  .scroll { margin: 0 -4px; }
+  .scroll table { min-width: 0; display: block; }
+  .scroll caption { display: block; }
+  .scroll thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .scroll tbody { display: grid; gap: 16px; }
+  .scroll tbody tr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid #e5d9df; border-radius: 6px; overflow: hidden; }
+  .scroll th:first-child { grid-column: 1 / -1; width: auto; }
+  .scroll td { padding: 12px 8px; white-space: normal; border: 0; }
+  .scroll td::before { content: attr(data-condition); display: block; font-size: 11px; font-weight: 500; margin-bottom: 6px; }
+}

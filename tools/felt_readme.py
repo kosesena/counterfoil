@@ -258,6 +258,7 @@ def main() -> None:
         ("show", "What these results show, and what they don't", "wool", "espresso", "espresso"),
         ("cost", "The cost of the alternatives", "orange", "espresso", "espresso"),
         ("results", "Results", "espresso", "cream", "butter"),
+        ("redteam", "Counterfoil red team", "orange", "espresso", "espresso"),
         ("quickstart", "Quick start", "butter", "espresso", "espresso"),
         ("mcp", "Use it from any MCP client", "lilac", "espresso", "espresso"),
         ("architecture", "Architecture", "powder", "espresso", "espresso"),

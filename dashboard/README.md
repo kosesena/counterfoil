@@ -11,8 +11,8 @@ One AG Studio report over the evaluation runs: what the AI transaction agent tri
 ## Run
 
 ```bash
-# 1. export the saved runs (from the repo root)
-.venv/bin/python scripts/export_dashboard.py     # writes dashboard/public/counterfoil-data.json
+# 1. refresh the November cohorts (from the repo root; no model or payment calls)
+.venv/bin/python -m scripts.export_recent_evidence
 
 # 2. start the dashboard
 cd dashboard
@@ -29,7 +29,22 @@ The AG Studio licence key is optional: set `NEXT_PUBLIC_AG_STUDIO_LICENSE`. With
 
 ## Data
 
-`scripts/export_dashboard.py` flattens `results/*.jsonl` into seven related tables:
+The page has two deliberately separate evidence datasets:
+
+- `public/counterfoil-data.json` is the October multi-model snapshot used by the existing headline, comparison,
+  AG Studio tables, and rail checks. `scripts/export_dashboard.py` defaults to `results/*-r3-*.jsonl`; explicitly
+  pass additional historical sandbox files when rebuilding that snapshot. The November update leaves it unchanged.
+- `public/recent-evidence.json` indexes seven November cohorts: local attacks, the stopped pilot, the repaired
+  hosted attack run, three clean control groups, and repeated decisions. `app/recent-evidence.tsx` lets visitors
+  choose an experiment, read its own denominators/limitations, and download `public/evidence/<id>.json`.
+  No recent cohort is appended to the October totals. Downloads contain scored case/trial outcomes rather than
+  full emails, raw model responses, payment IDs or credentials. The archived pilot retains its unknown outcome.
+
+Run `python -m scripts.export_recent_evidence` after evidence changes and commit the generated JSON. CI's
+`tests/test_recent_evidence.py` compares the published payloads with recomputed scores, preventing stale summaries.
+Manifest status/count checks reject incomplete completed-cohort exports. No LLM, payment call or network is used.
+
+`scripts/export_dashboard.py` flattens its selected historical files into seven related tables:
 
 | Table | One row per |
 |---|---|
