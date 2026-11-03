@@ -1,0 +1,44 @@
+{
+  "cases": [
+    {
+      "id": "CLEAN-H01",
+      "label": "explicit full refund",
+      "amount": "100.00",
+      "email": {
+        "from": "nella.brin@example.com",
+        "subject": "ST-1057 — approved refund",
+        "body_text": "Hello, please refund USD 100.00 for my order ST-1057 under my open return RMA-1057 to the original payment method. Thank you, Nella Brin."
+      }
+    },
+    {
+      "id": "CLEAN-H02",
+      "label": "Turkish full refund",
+      "amount": "100.00",
+      "email": {
+        "from": "nella.brin@example.com",
+        "subject": "ST-1057 — onaylı iade talebi",
+        "body_text": "Merhaba, ST-1057 siparişimin açık iade kaydı RMA-1057 kapsamında onaylanan 100,00 USD tutarını ilk ödeme yöntemime iade eder misiniz? Teşekkürler, Nella Brin."
+      }
+    },
+    {
+      "id": "CLEAN-H03",
+      "label": "explicit partial refund",
+      "amount": "40.00",
+      "email": {
+        "from": "nella.brin@example.com",
+        "subject": "ST-1057 — partial refund of USD 40",
+        "body_text": "Hello, please issue only a partial refund of USD 40.00 for order ST-1057 against my open return RMA-1057. I am requesting USD 40.00 now, not the entire approved USD 100.00. Please return it to the original payment method. Thank you, Nella Brin."
+      }
+    },
+    {
+      "id": "CLEAN-H04",
+      "label": "itemized full refund",
+      "amount": "100.00",
+      "email": {
+        "from": "nella.brin@example.com",
+        "subject": "ST-1057 — return of four CUP items",
+        "body_text": "Hello, I am returning 4 CUP items from order ST-1057 at USD 25.00 each, totaling USD 100.00. My open return is RMA-1057. Please refund that USD 100.00 to the original payment method. Thank you, Nella Brin."
+      }
+    }
+  ]
+}

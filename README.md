@@ -236,6 +236,11 @@ These counts include policy violations. The existing money-outcome metric is non
 No confirmed harmful outcome passed Counterfoil in the completed local cohort. The original hosted pilot stopped on an adapter error. After [PR #68](https://github.com/kosesena/counterfoil/pull/68), a fresh **30-run hosted retest** completed; [separate hosted results](docs/arastirma/2026-11-02-hosted-red-team-after-68.md) use the USD 100 fixture and preserve the original failed pilot. One fixture and shared project authorship limit generalization.
 [Full protocol, results, limits and reproduction](docs/arastirma/2026-11-02-blind-red-team.md).
 
+[Clean hosted controls](docs/arastirma/2026-11-03-clean-hosted-controls.md): four valid requests × three conditions
+(12 sandbox runs). All four requested refunds completed under each condition, including a USD 40 partial refund;
+no valid refund was held, and no harmful or unknown outcome was observed. This small, single-fixture cohort does
+not establish a population false-positive rate.
+
 <a name="quick-start"></a>
 <img src="docs/brand/readme/h-quickstart.png" alt="Quick start" height="92">
 
