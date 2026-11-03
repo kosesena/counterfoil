@@ -1,0 +1,11 @@
+{
+  "startedAt": "2026-11-03T16:34:02.783704+00:00",
+  "casesSha256": "bce005f28184407b0befbfd1964ee19eba66ab83c9a075d5a7b21a0e6b28df74",
+  "conditions": [
+    "counterfoil"
+  ],
+  "expectedRuns": 4,
+  "status": "stopped_unknown",
+  "scope": "Project-authored robustness check, not independent or real-user validation",
+  "finishedAt": "2026-11-03T16:34:21.490285+00:00"
+}

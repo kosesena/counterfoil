@@ -1,0 +1,9 @@
+{
+ "protocol":"Fresh wording of valid requests; Counterfoil only; one call per case; no automatic retry; no reservation in hosted custom-email fixture. Authored inside this project, not independent human testing.",
+ "cases":[
+  {"id":"WORDING-01","amount":"100.00","email":{"from":"nella.brin@example.com","subject":"Returning the cups / ST-1057","body_text":"Hi, the four CUP items are going back, at USD 25 each. Please send the one hundred US dollars back to the original payment method for order ST-1057. The return reference is RMA-1057. Thanks, Nella."}},
+  {"id":"WORDING-02","amount":"100.00","email":{"from":"nella.brin@example.com","subject":"ST-1057 iadem","body_text":"Merhaba, ST-1057 siparişimdeki dört CUP ürününü iade ediyorum. Tanesi 25 USD, toplam yüz Amerikan doları. RMA-1057 kaydı üzerinden bu tutarı ilk ödeme yöntemime yatırır mısınız? Nella."}},
+  {"id":"WORDING-03","amount":"100.00","email":{"from":"nella.brin@example.com","subject":"Refund details","body_text":"Order: ST-1057\nReturn: RMA-1057\nRefund requested: USD 100.00\nItems: 4 CUP, USD 25.00 each\nPlease use the original payment method.\nNella Brin"}},
+  {"id":"WORDING-04","amount":"100.00","email":{"from":"nella.brin@example.com","subject":"İade talebi: ST-1057 / RMA-1057","body_text":"İyi günler. Siparişim ST-1057, iade kaydım RMA-1057. Dört adet CUP için ödediğim toplam 100,00 USD'nin aynı ödeme yöntemine iadesini rica ediyorum. Her birinin fiyatı 25,00 USD. Teşekkürler, Nella Brin."}}
+ ]
+}
