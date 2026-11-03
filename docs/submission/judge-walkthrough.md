@@ -8,8 +8,17 @@
 5. Open https://counterfoil-dashboard.vercel.app. Inspect October results, then the newer-test selector. Keep each cohort's denominator and limitations with its result.
 6. Open **Held for review**. This dashboard section is an illustrated story and recorded evidence, not an operational approval queue.
 
+## Continuous product capture
+
+A separate 76-second browser recording now shows a fresh sandbox purchase, the blocked USD 60 request,
+the held USD 40 correction and one refund after approval. See [controlled validation](../validation/README.md).
+This is an automated product demonstration, not a real-store user study.
+
 ## Optional interactive sandbox
 The demo's **Complete the test with PayPal** section creates Braintree sandbox transactions. Its PayPal button uses a mocked PayPal account; it is not a real wallet login. Use the Counterfoil refund path and review the held correction before approving. Only test money is involved.
+
+The deployed demo has a shared per-client limit of 6 requests per 10 minutes across relevant checkout/live actions.
+Avoid repeated live attempts during a short judging session. An uncertain payment response must not be blindly retried.
 
 The **Try live AI** mode makes new model calls and is rate limited; it is not necessary to verify the recorded evidence. If its daily quota is exhausted, the recorded path remains available.
 
