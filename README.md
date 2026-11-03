@@ -353,3 +353,5 @@ The agent prompts are deliberately ordinary, not hardened against injection: the
 <img src="docs/brand/readme/h-license.png" alt="License" height="92">
 
 MIT. See [LICENSE](LICENSE).
+
+Approval/restart validation: [12 Braintree sandbox cases](docs/arastirma/2026-11-03-approval-recovery.md) cover manager decisions, expiry, replay and injected interruptions around payment acceptance. Unknown outcomes remain blocked pending reconciliation; demo checkout sessions do not resume across restarts.

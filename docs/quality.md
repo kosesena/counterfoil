@@ -5,7 +5,7 @@ are the historical 24 Oct measurement, not a new mutation run. Reproduction comm
 
 | Measure | Number |
 |---|---|
-| Tests | **522** collected: **519 passed**, 2 skipped, 1 expected failure (P1-02 scoring, explained in the test) |
+| Tests | **536** collected: **533 passed**, 2 skipped, 1 expected failure (P1-02 scoring, explained in the test) |
 | Line + branch coverage, whole package | **94.74 %** |
 | Line + branch coverage, `counterfoil/gateway.py` | **99 %** (2 defensive lines) |
 | Mutation score, `counterfoil/gateway.py` | **94.8 %**, historical 24 Oct run (1217 of 1284 mutants killed; the 67 survivors are explained below) |

@@ -81,7 +81,7 @@ The agent can still be fooled; Counterfoil makes sure a fooled agent can't send 
 - **Live Claude Haiku 5.5** in the hosted demo, with per-visitor rate limits and a daily call budget.
 - **AG Studio** (AG Grid) dashboard over every run, with a review desk that explains each held call. Its case panel runs on rules over the recorded data, not on an LLM.
 
-**Engineering:** Python, FastAPI and SQLite (orders, RMAs, refund reservations, charge states); **519 passing tests**,
+**Engineering:** Python, FastAPI and SQLite (orders, RMAs, refund reservations, charge states); **533 passing tests**,
 2 skipped and 1 expected failure, **94.74% coverage** (3 Nov 2026), without an LLM or network; 10 architecture decision
 records; the demo configured on **Render Starter**, the dashboard on Vercel. Mutation results remain dated to their
 24 Oct run; see [quality evidence](quality.md).

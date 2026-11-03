@@ -161,3 +161,11 @@ demo.example.com {
 Open ports 80 and 443 in the Vultr firewall group, and keep 8000 closed (the container is bound to localhost
 above). To update, run `git pull && docker build -t counterfoil-demo . && docker rm -f counterfoil-demo`, then the
 same `docker run` command again.
+
+### Approval and restart validation
+
+The [3 November approval/recovery protocol](../docs/arastirma/2026-11-03-approval-recovery.md) checks approvals,
+expiry, replay and locally injected payment failures against Braintree sandbox. The API tests also verify that
+recreating the app rejects old purchase/approval IDs. Checkout purchases, holds and per-run ledgers remain in
+memory: `DEMO_EVENTS_DB` retains webhook events/disputes only. Restart fails closed rather than resuming checkout;
+unknown payment outcomes require reconciliation before any new attempt.
