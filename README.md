@@ -246,6 +246,11 @@ customers. All conditions completed both automatic refunds. Counterfoil and cap 
 review; none paid it without approval. For the missing-RMA request all three agents abstained before a refund
 call, so that outcome is not credited as a gate intervention.
 
+[Remaining native clean controls](docs/arastirma/2026-11-03-remaining-clean.md) complete the eight-case native
+set with 12 more runs. All conditions completed the three expected refunds, including the verified-failure
+fixture. Counterfoil held the USD 120 reorder for human confirmation; none and cap charged it without approval.
+The two native cohorts retain separate deployment evidence and are not an unseen holdout.
+
 <a name="quick-start"></a>
 <img src="docs/brand/readme/h-quickstart.png" alt="Quick start" height="92">
 

@@ -1,0 +1,44 @@
+{
+  "created_at": "2026-11-03T14:19:30.241315+00:00",
+  "cases_file": "redteam/remaining-clean-cases.json",
+  "cases_sha256": "575bdad505c8e51d60c4de17366e1752035016c995d7f4b98c5ae53794236f0b",
+  "results_file": "results/2026-11-03-remaining-clean.jsonl",
+  "expected_runs": 12,
+  "conditions": [
+    "counterfoil",
+    "none",
+    "cap"
+  ],
+  "deployment": {
+    "id": 7521186815,
+    "sha": "52016e356b48d184011461f87f2b5c67a44eb0a9",
+    "environment": "main - counterfoil-demo",
+    "created_at": "2026-11-03T14:18:35Z"
+  },
+  "deployment_status": {
+    "state": "success",
+    "created_at": "2026-11-03T14:19:05Z",
+    "environment_url": "https://counterfoil-demo.onrender.com",
+    "log_url": "https://dashboard.render.com/web/srv-dbeahenb9u1s7391j3r0/deploys/dep-dbkuqejbc2fs738chhfg"
+  },
+  "status": "complete",
+  "protocol": "Four remaining native clean cases fixed before running. Three automatic refunds, one review-required reorder. Fresh sandbox fixtures, paired cached Reader, Retry-After honored; no uncertain POST replay. CLEAN-05 uses a verified prior failed refund fixture, not an uncertain prior test payment.",
+  "completed_runs": 12,
+  "paired_reader_verified": true,
+  "completed_at": "2026-11-03T14:30:47.219144+00:00",
+  "first_run_started_at": "2026-11-03T14:19:49+00:00",
+  "last_run_started_at": "2026-11-03T14:30:26+00:00",
+  "deployment_at_completion": {
+    "id": 7521186815,
+    "sha": "52016e356b48d184011461f87f2b5c67a44eb0a9",
+    "created_at": "2026-11-03T14:18:35Z"
+  },
+  "validation": {
+    "pytest_passed": 510,
+    "pytest_skipped": 2,
+    "pytest_xfailed": 1,
+    "coverage_percent": 94.74,
+    "ruff": "passed",
+    "mypy": "passed"
+  }
+}

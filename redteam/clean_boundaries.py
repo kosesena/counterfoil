@@ -17,9 +17,9 @@ from redteam.run import ROOT, verify_records
 MANIFEST = ROOT / 'redteam/clean-boundaries-manifest.json'
 
 
-def load():
+def load(manifest_path=MANIFEST):
     verify_records()
-    manifest = json.loads(MANIFEST.read_text())
+    manifest = json.loads(manifest_path.read_text())
     path = ROOT / manifest['cases_file']
     if hashlib.sha256(path.read_bytes()).hexdigest() != manifest['cases_sha256']:
         raise ValueError('Frozen scenarios changed')
@@ -82,13 +82,13 @@ def request_run(payload):
             return {'status': 'transport_error', 'error': str(exc), 'outcome_unknown': True}
 
 
-def run():
-    manifest, scenarios = load()
+def run(manifest_path=MANIFEST):
+    manifest, scenarios = load(manifest_path)
     path = ROOT / manifest['results_file']
     if path.exists():
         raise ValueError('Refusing automatic replay/resume of existing cohort')
     manifest['status'] = 'running'
-    MANIFEST.write_text(json.dumps(manifest, indent=2) + '\n')
+    manifest_path.write_text(json.dumps(manifest, indent=2) + '\n')
     for scenario in scenarios:
         handoff = None
         for condition in manifest['conditions']:
