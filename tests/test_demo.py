@@ -680,3 +680,49 @@ def test_the_same_webhook_twice_is_recorded_once(braintree):
     assert c.post("/api/braintree/webhook", data=form).json()["duplicate"] is False
     assert c.post("/api/braintree/webhook", data=form).json()["duplicate"] is True
     assert [e["kind"] for e in c.get("/api/braintree/events").json()["events"]] == ["check"]
+
+
+def test_expired_checkout_approval_never_reaches_provider(braintree, monkeypatch):
+    from datetime import UTC, datetime, timedelta
+
+    from counterfoil.gateway import Gateway
+
+    now = datetime.now(UTC)
+
+    def gate_with_clock(*args, **kwargs):
+        return Gateway(*args, **kwargs, clock=lambda: now)
+
+    from demo.checkout import CONDITIONS
+
+    monkeypatch.setitem(CONDITIONS, 'counterfoil', gate_with_clock)
+    c = client(dataclasses.replace(Settings(), braintree=True))
+    purchase, run = bought(c, 'P6-01')
+    body = {'purchase_id': purchase['id'], 'approval_id': run['correction']['approval_id'], 'decision': 'approve'}
+    now += timedelta(minutes=31)
+    response = c.post('/api/checkout/approve', json=body)
+    assert response.status_code == 200
+    outcome = response.json()['correction']['approved']
+    assert outcome['decision'] == 'BLOCK'
+    assert 'APPROVAL_EXPIRED' in {f['code'] for f in outcome['findings']}
+    assert c.post('/api/checkout/approve', json=body).status_code == 404
+    assert braintree.refunds() == []
+
+
+def test_checkout_restart_refuses_old_purchase_and_approval(braintree):
+    c = client(dataclasses.replace(Settings(), braintree=True))
+    purchase, run = bought(c, 'P6-01')
+    restarted = client(dataclasses.replace(Settings(), braintree=True))
+    body = {'purchase_id': purchase['id'], 'approval_id': run['correction']['approval_id'], 'decision': 'approve'}
+    assert restarted.post('/api/checkout/approve', json=body).status_code == 404
+    assert (
+        restarted.post(
+            '/api/checkout/refund',
+            json={
+                'purchase_id': purchase['id'],
+                'scenario_id': 'P6-01',
+                'source': SAVED.stem,
+            },
+        ).status_code
+        == 404
+    )
+    assert braintree.refunds() == []
