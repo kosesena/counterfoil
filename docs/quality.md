@@ -1,20 +1,29 @@
 # Quality: how the gate is tested, and how well
 
-Measured on 24 Oct 2026 (Python 3.13, macOS) at the commit that added this file. Every number below can be
-reproduced with the commands under each heading.
+Tests and coverage remeasured on 3 Nov 2026 (Python 3.14.5, macOS); CI uses Python 3.13. Mutation results below
+are the historical 24 Oct measurement, not a new mutation run. Reproduction commands are under each heading.
 
 | Measure | Number |
 |---|---|
-| Tests | **301** collected: 298 pass, 2 skipped (parametrised cases with nothing to check: an unlisted tool has no rail endpoint), 1 expected failure (P1-02 scoring, explained in the test) |
-| Line + branch coverage, whole package | **94 %** |
+| Tests | **522** collected: **519 passed**, 2 skipped, 1 expected failure (P1-02 scoring, explained in the test) |
+| Line + branch coverage, whole package | **94.74 %** |
 | Line + branch coverage, `counterfoil/gateway.py` | **99 %** (2 defensive lines) |
-| Mutation score, `counterfoil/gateway.py` | **94.8 %** (1217 of 1284 mutants killed; the 67 survivors are explained below) |
+| Mutation score, `counterfoil/gateway.py` | **94.8 %**, historical 24 Oct run (1217 of 1284 mutants killed; the 67 survivors are explained below) |
 | Property tests | 8 hypothesis tests: a stateful model of the gate with 7 invariants, money parsing, and two fuzzers |
 | Static checks | ruff (pyflakes, pycodestyle, isort, bugbear, pyupgrade, simplify, bandit), ruff format, mypy (`check_untyped_defs`) |
-| Supply chain | pip-audit on runtime and dev requirements: no known vulnerabilities; CodeQL `security-extended` |
+| Supply chain | pip-audit runs in PR CI; CodeQL `security-extended` is configured but was skipped on the recent PR runs, so it is not a completed scan claim |
 
 CI (`.github/workflows/tests.yml`) runs the lint, type, test and audit jobs on every pull request and fails if
 coverage drops below 90 %.
+
+The November control/repeat cohorts and the dashboard export have offline integrity tests. The export checks
+separate denominators, preserves the archived pilot's unknown outcome, excludes errors/unknowns from successful
+completion, and compares published JSON with recomputed scores. Local Python 3.14 emitted SQLite ResourceWarnings
+in the wider suite; those warnings did not fail the run. No live model or payment is needed to reproduce CI tests.
+
+Dashboard validation: `cd dashboard && npm ci && npm run build` checks TypeScript and produces the static site.
+`python -m scripts.export_recent_evidence` rebuilds the separate November evidence files without changing the
+historical multi-model dataset. See [dashboard/README.md](../dashboard/README.md) for the two export paths.
 
 ## Set up
 
