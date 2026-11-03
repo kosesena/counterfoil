@@ -1,6 +1,6 @@
 # Yayın öncesi inceleme — 3 Kasım 2026
 
-İncelenen paket [GitHub teslim sürümüne](https://github.com/kosesena/counterfoil/releases/tag/demo-review-2026-11-03) eklenir. Bu, YouTube yayını veya Devpost gönderimi değildir. Repo hâlâ özeldir; görünürlük değişikliği yapılmadı.
+İncelenen paket [GitHub teslim sürümüne](https://github.com/kosesena/counterfoil/releases/tag/demo-review-2026-11-03) eklenmiştir. Bu, YouTube yayını veya Devpost gönderimi değildir. Repo hâlâ özeldir; görünürlük değişikliği yapılmadı.
 
 ## Hazırlananlar
 - Ana video: GlovesOn’da seçili Eve sesiyle İngilizce anlatım, İngilizce altyazı, 76 saniyelik gerçek sandbox kaydı; kayıt kesilmedi veya hızlandırılmadı.
@@ -19,4 +19,4 @@
 Resmî kurallar: https://paypalaihackathon.devpost.com/rules
 Takvim: https://paypalaihackathon.devpost.com/details/dates
 
-Onay istenen materyaller: counterfoil-demo-eve.mp4 ve devpost-ready.md. Yayınlamaya veya başvuru göndermeye yönelik otomatik işlem yoktur.
+Onay istenen materyaller: counterfoil-demo-eve-captioned.mp4 ve devpost-ready.md. Yayınlamaya veya başvuru göndermeye yönelik otomatik işlem yoktur.

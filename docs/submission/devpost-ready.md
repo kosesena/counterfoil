@@ -12,7 +12,7 @@ Counterfoil checks AI-requested refunds against merchant records before Braintre
 - Interactive demo: https://counterfoil-demo.onrender.com
 - Evidence dashboard: https://counterfoil-dashboard.vercel.app
 - Source: https://github.com/kosesena/counterfoil — PUBLICATION PENDING. The complete source and assets must be public with the MIT license visible before submission. Private reviewer invitations do not satisfy this requirement.
-- Video: YOUTUBE URL PENDING. After owner review, upload counterfoil-demo-eve.mp4 to YouTube, make it publicly visible, and insert its URL here and in the submission form.
+- Video: YOUTUBE URL PENDING. After owner review, upload counterfoil-demo-eve-captioned.mp4 to YouTube, make it publicly visible, and insert its URL here and in the submission form.
 
 ## Inspiration
 An AI returns agent can read a convincing email and ask for the wrong refund. A payment provider knows the sale total, but not which items came back or how much the store's return record still allows. We built Counterfoil to check that merchant evidence before an agent's request reaches the payment provider.
@@ -27,7 +27,7 @@ HOMI, a fictional felt homeware store, makes the flow visible. The live website 
 ## What the demo video shows
 The main video includes a continuous, unsped-up 76-second recording of the deployed browser application captured on 3 November. It shows a USD 200 Braintree sandbox purchase, rejection of a USD 60 refund when only USD 40 remains available, a held USD 40 correction, manager approval, and the resulting sandbox refund. The captured evidence records zero refund calls before approval and one successful USD 40 refund afterward.
 
-The agent calls in this flow are replayed from a saved run. Checkout, gate checks, approval and refund executed against the hosted application and Braintree sandbox during capture. The account is Braintree's mocked PayPal account, not a real PayPal wallet login. Browser automation acts as the manager. This is a working-product demonstration, not a new live-model evaluation or a human user study. English narration uses AssemblyAI’s stock Eve voice (aai-eve); it is synthetic, not a cloned speaker. English captions are supplied. Soft transitions appear between sections; the 76-second sandbox capture remains uninterrupted at its original speed.
+The agent calls in this flow are replayed from a saved run. Checkout, gate checks, approval and refund executed against the hosted application and Braintree sandbox during capture. The account is Braintree's mocked PayPal account, not a real PayPal wallet login. Browser automation acts as the manager. This is a working-product demonstration, not a new live-model evaluation or a human user study. English narration uses AssemblyAI’s stock Eve voice (aai-eve); it is synthetic, not a cloned speaker. English captions are burned into the image and supplied separately as an SRT file. Soft transitions appear between sections; the 76-second sandbox capture remains uninterrupted at its original speed.
 
 ## Why Braintree
 The project's measured payment integration uses Braintree sandbox. The author could not obtain a PayPal account from Türkiye for this project; the PayPal REST adapter was therefore tested with simulated HTTP responses only. Braintree is explicitly included in the [official project requirements](https://paypalaihackathon.devpost.com/rules).

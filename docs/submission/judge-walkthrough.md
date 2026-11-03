@@ -1,6 +1,6 @@
 # Counterfoil — English judge walkthrough
 
-1. Download `counterfoil-demo-review.mp4` from the [reviewed delivery](https://github.com/kosesena/counterfoil/releases/tag/demo-review-2026-11-03) and watch it. Its 76-second central segment is an uninterrupted browser capture at original speed. It shows executed sandbox payments with recorded agent calls.
+1. Download `counterfoil-demo-eve-captioned.mp4` from the [reviewed delivery](https://github.com/kosesena/counterfoil/releases/tag/demo-review-2026-11-03) and watch it. Its 76-second central segment is an uninterrupted browser capture at original speed. It shows executed sandbox payments with recorded agent calls.
 2. Open https://counterfoil-demo.onrender.com. Select “Watch a recorded run”, P6-01, then “Compare the three checks”. Inspect the split-refund attempt and each gate decision.
 3. To test actual sandbox execution, use “Complete the test with PayPal”. Create the USD 200 sandbox purchase, choose the Counterfoil refund path, inspect the blocked USD 60 attempt and the held USD 40 correction, then approve the correction. Inspect the resulting Braintree sandbox refund. This uses a mocked PayPal account, not a wallet login.
 4. Open https://counterfoil-dashboard.vercel.app and inspect the October and November cohorts separately. “Held for review” on this dashboard is an illustrated story, not the operational checkout approval panel.

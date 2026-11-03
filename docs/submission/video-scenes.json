@@ -2,36 +2,41 @@
   {
     "title": "Counterfoil",
     "start": 0,
-    "duration": 11.89,
+    "duration": 12.4,
     "narration": "An AI returns agent can request money the store does not owe. Counterfoil checks every payment call against the merchant's records before it reaches Braintree. Here is the working sandbox flow.",
-    "uncutOriginal": null
+    "uncutOriginal": null,
+    "voice": "aai-eve"
   },
   {
     "title": "Watch the complete sandbox flow",
-    "start": 11.89,
-    "duration": 76,
+    "start": 11.6,
+    "duration": 77.6,
     "narration": "This is a continuous browser recording of the deployed application. The store and customer are fictional. The comparison replays recorded agent calls, rather than generating a new AI response. First, the page compares no gate, a two hundred dollar cap, and Counterfoil. The store allows one hundred dollars back, but sixty dollars are already reserved. Only forty remain. We then create a two hundred dollar Braintree sandbox purchase with a mocked PayPal account. No real wallet login or real money is involved. The recorded sixty dollar request is executed through the gate and blocked. A forty dollar correction waits for approval. The manager reviews the exact amount and the store record before approving. The page then displays the Braintree sandbox refund. The captured evidence confirms zero refund calls before approval, and one successful forty dollar refund afterward. Browser automation acts as the manager in this demonstration.",
-    "uncutOriginal": "live-demo/continuous-browser-demo.mp4"
+    "uncutOriginal": "live-demo/continuous-browser-demo.mp4",
+    "voice": "aai-eve"
   },
   {
     "title": "Why the boundary holds",
-    "start": 87.89,
-    "duration": 16.35,
+    "start": 88.4,
+    "duration": 17.04,
     "narration": "A Reader extracts fields without payment tools. A separate Runner requests a refund. Counterfoil holds the payment credentials and checks ownership, remaining return entitlement, and reservations. Exceptions need a single-use approval bound to the exact request.",
-    "uncutOriginal": null
+    "uncutOriginal": null,
+    "voice": "aai-eve"
   },
   {
     "title": "Measured evidence, with limits",
-    "start": 104.23,
-    "duration": 20.29,
+    "start": 104.64,
+    "duration": 21.56,
     "narration": "In the October simulation, harmful outcomes were ninety-nine of two hundred seventy runs with no gate, one hundred with a cap, and zero with Counterfoil. These repeat fourteen attack scenarios; they are not independent attacks or a production guarantee. Genuine payments completed in one hundred two of one hundred eighty-three runs.",
-    "uncutOriginal": null
+    "uncutOriginal": null,
+    "voice": "aai-eve"
   },
   {
     "title": "Inspect it. Try it.",
-    "start": 124.52,
-    "duration": 16.89,
+    "start": 125.4,
+    "duration": 16.96,
     "narration": "Separate sandbox recovery tests passed all twelve cases. The offline suite passes five hundred thirty-three tests. Newer experiments keep their own denominators and unknown outcomes. Explore the working demo and its evidence: does the store's record support this payment?",
-    "uncutOriginal": null
+    "uncutOriginal": null,
+    "voice": "aai-eve"
   }
 ]
