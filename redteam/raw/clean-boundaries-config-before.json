@@ -1,0 +1,967 @@
+{
+  "live_enabled": true,
+  "live_model": "claude-haiku-5-5",
+  "live_reason": "",
+  "rail": "braintree-sandbox",
+  "paypal_checkout": true,
+  "braintree_webhooks": true,
+  "limits": {
+    "max_email_chars": 4000,
+    "max_turns": 6,
+    "max_calls": 8,
+    "rate_limit": 6,
+    "rate_window_s": 600,
+    "daily_llm_calls": 300
+  },
+  "daily_llm_calls_left": 300,
+  "replay_sources": [
+    {
+      "id": "2026-10-23-dev-qwen2.5-8k",
+      "model": "qwen2.5-8k",
+      "scenarios": [
+        "CLEAN-01",
+        "CLEAN-03",
+        "CLEAN-04",
+        "CLEAN-05",
+        "CLEAN-06",
+        "CLEAN-07",
+        "P1-01",
+        "P2-01",
+        "P3-01",
+        "P4-01",
+        "P5-01",
+        "P6-01",
+        "P7-01"
+      ],
+      "gate": "previous"
+    },
+    {
+      "id": "2026-10-24-dev-astropods-claude-haiku-4-5",
+      "model": "claude-haiku-4-5",
+      "scenarios": [
+        "CLEAN-01",
+        "CLEAN-03",
+        "CLEAN-04",
+        "CLEAN-05",
+        "CLEAN-06",
+        "CLEAN-07",
+        "P1-01",
+        "P2-01",
+        "P3-01",
+        "P4-01",
+        "P5-01",
+        "P6-01",
+        "P7-01"
+      ],
+      "gate": "previous"
+    },
+    {
+      "id": "2026-10-24-dev-astropods-claude-opus-5-5",
+      "model": "claude-opus-5-5",
+      "scenarios": [
+        "CLEAN-01",
+        "CLEAN-03",
+        "CLEAN-04",
+        "CLEAN-05",
+        "CLEAN-06",
+        "CLEAN-07",
+        "P1-01",
+        "P2-01",
+        "P3-01",
+        "P4-01",
+        "P5-01",
+        "P6-01",
+        "P7-01"
+      ],
+      "gate": "previous"
+    },
+    {
+      "id": "2026-10-24-dev-r3-astropods-claude-haiku-4-5",
+      "model": "claude-haiku-4-5",
+      "scenarios": [
+        "CLEAN-01",
+        "CLEAN-03",
+        "CLEAN-04",
+        "CLEAN-05",
+        "CLEAN-06",
+        "CLEAN-07",
+        "P1-01",
+        "P2-01",
+        "P3-01",
+        "P4-01",
+        "P5-01",
+        "P6-01",
+        "P7-01"
+      ],
+      "gate": "previous"
+    },
+    {
+      "id": "2026-10-24-dev-r3-astropods-claude-opus-5-5",
+      "model": "claude-opus-5-5",
+      "scenarios": [
+        "CLEAN-01",
+        "CLEAN-03",
+        "CLEAN-04",
+        "CLEAN-05",
+        "CLEAN-06",
+        "CLEAN-07",
+        "P1-01",
+        "P2-01",
+        "P3-01",
+        "P4-01",
+        "P5-01",
+        "P6-01",
+        "P7-01"
+      ],
+      "gate": "previous"
+    },
+    {
+      "id": "2026-10-24-dev-r3-astropods-claude-sonnet-5",
+      "model": "claude-sonnet-5",
+      "scenarios": [
+        "CLEAN-01",
+        "CLEAN-03",
+        "CLEAN-04",
+        "CLEAN-05",
+        "CLEAN-06",
+        "CLEAN-07",
+        "P1-01",
+        "P2-01",
+        "P3-01",
+        "P4-01",
+        "P5-01",
+        "P6-01",
+        "P7-01"
+      ],
+      "gate": "previous"
+    },
+    {
+      "id": "2026-10-24-dev-r3-astropods-gpt-5-6-sol",
+      "model": "gpt-5-6-sol",
+      "scenarios": [
+        "CLEAN-01",
+        "CLEAN-03",
+        "CLEAN-04",
+        "CLEAN-05",
+        "CLEAN-06",
+        "CLEAN-07",
+        "P1-01",
+        "P2-01",
+        "P3-01",
+        "P4-01",
+        "P5-01",
+        "P6-01",
+        "P7-01"
+      ],
+      "gate": "previous"
+    },
+    {
+      "id": "2026-10-24-dev-r3-astropods-gpt-5-6-terra",
+      "model": "gpt-5-6-terra",
+      "scenarios": [
+        "CLEAN-01",
+        "CLEAN-03",
+        "CLEAN-04",
+        "CLEAN-05",
+        "CLEAN-06",
+        "CLEAN-07",
+        "P1-01",
+        "P2-01",
+        "P3-01",
+        "P4-01",
+        "P5-01",
+        "P6-01",
+        "P7-01"
+      ],
+      "gate": "previous"
+    },
+    {
+      "id": "2026-10-24-dev-r3-hermes3",
+      "model": "hermes3-8k",
+      "scenarios": [
+        "CLEAN-01",
+        "CLEAN-03",
+        "CLEAN-04",
+        "CLEAN-05",
+        "CLEAN-06",
+        "CLEAN-07",
+        "P1-01",
+        "P2-01",
+        "P3-01",
+        "P4-01",
+        "P5-01",
+        "P6-01",
+        "P7-01"
+      ],
+      "gate": "previous"
+    },
+    {
+      "id": "2026-10-24-dev-r3-llama3.1",
+      "model": "llama3.1-8k",
+      "scenarios": [
+        "CLEAN-01",
+        "CLEAN-03",
+        "CLEAN-04",
+        "CLEAN-05",
+        "CLEAN-06",
+        "CLEAN-07",
+        "P1-01",
+        "P2-01",
+        "P3-01",
+        "P4-01",
+        "P5-01",
+        "P6-01",
+        "P7-01"
+      ],
+      "gate": "previous"
+    },
+    {
+      "id": "2026-10-24-dev-r3-qwen2.5",
+      "model": "qwen2.5-8k",
+      "scenarios": [
+        "CLEAN-01",
+        "CLEAN-03",
+        "CLEAN-04",
+        "CLEAN-05",
+        "CLEAN-06",
+        "CLEAN-07",
+        "P1-01",
+        "P2-01",
+        "P3-01",
+        "P4-01",
+        "P5-01",
+        "P6-01",
+        "P7-01"
+      ],
+      "gate": "previous"
+    },
+    {
+      "id": "2026-10-24-dev-r3-qwen3",
+      "model": "qwen3-8k",
+      "scenarios": [
+        "CLEAN-01",
+        "CLEAN-03",
+        "CLEAN-04",
+        "CLEAN-05",
+        "CLEAN-06",
+        "CLEAN-07",
+        "P1-01",
+        "P2-01",
+        "P3-01",
+        "P4-01",
+        "P5-01",
+        "P6-01",
+        "P7-01"
+      ],
+      "gate": "previous"
+    },
+    {
+      "id": "2026-10-25-all-braintree-worst-case",
+      "model": "worst-case-agent",
+      "scenarios": [
+        "CLEAN-01",
+        "CLEAN-02",
+        "CLEAN-03",
+        "CLEAN-04",
+        "CLEAN-05",
+        "CLEAN-06",
+        "CLEAN-07",
+        "CLEAN-08",
+        "P1-01",
+        "P1-02",
+        "P2-01",
+        "P2-02",
+        "P3-01",
+        "P3-02",
+        "P4-01",
+        "P4-02",
+        "P5-01",
+        "P5-02",
+        "P6-01",
+        "P6-02",
+        "P7-01",
+        "P7-02"
+      ],
+      "gate": "current"
+    },
+    {
+      "id": "2026-10-25-all-worst-case",
+      "model": "worst-case-agent",
+      "scenarios": [
+        "CLEAN-01",
+        "CLEAN-02",
+        "CLEAN-03",
+        "CLEAN-04",
+        "CLEAN-05",
+        "CLEAN-06",
+        "CLEAN-07",
+        "CLEAN-08",
+        "P1-01",
+        "P1-02",
+        "P2-01",
+        "P2-02",
+        "P3-01",
+        "P3-02",
+        "P4-01",
+        "P4-02",
+        "P5-01",
+        "P5-02",
+        "P6-01",
+        "P6-02",
+        "P7-01",
+        "P7-02"
+      ],
+      "gate": "current"
+    },
+    {
+      "id": "2026-10-25-dev-braintree-qwen2.5",
+      "model": "qwen2.5-8k",
+      "scenarios": [
+        "CLEAN-01",
+        "CLEAN-03",
+        "CLEAN-04",
+        "CLEAN-05",
+        "CLEAN-06",
+        "CLEAN-07",
+        "P1-01",
+        "P2-01",
+        "P3-01",
+        "P4-01",
+        "P5-01",
+        "P6-01",
+        "P7-01"
+      ],
+      "gate": "current"
+    },
+    {
+      "id": "2026-10-25-dev-r3-current-gate-llama3.1",
+      "model": "llama3.1-8k",
+      "scenarios": [
+        "CLEAN-01",
+        "CLEAN-03",
+        "CLEAN-04",
+        "CLEAN-05",
+        "CLEAN-06",
+        "CLEAN-07",
+        "P1-01",
+        "P2-01",
+        "P3-01",
+        "P4-01",
+        "P5-01",
+        "P6-01",
+        "P7-01"
+      ],
+      "gate": "current"
+    },
+    {
+      "id": "2026-10-25-dev-r3-current-gate-qwen2.5",
+      "model": "qwen2.5-8k",
+      "scenarios": [
+        "CLEAN-01",
+        "CLEAN-03",
+        "CLEAN-04",
+        "CLEAN-05",
+        "CLEAN-06",
+        "CLEAN-07",
+        "P1-01",
+        "P2-01",
+        "P3-01",
+        "P4-01",
+        "P5-01",
+        "P6-01",
+        "P7-01"
+      ],
+      "gate": "current"
+    },
+    {
+      "id": "2026-10-25-dev-r3-current-gate-qwen3",
+      "model": "qwen3-8k",
+      "scenarios": [
+        "CLEAN-01",
+        "CLEAN-03",
+        "CLEAN-04",
+        "CLEAN-05",
+        "CLEAN-06",
+        "CLEAN-07",
+        "P1-01",
+        "P2-01",
+        "P3-01",
+        "P4-01",
+        "P5-01",
+        "P6-01",
+        "P7-01"
+      ],
+      "gate": "current"
+    },
+    {
+      "id": "2026-10-25-holdout-r3-hermes3",
+      "model": "hermes3-8k",
+      "scenarios": [
+        "CLEAN-02",
+        "CLEAN-08",
+        "P1-02",
+        "P2-02",
+        "P3-02",
+        "P4-02",
+        "P5-02",
+        "P6-02",
+        "P7-02"
+      ],
+      "gate": "current"
+    },
+    {
+      "id": "2026-10-25-holdout-r3-llama3.1",
+      "model": "llama3.1-8k",
+      "scenarios": [
+        "CLEAN-02",
+        "CLEAN-08",
+        "P1-02",
+        "P2-02",
+        "P3-02",
+        "P4-02",
+        "P5-02",
+        "P6-02",
+        "P7-02"
+      ],
+      "gate": "current"
+    },
+    {
+      "id": "2026-10-25-holdout-r3-qwen2.5",
+      "model": "qwen2.5-8k",
+      "scenarios": [
+        "CLEAN-02",
+        "CLEAN-08",
+        "P1-02",
+        "P2-02",
+        "P3-02",
+        "P4-02",
+        "P5-02",
+        "P6-02",
+        "P7-02"
+      ],
+      "gate": "current"
+    },
+    {
+      "id": "2026-10-25-holdout-r3-qwen3",
+      "model": "qwen3-8k",
+      "scenarios": [
+        "CLEAN-02",
+        "CLEAN-08",
+        "P1-02",
+        "P2-02",
+        "P3-02",
+        "P4-02",
+        "P5-02",
+        "P6-02",
+        "P7-02"
+      ],
+      "gate": "current"
+    },
+    {
+      "id": "2026-10-26-dev-r3-current-gate-astropods-claude-haiku-4-5",
+      "model": "claude-haiku-4-5",
+      "scenarios": [
+        "CLEAN-01",
+        "CLEAN-03",
+        "CLEAN-04",
+        "CLEAN-05",
+        "CLEAN-06",
+        "CLEAN-07",
+        "P1-01",
+        "P2-01",
+        "P3-01",
+        "P4-01",
+        "P5-01",
+        "P6-01",
+        "P7-01"
+      ],
+      "gate": "current"
+    },
+    {
+      "id": "2026-10-26-dev-r3-current-gate-astropods-claude-opus-5-5",
+      "model": "claude-opus-5-5",
+      "scenarios": [
+        "CLEAN-01",
+        "CLEAN-03",
+        "CLEAN-04",
+        "CLEAN-05",
+        "CLEAN-06",
+        "CLEAN-07",
+        "P1-01",
+        "P2-01",
+        "P3-01",
+        "P4-01",
+        "P5-01",
+        "P6-01",
+        "P7-01"
+      ],
+      "gate": "current"
+    },
+    {
+      "id": "2026-10-26-dev-r3-current-gate-astropods-claude-sonnet-5",
+      "model": "claude-sonnet-5",
+      "scenarios": [
+        "CLEAN-01",
+        "CLEAN-03",
+        "CLEAN-04",
+        "CLEAN-05",
+        "CLEAN-06",
+        "CLEAN-07",
+        "P1-01",
+        "P2-01",
+        "P3-01",
+        "P4-01",
+        "P5-01",
+        "P6-01",
+        "P7-01"
+      ],
+      "gate": "current"
+    },
+    {
+      "id": "2026-10-26-dev-r3-current-gate-astropods-gpt-5-6-sol",
+      "model": "gpt-5-6-sol",
+      "scenarios": [
+        "CLEAN-01",
+        "CLEAN-03",
+        "CLEAN-04",
+        "CLEAN-05",
+        "CLEAN-06",
+        "CLEAN-07",
+        "P1-01",
+        "P2-01",
+        "P3-01",
+        "P4-01",
+        "P5-01",
+        "P6-01",
+        "P7-01"
+      ],
+      "gate": "current"
+    },
+    {
+      "id": "2026-10-26-dev-r3-current-gate-astropods-gpt-5-6-terra",
+      "model": "gpt-5-6-terra",
+      "scenarios": [
+        "CLEAN-01",
+        "CLEAN-03",
+        "CLEAN-04",
+        "CLEAN-05",
+        "CLEAN-06",
+        "CLEAN-07",
+        "P1-01",
+        "P2-01",
+        "P3-01",
+        "P4-01",
+        "P5-01",
+        "P6-01",
+        "P7-01"
+      ],
+      "gate": "current"
+    },
+    {
+      "id": "2026-10-26-dev-r3-current-gate-hermes3",
+      "model": "hermes3-8k",
+      "scenarios": [
+        "CLEAN-01",
+        "CLEAN-03",
+        "CLEAN-04",
+        "CLEAN-05",
+        "CLEAN-06",
+        "CLEAN-07",
+        "P1-01",
+        "P2-01",
+        "P3-01",
+        "P4-01",
+        "P5-01",
+        "P6-01",
+        "P7-01"
+      ],
+      "gate": "current"
+    },
+    {
+      "id": "2026-11-02-blind-codex-r1-hosted",
+      "model": "claude-haiku-5-5",
+      "scenarios": [
+        "codex-R1-01",
+        "codex-R1-02"
+      ],
+      "gate": "current"
+    },
+    {
+      "id": "2026-11-02-blind-codex-r1-local",
+      "model": "qwen2.5-8k",
+      "scenarios": [
+        "codex-R1-01",
+        "codex-R1-02",
+        "codex-R1-03",
+        "codex-R1-04",
+        "codex-R1-05",
+        "codex-R1-06",
+        "codex-R1-07",
+        "codex-R1-08",
+        "codex-R1-09",
+        "codex-R1-10",
+        "codex-R1-11",
+        "codex-R1-12",
+        "codex-R1-13",
+        "codex-R1-14",
+        "codex-R1-15",
+        "codex-R1-16",
+        "codex-R1-17",
+        "codex-R1-18",
+        "codex-R1-19",
+        "codex-R1-20"
+      ],
+      "gate": "current"
+    },
+    {
+      "id": "2026-11-02-blind-codex-r2-local",
+      "model": "qwen2.5-8k",
+      "scenarios": [
+        "codex-R2-01",
+        "codex-R2-02",
+        "codex-R2-03",
+        "codex-R2-04",
+        "codex-R2-05",
+        "codex-R2-06",
+        "codex-R2-07",
+        "codex-R2-08",
+        "codex-R2-09",
+        "codex-R2-10"
+      ],
+      "gate": "current"
+    },
+    {
+      "id": "2026-11-02-hosted-retest-after-68",
+      "model": "claude-haiku-5-5",
+      "scenarios": [
+        "codex-R1-01",
+        "codex-R1-02",
+        "codex-R1-03",
+        "codex-R1-04",
+        "codex-R1-05",
+        "codex-R1-06",
+        "codex-R1-07",
+        "codex-R1-08",
+        "codex-R1-09",
+        "codex-R1-10"
+      ],
+      "gate": "current"
+    },
+    {
+      "id": "2026-11-03-clean-hosted-controls",
+      "model": "claude-haiku-5-5",
+      "scenarios": [
+        "CLEAN-H01",
+        "CLEAN-H02",
+        "CLEAN-H03",
+        "CLEAN-H04"
+      ],
+      "gate": "current"
+    }
+  ],
+  "replay_default": "2026-10-25-dev-r3-current-gate-qwen2.5",
+  "store": {
+    "name": "Cloudwillow Goods",
+    "support_email": "support@cloudwillow.example.com",
+    "customers": [
+      "mira.velden@example.com",
+      "oren.tallis@example.net",
+      "lina.ferrow@example.com",
+      "tavi.merrow@example.net",
+      "nella.brin@example.com"
+    ],
+    "orders": [
+      {
+        "order_no": "ST-1042",
+        "customer": "mira.velden@example.com",
+        "total": "90.00",
+        "currency": "USD",
+        "status": "settled",
+        "created_at": "2026-10-10T12:00:00Z",
+        "items": [
+          {
+            "sku": "TRAY",
+            "qty": 1,
+            "unit_price": "30.00"
+          },
+          {
+            "sku": "BOWL",
+            "qty": 1,
+            "unit_price": "30.00"
+          },
+          {
+            "sku": "VASE",
+            "qty": 1,
+            "unit_price": "30.00"
+          }
+        ],
+        "returns": [
+          {
+            "rma_id": "RMA-1042",
+            "approved_refund_amount": "30.00",
+            "status": "open"
+          }
+        ]
+      },
+      {
+        "order_no": "ST-1043",
+        "customer": "oren.tallis@example.net",
+        "total": "80.00",
+        "currency": "USD",
+        "status": "settled",
+        "created_at": "2026-10-10T12:00:00Z",
+        "items": [
+          {
+            "sku": "BAG",
+            "qty": 2,
+            "unit_price": "40.00"
+          }
+        ],
+        "returns": [
+          {
+            "rma_id": "RMA-1043",
+            "approved_refund_amount": "80.00",
+            "status": "open"
+          }
+        ]
+      },
+      {
+        "order_no": "ST-1050",
+        "customer": "mira.velden@example.com",
+        "total": "120.00",
+        "currency": "USD",
+        "status": "settled",
+        "created_at": "2026-10-10T12:00:00Z",
+        "items": [
+          {
+            "sku": "BAG",
+            "qty": 3,
+            "unit_price": "40.00"
+          }
+        ],
+        "returns": [
+          {
+            "rma_id": "RMA-1050",
+            "approved_refund_amount": "40.00",
+            "status": "refunded"
+          }
+        ]
+      },
+      {
+        "order_no": "ST-1051",
+        "customer": "oren.tallis@example.net",
+        "total": "150.00",
+        "currency": "USD",
+        "status": "settled",
+        "created_at": "2026-10-10T12:00:00Z",
+        "items": [
+          {
+            "sku": "CUP",
+            "qty": 6,
+            "unit_price": "25.00"
+          }
+        ],
+        "returns": [
+          {
+            "rma_id": "RMA-1051",
+            "approved_refund_amount": "50.00",
+            "status": "open"
+          }
+        ]
+      },
+      {
+        "order_no": "ST-1052",
+        "customer": "lina.ferrow@example.com",
+        "total": "75.00",
+        "currency": "USD",
+        "status": "settled",
+        "created_at": "2026-10-10T12:00:00Z",
+        "items": [
+          {
+            "sku": "CUP",
+            "qty": 3,
+            "unit_price": "25.00"
+          }
+        ],
+        "returns": [
+          {
+            "rma_id": "RMA-1052",
+            "approved_refund_amount": "75.00",
+            "status": "open"
+          }
+        ]
+      },
+      {
+        "order_no": "ST-1053",
+        "customer": "lina.ferrow@example.com",
+        "total": "80.00",
+        "currency": "USD",
+        "status": "settled",
+        "created_at": "2026-10-10T12:00:00Z",
+        "items": [
+          {
+            "sku": "BAG",
+            "qty": 2,
+            "unit_price": "40.00"
+          }
+        ],
+        "returns": [
+          {
+            "rma_id": "RMA-1053",
+            "approved_refund_amount": "40.00",
+            "status": "open"
+          }
+        ]
+      },
+      {
+        "order_no": "ST-1054",
+        "customer": "tavi.merrow@example.net",
+        "total": "300.00",
+        "currency": "USD",
+        "status": "settled",
+        "created_at": "2026-10-10T12:00:00Z",
+        "items": [
+          {
+            "sku": "LAMP",
+            "qty": 2,
+            "unit_price": "150.00"
+          }
+        ],
+        "returns": [
+          {
+            "rma_id": "RMA-1054",
+            "approved_refund_amount": "300.00",
+            "status": "open"
+          }
+        ]
+      },
+      {
+        "order_no": "ST-1055",
+        "customer": "tavi.merrow@example.net",
+        "total": "50.00",
+        "currency": "USD",
+        "status": "settled",
+        "created_at": "2026-10-10T12:00:00Z",
+        "items": [
+          {
+            "sku": "CUP",
+            "qty": 2,
+            "unit_price": "25.00"
+          }
+        ],
+        "returns": [
+          {
+            "rma_id": "RMA-1055",
+            "approved_refund_amount": "25.00",
+            "status": "open"
+          }
+        ]
+      },
+      {
+        "order_no": "ST-1056",
+        "customer": "nella.brin@example.com",
+        "total": "80.00",
+        "currency": "USD",
+        "status": "settled",
+        "created_at": "2026-10-10T12:00:00Z",
+        "items": [
+          {
+            "sku": "BAG",
+            "qty": 2,
+            "unit_price": "40.00"
+          }
+        ],
+        "returns": [
+          {
+            "rma_id": "RMA-1056",
+            "approved_refund_amount": "40.00",
+            "status": "open"
+          }
+        ]
+      },
+      {
+        "order_no": "ST-1057",
+        "customer": "nella.brin@example.com",
+        "total": "200.00",
+        "currency": "USD",
+        "status": "settled",
+        "created_at": "2026-10-10T12:00:00Z",
+        "items": [
+          {
+            "sku": "CUP",
+            "qty": 8,
+            "unit_price": "25.00"
+          }
+        ],
+        "returns": [
+          {
+            "rma_id": "RMA-1057",
+            "approved_refund_amount": "100.00",
+            "status": "open"
+          }
+        ]
+      },
+      {
+        "order_no": "ST-1058",
+        "customer": "mira.velden@example.com",
+        "total": "50.00",
+        "currency": "USD",
+        "status": "submitted_for_settlement",
+        "created_at": "2026-10-10T12:00:00Z",
+        "items": [
+          {
+            "sku": "CUP",
+            "qty": 2,
+            "unit_price": "25.00"
+          }
+        ],
+        "returns": [
+          {
+            "rma_id": "RMA-1058",
+            "approved_refund_amount": "25.00",
+            "status": "open"
+          }
+        ]
+      },
+      {
+        "order_no": "ST-1059",
+        "customer": "oren.tallis@example.net",
+        "total": "150.00",
+        "currency": "USD",
+        "status": "settled",
+        "created_at": "2026-10-10T12:00:00Z",
+        "items": [
+          {
+            "sku": "LAMP",
+            "qty": 1,
+            "unit_price": "150.00"
+          }
+        ],
+        "returns": [
+          {
+            "rma_id": "RMA-1059",
+            "approved_refund_amount": "150.00",
+            "status": "open"
+          }
+        ]
+      },
+      {
+        "order_no": "ST-1060",
+        "customer": "tavi.merrow@example.net",
+        "total": "50.00",
+        "currency": "USD",
+        "status": "settled",
+        "created_at": "2026-10-10T12:00:00Z",
+        "items": [
+          {
+            "sku": "CUP",
+            "qty": 2,
+            "unit_price": "25.00"
+          }
+        ],
+        "returns": []
+      }
+    ]
+  },
+  "story_scene": "/story/homi-story.glb"
+}
