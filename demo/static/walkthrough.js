@@ -138,7 +138,7 @@ function place({ at, via }, walk) {
   }
   if (walks.length) requestAnimationFrame(tick);
 }
-const RIGGED = []; // characters with a rigged model in /static/world/crew/<key>.glb; add a key when its file lands
+const RIGGED = ["runner"]; // characters with a rigged model in /static/world/crew/<key>.glb; add a key when its file lands
 const rigs = {};
 async function loadRigs() {
   const loader = new GLTFLoader();
