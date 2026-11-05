@@ -29,8 +29,8 @@ A gate between an AI returns agent and Braintree. Every refund or charge the age
 > 5. **Where it stops:** [What these results show, and what they don't](#what-these-results-show-and-what-they-dont), and [what ran on a real rail](#what-ran-on-a-real-rail-and-what-didnt).
 
 <p align="center">
-  <a href="#results"><img src="docs/brand/readme/band.webp" alt="Wrong money moved: 0 of 270 attack runs with Counterfoil, 99 of 270 with no gate; 82% of genuine requests still handled right; 9 AI models tested" width="100%"></a>
-  <br><sub>Simulation · 1,359 completed runs · 14 attacks × 9 models × 3 repeats · exported 26 Oct 2026 · <a href="#results">how we measured</a></sub>
+  <a href="#results"><img src="docs/brand/readme/band.webp" alt="Wrong money moved: 0 of 270 attack runs with Counterfoil, 99 of 270 with no gate, 100 of 270 behind a $200 spending cap; 82% of genuine requests still handled right" width="100%"></a>
+  <br><sub><b>9 AI models</b>, local and cloud · 14 attacks × 3 repeats · simulation, 1,359 completed runs · exported 26 Oct 2026 · <a href="#results">how we measured</a></sub>
 </p>
 
 <a name="the-return-crew"></a>

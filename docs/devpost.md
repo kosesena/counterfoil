@@ -12,9 +12,13 @@ Counterfoil
 
 ## Elevator pitch (≤ 200 characters)
 
-> An AI agent can be talked into a refund. A store's records can't. Counterfoil checks every agent refund against the return record before Braintree moves the money.
+> Across 9 AI models and 270 attack runs, a returns agent moved wrong money 99 times with no gate and 100 times behind a $200 cap. Behind Counterfoil: 0.
 
-(163 characters)
+(151 characters. Source: `results/2026-10-25-*-r3-*.jsonl` and `results/2026-10-26-dev-r3-current-gate-*.jsonl`,
+re-scored with the current scorer on 5 Nov: none 99/270, cap 100/270, counterfoil 0/270.)
+
+Earlier pitch, kept as the README tagline: *An AI agent can be talked into a refund. A store's records can't.
+Counterfoil checks every agent refund against the return record before Braintree moves the money.*
 
 ## Try it out
 
