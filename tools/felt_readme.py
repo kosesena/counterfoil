@@ -199,8 +199,8 @@ def band() -> None:
     blocks = [
         ("0", "/270", ["attack runs where wrong", "money moved, with Counterfoil"], "espresso", "cream", "cream"),
         ("99", "/270", ["the same attacks", "with no gate"], "orange", "espresso", "espresso"),
+        ("100", "/270", ["the same attacks behind", "a $200 spending cap"], "powder", "espresso", "espresso"),
         ("82%", "", ["genuine requests", "still handled right"], "lilac", "espresso", "espresso"),
-        ("9", "", ["AI models tested,", "local and cloud"], "powder", "espresso", "espresso"),
     ]
     bw, bh, gap = 300 * S, 230 * S, 8 * S
     canvas = Image.new("RGBA", (4 * bw + 3 * gap + 48, bh + 60), (0, 0, 0, 0))
