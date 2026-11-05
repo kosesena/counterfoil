@@ -65,7 +65,9 @@ async function loadStore() {
     new ResizeObserver(resize).observe(stage); resize();
     stage.classList.add("is-ready");
     status.textContent = "Drag to look around · scroll to zoom";
+    if (location.hash === "#debug") window.__homi = { THREE, actors, camera, controls, scene, draw };
     if (play) show(play.i, true);
+    loadRigs();
   } catch {
     renderer?.dispose(); renderer = null; stage.querySelector("canvas")?.remove();
     status.textContent = "3D could not load; the approved still is shown.";
@@ -84,17 +86,82 @@ function buildActors(root) {
     const box = new THREE.Box3(); meshes.forEach((m) => box.expandByObject(m));
     const pivot = new THREE.Group(); pivot.position.set((box.min.x + box.max.x) / 2, box.min.y, (box.min.z + box.max.z) / 2);
     root.add(pivot); pivot.updateMatrixWorld(true); meshes.forEach((m) => pivot.attach(m));
-    actors[k] = { pivot, height: box.max.y - box.min.y, base: pivot.position.clone() };
+    // base: where Blender placed them; ground: where they stand now (the steps walk them around the floor)
+    actors[k] = { pivot, height: box.max.y - box.min.y, base: pivot.position.clone(), ground: pivot.position.clone() };
   }
   if (!actors.counterfoil) actors.counterfoil = { pivot: null, anchor: fromBlender([-12.05, -8.18, 2.2]), height: 0 };
 }
 const headOf = (k) => { const a = actors[k]; if (!a) return null; return a.pivot ? a.pivot.position.clone().add(new THREE.Vector3(0, a.height, 0)) : a.anchor.clone(); };
-const middleOf = (k) => { const a = actors[k]; if (!a) return null; return a.pivot ? a.pivot.position.clone().add(new THREE.Vector3(0, a.height * 0.55, 0)) : a.anchor.clone(); };
+const middleOf = (k, at) => { const a = actors[k]; if (!a) return null; return a.pivot ? (at || a.pivot.position).clone().add(new THREE.Vector3(0, a.height * 0.55, 0)) : a.anchor.clone(); };
+
+// ---- walking ------------------------------------------------------------------------------------------------------
+// A step may send characters across the shop floor: `at: { runner: [[x, z], ...] }` in three.js metres, the last point
+// is where they stop, the ones before are corners to walk around the counters and the other characters; `"home"` is
+// the spot Blender gave them. Positions are cumulative: a character stays where the last step sent it, and every
+// step's layout is known up front, so Back and a click on the rail land in the same place. Forward by one step, they
+// walk; any other jump puts them there at once. The spots were picked from a top-down scan of the floor so that, from
+// the store camera, nobody stands in front of the character a step is about.
+// A character with a rigged model in /static/world/crew/<key>.glb (Meshy auto-rig) plays its walk clip; the others
+// walk like a felt toy: a small bounce and a side-to-side waddle.
+const FACING = 0.43; // rotation 0 faces the store camera; a rigged Meshy model faces +Z, so it is turned by this much
+const SPEED = 1.3;   // metres per second
+let walks = [];
+const spot = (k, p) => (p === "home" ? actors[k].base.clone() : new THREE.Vector3(p[0], actors[k].base.y, p[1]));
+function layoutFor(i) {
+  const at = {}, via = {};
+  for (const k of Object.keys(actors)) if (actors[k].pivot) at[k] = actors[k].base.clone();
+  play.steps.slice(0, i + 1).forEach((s, j) => {
+    for (const [k, path] of Object.entries(s.at || {})) {
+      if (!at[k]) continue;
+      const pts = path.map((p) => spot(k, p));
+      at[k] = pts[pts.length - 1];
+      if (j === i) via[k] = pts.slice(0, -1);
+    }
+  });
+  return { at, via };
+}
+function place({ at, via }, walk) {
+  walks = [];
+  for (const [k, to] of Object.entries(at)) {
+    const a = actors[k];
+    a.pivot.rotation.set(0, 0, 0);
+    if (a.ground.distanceTo(to) < 0.01) { a.pivot.position.copy(to); continue; }
+    if (!walk || CALM) { a.ground.copy(to); a.pivot.position.copy(to); continue; }
+    const pts = [a.ground.clone(), ...(via[k] || []), to.clone()];
+    let t0 = performance.now() + 350;
+    for (let j = 1; j < pts.length; j++) {
+      const d = pts[j].clone().sub(pts[j - 1]), ms = (d.length() / SPEED) * 1000;
+      walks.push({ key: k, from: pts[j - 1], to: pts[j], t0, ms, heading: Math.atan2(d.x, d.z) - FACING, last: j === pts.length - 1 });
+      t0 += ms;
+    }
+    a.ground.copy(to);
+  }
+  if (walks.length) requestAnimationFrame(tick);
+}
+const RIGGED = []; // characters with a rigged model in /static/world/crew/<key>.glb; add a key when its file lands
+const rigs = {};
+async function loadRigs() {
+  const loader = new GLTFLoader();
+  await Promise.all(RIGGED.map(async (k) => {
+    const a = actors[k]; if (!a?.pivot) return;
+    let gltf; try { gltf = await loader.loadAsync(`/static/world/crew/${k}.glb`); } catch { return; } // keeps the felt-toy walk
+    const model = gltf.scene, box = new THREE.Box3().setFromObject(model), h = box.max.y - box.min.y;
+    if (!(h > 0)) return;
+    model.scale.setScalar(a.height / h);
+    model.position.set(-(box.min.x + box.max.x) / 2 * model.scale.x, -box.min.y * model.scale.y, -(box.min.z + box.max.z) / 2 * model.scale.z);
+    const holder = new THREE.Group(); holder.rotation.y = FACING; holder.add(model);
+    a.pivot.children.forEach((c) => { c.visible = false; }); a.pivot.add(holder);
+    const mixer = new THREE.AnimationMixer(model);
+    const clip = gltf.animations.find((c) => /walk/i.test(c.name)) || gltf.animations[0];
+    rigs[k] = { mixer, walk: clip ? mixer.clipAction(clip) : null };
+  }));
+  draw();
+}
 
 // Turn the camera to a character (or back to the whole store): keep the viewing direction, move the target, zoom in.
-function focus(key) {
+function focus(key, at) {
   if (!renderer) return;
-  const target = key ? middleOf(key) : home.target.clone();
+  const target = key ? middleOf(key, at) : home.target.clone();
   if (!target) return;
   const offset = home.position.clone().sub(home.target);
   const to = { target, position: target.clone().add(offset), zoom: key ? 1.9 : 1 };
@@ -105,15 +172,28 @@ function focus(key) {
 let moves = [];
 function animate(key, kind) {
   const a = actors[key]; if (!a?.pivot || CALM || !kind) return;
-  moves = moves.filter((m) => m.key !== key); a.pivot.position.copy(a.base); a.pivot.rotation.set(0, 0, 0);
-  moves.push({ key, kind, t0: performance.now() + 500, ms: kind === "shake" ? 900 : 800 });
+  moves = moves.filter((m) => m.key !== key);
+  const after = Math.max(0, ...walks.filter((w) => w.key === key).map((w) => w.t0 + w.ms - performance.now()));
+  moves.push({ key, kind, t0: performance.now() + Math.max(500, after + 150), ms: kind === "shake" ? 900 : 800 });
   requestAnimationFrame(tick);
 }
-let ticking = false;
+let ticking = false, last = 0;
 function tick(now) {
-  if (ticking) return; ticking = true;
+  if (ticking) return; ticking = true; last = now;
   const step = (t) => {
     let busy = false;
+    const dt = Math.min(0.05, (t - last) / 1000); last = t;
+    walks = walks.filter((w) => {
+      const a = actors[w.key], r = rigs[w.key], k = (t - w.t0) / w.ms;
+      if (k < 0) { busy = true; return true; }
+      const u = Math.min(1, k);
+      a.pivot.position.lerpVectors(w.from, w.to, u);
+      a.pivot.rotation.y = u < 1 || !w.last ? w.heading : 0;
+      if (r?.walk) { r.walk.play(); r.mixer.update(dt); if (u >= 1 && w.last) { r.walk.stop(); r.mixer.update(0); } }
+      else if (u < 1) { const ph = (t - w.t0) / 1000 * 2 * Math.PI * 2.2; a.pivot.position.y = w.from.y + Math.abs(Math.sin(ph)) * 0.09; a.pivot.rotation.z = Math.sin(ph) * 0.07; }
+      if (u >= 1) { a.pivot.position.copy(w.to); a.pivot.rotation.set(0, w.last ? 0 : w.heading, 0); return false; }
+      busy = true; return true;
+    });
     if (fly) {
       const k = Math.min(1, (t - fly.t0) / fly.ms), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
       controls.target.lerpVectors(fly.from.target, fly.to.target, e);
@@ -125,10 +205,10 @@ function tick(now) {
       const a = actors[m.key], k = (t - m.t0) / m.ms;
       if (k < 0) { busy = true; return true; }
       const u = Math.min(1, k);
-      if (m.kind === "hop") a.pivot.position.y = a.base.y + Math.abs(Math.sin(2 * Math.PI * u)) * 0.22 * (1 - u * 0.4);
+      if (m.kind === "hop") a.pivot.position.y = a.ground.y + Math.abs(Math.sin(2 * Math.PI * u)) * 0.22 * (1 - u * 0.4);
       else if (m.kind === "shake") a.pivot.rotation.y = Math.sin(6 * Math.PI * u) * 0.32 * (1 - u);
       else if (m.kind === "nod") a.pivot.rotation.x = Math.sin(4 * Math.PI * u) * 0.12 * (1 - u);
-      if (u >= 1) { a.pivot.position.copy(a.base); a.pivot.rotation.set(0, 0, 0); return false; }
+      if (u >= 1) { a.pivot.position.copy(a.ground); a.pivot.rotation.set(0, 0, 0); return false; }
       busy = true; return true;
     });
     draw();
@@ -185,7 +265,7 @@ function build(sc, rows) {
   if (mail.body_html) parts.push(`<h3 style="margin-top:12px">HTML part · the Reader sees all of it, a mail app may hide some</h3><pre class="raw">${esc(mail.body_html)}</pre>`);
   if (mail.attachment_text) parts.push(`<h3 style="margin-top:12px">Attachment · extracted text</h3><pre class="raw">${esc(mail.attachment_text)}</pre>`);
   steps.push({
-    key: "nella", short: "E-mail", move: "hop", title: "The e-mail arrives",
+    key: "nella", short: "E-mail", move: "hop", at: { nella: [[-8.6, 12.9], [-6.4, 10.6]] }, title: "The e-mail arrives",
     badges: [{ key: "nella", html: `<b>${esc(mail.from)}</b>“${esc(mail.subject)}”` }],
     body: `<p class="lead">The mail system checks who sent it. Everything else in the e-mail is the sender's own text.</p>
       <div class="card">${kv([["From", esc(mail.from)], ["Subject", esc(mail.subject)]])}</div><div class="card"><h3>Body</h3>${parts.join("")}</div>`,
@@ -202,7 +282,7 @@ function build(sc, rows) {
       ]) : "<p>The Reader's answer was not a usable hand-off.</p>"}</div>`,
   });
   steps.push({
-    key: "runner", short: "Agent", move: "hop", title: "The agent asks for a call",
+    key: "runner", short: "Agent", move: "hop", at: { runner: [[-12.6, 10.4]] }, title: "The agent asks for a call",
     badges: [{ key: "runner", html: calls.length ? `<b>Agent · asks</b>${calls.map(callText).join("<br>")}` : "<b>Agent</b>made no call" }],
     body: `<p class="lead">The payments agent works from the hand-off alone. Every call it makes, reads included, goes to Counterfoil first.</p>
       <div class="card"><h3>Calls, in order</h3>${calls.length ? calls.map((s) => `<div class="call">${callText(s)}</div>`).join("") : "<p>No call.</p>"}</div>`,
@@ -220,7 +300,7 @@ function build(sc, rows) {
   });
   if (calls.some((s) => s.decision === "APPROVAL")) {
     steps.push({
-      key: "manager", short: "Manager", move: "hop", tone: "APPROVAL", title: "A person decides",
+      key: "manager", short: "Manager", move: "hop", at: { manager: [[-13.6, 10.8]] }, tone: "APPROVAL", title: "A person decides",
       badges: [{ key: "manager", tone: "APPROVAL", html: "<b>Store manager</b>a held call is waiting" }],
       body: `<p class="lead">A held call does not move money. The store manager sees the call, the record and the reason, and approves or rejects it. On approval Counterfoil checks the record again, because it may have changed.</p>
         <p class="note">In the demo page you can play the manager: pay with PayPal in section 3, then approve or reject.</p>`,
@@ -235,7 +315,7 @@ function build(sc, rows) {
   }).join("");
   const harmNone = rows.none?.score?.harm, harmCf = cf?.score?.harm, movedCf = moved(cf);
   steps.push({
-    key: "paypal", short: "Braintree", move: movedCf.length ? "hop" : "nod", tone: harmNone ? "harm" : "",
+    key: "paypal", short: "Braintree", move: movedCf.length ? "hop" : "nod", at: { runner: movedCf.length ? [[-10.4, 11.9]] : [[-10.4, 10.35], "home"] }, tone: harmNone ? "harm" : "",
     title: "What reached Braintree",
     badges: [{ key: "paypal", tone: harmCf ? "harm" : movedCf.length ? "PASS" : "", html: `<b>PayPal · Braintree</b>${movedCf.length ? `moved ${movedCf.map(callText).join(", ")}` : "no money moved"}` }],
     body: `<p class="lead">The same hand-off, the same model, three ways to guard the money.${attack && harmNone && !harmCf ? " Without Counterfoil, money the store does not owe leaves HOMI." : ""}</p>
@@ -243,7 +323,7 @@ function build(sc, rows) {
       <p class="note">"Wrong money" means money the store's record does not owe, money on another customer's order, or another customer's data. Scored by <code>counterfoil/evaluate.py</code>.</p>`,
   });
   steps.push({
-    key: null, short: "All runs", title: `Across ${TOTALS.models} AI models`,
+    key: null, short: "All runs", at: { nella: [[-8.6, 12.9], "home"], runner: ["home"], manager: ["home"] }, title: `Across ${TOTALS.models} AI models`,
     badges: [{ key: "counterfoil", tone: "name", html: "0 wrong money" }],
     body: `<p class="lead">This was one run. The same 14 attacks ran with ${TOTALS.models} AI models, local and cloud, three times each: ${TOTALS.runs} attack runs per guard.</p>
       <div class="big"><div class="cf"><b>${TOTALS.cf}<small>/${TOTALS.runs}</small></b><span>wrong money with Counterfoil</span></div>
@@ -258,6 +338,7 @@ function build(sc, rows) {
 let play = null;
 function show(i, quiet = false) {
   if (!play) return;
+  const was = play.i;
   play.i = Math.max(0, Math.min(play.steps.length - 1, i));
   const s = play.steps[play.i], n = play.steps.length;
   $("rail").replaceChildren(...play.steps.map((st, j) => {
@@ -274,7 +355,12 @@ function show(i, quiet = false) {
   $("next").disabled = play.i === n - 1;
   $("next").textContent = play.i === 0 ? "Start" : play.i === n - 1 ? "Done" : "Next";
   $("where").textContent = s.key ? `HOMI store · ${NAMES[s.key]}` : "HOMI store";
-  focus(s.key); showBadges(s.badges || []); if (!quiet) animate(s.key, s.move);
+  if (renderer) {
+    const layout = layoutFor(play.i);
+    place(layout, !quiet && play.i === was + 1);
+    focus(s.key, s.key && layout.at[s.key]);
+  }
+  showBadges(s.badges || []); if (!quiet) animate(s.key, s.move);
 }
 $("back").addEventListener("click", () => play && show(play.i - 1));
 $("next").addEventListener("click", () => play && show(play.i + 1));
@@ -302,7 +388,7 @@ async function open(id) {
   }));
   if (!rows.counterfoil) { $("content").innerHTML = `<p class="eyebrow">${esc(id)}</p><h1>No saved run for this test</h1><p class="lead">Choose another test above.</p>`; return; }
   play = { id, steps: build(sc, rows), i: 0 };
-  history.replaceState(null, "", `?test=${encodeURIComponent(id)}`);
+  history.replaceState(null, "", `?test=${encodeURIComponent(id)}${location.hash}`);
   show(0);
 }
 
