@@ -35,8 +35,11 @@ let renderer, camera, scene, controls, home, fly = null, badges = [], props = nu
 
 function draw() { if (!renderer) return; renderer.render(scene, camera); placeBadges(); }
 
+let storeLoading = false;
 async function loadStore() {
   if (PHONE.matches) { status.textContent = ""; return; }
+  if (renderer || storeLoading) return;
+  storeLoading = true; status.textContent = "Opening the 3D store…";
   try {
     const meta = await fetch("/static/world/camera.json").then((r) => { if (!r.ok) throw Error(); return r.json(); });
     const draco = new DRACOLoader().setDecoderPath("https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/libs/draco/gltf/");
@@ -77,6 +80,8 @@ async function loadStore() {
   } catch {
     renderer?.dispose(); renderer = null; stage.querySelector("canvas")?.remove();
     status.textContent = "3D could not load; the approved still is shown.";
+  } finally {
+    storeLoading = false;
   }
 }
 
@@ -391,6 +396,8 @@ addEventListener("keydown", (e) => {
   else if (e.key === "Home") { e.preventDefault(); show(0); }
   else if (e.key === "End") { e.preventDefault(); show(play.steps.length - 1); }
 });
+
+PHONE.addEventListener("change", () => { if (!PHONE.matches) loadStore(); }); // a window opened narrow and widened later still gets the store
 
 async function api(path, body) {
   const r = await fetch(path, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {});
