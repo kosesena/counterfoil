@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HOMI · Walkthrough</title>
+<meta name="description" content="One recorded test, step by step, in the 3D HOMI store: the e-mail, the Reader, the agent's call, Counterfoil's check and what reached Braintree.">
+<style>
+:root {
+  --bg: #e9e3da; --card: #fbf7f2; --paper: #ffffff; --ink: #2d1e19; --mute: #7b6f66; --line: #ddd2c6; --soft: #f3ece4;
+  --block: #e98a3a; --hold: #f6d98a; --pass: #e4a1f5; --harm: #2d1e19; --panel: min(560px, 44vw);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
+button, select { font: inherit; color: inherit; }
+button:focus-visible, select:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+/* ---------- layout: the store on the left, the steps on the right ---------- */
+.app { display: grid; grid-template-columns: minmax(0, 1fr) var(--panel); height: 100vh; height: 100dvh; overflow: hidden; }
+.stage-wrap { position: relative; overflow: hidden; background: radial-gradient(120% 90% at 50% 40%, #f4efe8 0%, #e9e3da 60%, #ded5ca 100%); }
+#stage { position: absolute; inset: 0; cursor: grab; }
+#stage:active { cursor: grabbing; }
+#stage canvas { display: block; position: absolute; inset: 0; touch-action: none; }
+#stage > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+#stage.is-ready > img { visibility: hidden; }
+.meta { position: absolute; top: 20px; left: 22px; right: 22px; display: flex; justify-content: space-between; gap: 12px; z-index: 3; pointer-events: none; }
+.chip { font: 600 11px ui-monospace, Menlo, monospace; letter-spacing: .14em; text-transform: uppercase; background: rgba(251,247,242,.86); border: 1px solid rgba(45,30,25,.12); border-radius: 999px; padding: 7px 12px; backdrop-filter: blur(8px); }
+.chip a { color: inherit; pointer-events: auto; text-decoration: none; }
+.status { position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%); font-size: 12px; color: var(--mute); background: rgba(251,247,242,.86); border: 1px solid rgba(45,30,25,.1); border-radius: 999px; padding: 6px 12px; z-index: 3; pointer-events: none; white-space: nowrap; }
+.tools { position: absolute; right: 20px; bottom: 18px; z-index: 4; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: rgba(251,247,242,.9); }
+.tools button { width: 40px; height: 38px; border: 0; background: none; font-size: 18px; cursor: pointer; }
+.tools button + button { border-top: 1px solid var(--line); }
+.tools button:hover { background: var(--soft); }
+
+/* felt speech badge over a character (same patch as the demo's store) */
+.badges { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.badge { position: absolute; transform: translate(-50%, calc(-100% - 14px)); max-width: min(300px, 48%); padding: 11px 15px 12px; border-radius: 16px; background: var(--card); color: var(--ink);
+  box-shadow: 0 3px 0 #d9c9b8, 0 10px 24px rgba(45,30,25,.18); outline: 2px dashed rgba(45,30,25,.38); outline-offset: -7px; font-size: 13px; line-height: 1.4; opacity: 0; transition: opacity .25s, transform .25s; }
+.badge.show { opacity: 1; transform: translate(-50%, calc(-100% - 18px)); }
+.badge::after { content: ""; position: absolute; left: 50%; bottom: -9px; width: 16px; height: 16px; background: inherit; transform: translateX(-50%) rotate(45deg); border-radius: 0 0 4px 0; box-shadow: 3px 3px 0 #d9c9b8; }
+.badge b { display: block; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 2px; opacity: .75; }
+.badge.name { padding: 6px 12px 7px; font-size: 12px; font-weight: 600; }
+.badge.BLOCK { background: var(--block); } .badge.APPROVAL { background: var(--hold); } .badge.PASS { background: var(--pass); }
+.badge.harm { background: var(--harm); color: var(--card); outline-color: rgba(251,247,242,.45); box-shadow: 0 3px 0 #120a08, 0 10px 24px rgba(45,30,25,.25); }
+
+/* ---------- panel ---------- */
+.panel { display: flex; flex-direction: column; background: var(--card); border-left: 1px solid var(--line); min-height: 0; }
+.top { display: flex; align-items: center; gap: 12px; padding: 16px 26px 12px; border-bottom: 1px solid var(--line); flex: none; }
+.top img { height: 26px; width: auto; }
+.top label { margin-left: auto; font-size: 12px; color: var(--mute); display: flex; align-items: center; gap: 8px; }
+.top select { max-width: 230px; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; font-size: 13px; }
+.rail { display: flex; padding: 16px 22px 12px; gap: 2px; border-bottom: 1px solid var(--line); flex: none; }
+.st { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: 0; padding: 0; cursor: pointer; font-size: 11px; color: var(--mute); position: relative; }
+.st i { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid var(--line); background: var(--paper); display: grid; place-items: center; font: 600 11px ui-monospace, Menlo, monospace; font-style: normal; position: relative; z-index: 1; transition: .25s; }
+.st:not(:last-child)::after { content: ""; position: absolute; left: calc(50% + 15px); right: calc(-50% + 15px); top: 14.5px; height: 1.5px; background: var(--line); }
+.st span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.st.done i { border-color: var(--ink); color: var(--ink); } .st.done::after { background: var(--ink); }
+.st.on { color: var(--ink); font-weight: 600; }
+.st.on i { background: var(--ink); color: var(--card); border-color: var(--ink); box-shadow: 0 0 0 4px rgba(45,30,25,.1); }
+.st.on.BLOCK i { background: var(--block); color: var(--ink); border-color: var(--ink); }
+.st.on.APPROVAL i { background: var(--hold); color: var(--ink); border-color: var(--ink); }
+.st.on.PASS i { background: var(--pass); color: var(--ink); border-color: var(--ink); }
+.content { flex: 1; min-height: 0; overflow: auto; padding: 22px 26px 14px; }
+.eyebrow { font: 600 11px ui-monospace, Menlo, monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--mute); margin: 0 0 10px; }
+h1 { margin: 0 0 10px; font-size: 27px; line-height: 1.2; letter-spacing: -.01em; }
+.lead { font-size: 16px; color: #5b4d44; margin: 0 0 18px; }
+.card { border: 1px solid var(--line); background: var(--paper); border-radius: 14px; padding: 12px 16px; margin: 0 0 12px; }
+.card h3 { margin: 0 0 6px; font: 600 11px ui-monospace, Menlo, monospace; letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
+.kv { display: grid; grid-template-columns: 118px 1fr; gap: 0 14px; margin: 0; }
+.kv dt, .kv dd { padding: 8px 0; border-bottom: 1px dashed var(--line); margin: 0; font-size: 14px; }
+.kv dt { color: var(--mute); }
+.kv > :nth-last-child(-n+2) { border-bottom: 0; }
+.mail { white-space: pre-wrap; word-break: break-word; font-size: 14px; margin: 0; }
+.raw { white-space: pre-wrap; word-break: break-word; font: 12.5px/1.5 ui-monospace, Menlo, monospace; background: var(--soft); border-radius: 8px; padding: 10px 12px; margin: 6px 0 0; }
+.call { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px dashed var(--line); }
+.call:last-child { border-bottom: 0; }
+.call code { background: var(--soft); border-radius: 6px; padding: 3px 7px; font-size: 13px; }
+.why { flex-basis: 100%; font-size: 13px; color: #5b4d44; }
+.why code { background: none; padding: 0; font-weight: 600; }
+.pill { font: 700 11px ui-monospace, Menlo, monospace; letter-spacing: .08em; border-radius: 999px; padding: 3px 9px; border: 1.5px solid var(--ink); }
+.pill.BLOCK { background: var(--block); } .pill.APPROVAL { background: var(--hold); } .pill.PASS { background: var(--pass); }
+.pill.harm { background: var(--harm); color: var(--card); } .pill.safe { background: var(--paper); }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 9px 6px; border-bottom: 1px dashed var(--line); vertical-align: top; }
+th { font: 600 11px ui-monospace, Menlo, monospace; letter-spacing: .1em; text-transform: uppercase; color: var(--mute); }
+tr.us td { font-weight: 600; }
+.big { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 0 0 12px; }
+.big div { border-radius: 14px; padding: 14px 14px 12px; border: 1.5px solid var(--ink); outline: 2px dashed rgba(45,30,25,.3); outline-offset: -7px; }
+.big b { display: block; font-size: 30px; line-height: 1.1; } .big b small { font-size: 15px; font-weight: 600; }
+.big span { font-size: 12.5px; }
+.big .cf { background: var(--harm); color: var(--card); outline-color: rgba(251,247,242,.4); } .big .ng { background: var(--block); } .big .cap { background: #c9d6e6; }
+.note { font-size: 13px; color: var(--mute); margin: 8px 0 0; }
+.note a, .lead a { color: var(--ink); text-underline-offset: 3px; }
+.nav { display: flex; align-items: center; gap: 10px; padding: 14px 26px 18px; border-top: 1px solid var(--line); flex: none; }
+.nav .keys { font-size: 12px; color: var(--mute); margin-right: auto; }
+.btn { border: 1.5px solid var(--ink); background: var(--paper); border-radius: 999px; padding: 10px 18px; font-weight: 600; cursor: pointer; }
+.btn.primary { background: var(--ink); color: var(--card); padding: 10px 26px; }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+
+/* phones: no WebGL, the approved still, the steps underneath */
+@media (max-width: 760px) {
+  .app { display: block; height: auto; overflow: visible; }
+  .stage-wrap { height: 46vh; min-height: 300px; }
+  .tools, .status, #where { display: none; }
+  .meta { top: 12px; left: 12px; right: 12px; justify-content: flex-end; }
+  .panel { border-left: 0; border-top: 1px solid var(--line); }
+  .top, .rail, .content, .nav { padding-left: 16px; padding-right: 16px; }
+  .st span { display: none; }
+  .nav { position: sticky; bottom: 0; background: var(--card); }
+  .nav .keys { display: none; }
+  .big { grid-template-columns: 1fr; }
+  h1 { font-size: 23px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="stage-wrap">
+    <div id="stage"><img src="/static/world/preview.png" alt="The HOMI store in felt: Nella at the exit gates, PayPal beside her, Reader and Runner at the returns kiosk and the till, the manager by the office door, Counterfoil behind the checkout."></div>
+    <div class="badges" id="badges" aria-hidden="true"></div>
+    <div class="meta"><span class="chip" id="where">HOMI store · return desk</span><span class="chip"><a href="/">Try your own e-mail ↗</a></span></div>
+    <p class="status" id="status" role="status">Opening the 3D store…</p>
+    <div class="tools"><button id="zoomIn" aria-label="Zoom in">+</button><button id="zoomOut" aria-label="Zoom out">−</button><button id="reset" aria-label="Reset view">⟲</button></div>
+  </div>
+  <section class="panel" aria-label="Walkthrough">
+    <div class="top">
+      <img src="/static/crew/homi-wordmark.webp" alt="HOMI">
+      <label>Test <select id="pick" aria-label="Choose a recorded test"></select></label>
+    </div>
+    <nav class="rail" id="rail" aria-label="Steps"></nav>
+    <div class="content" id="content" aria-live="polite"></div>
+    <div class="nav">
+      <span class="keys">← → to move · nothing plays on its own</span>
+      <button class="btn" id="back">Back</button>
+      <button class="btn primary" id="next">Next</button>
+    </div>
+  </section>
+</div>
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+               "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }
+</script>
+<script type="module" src="/static/walkthrough.js"></script>
+</body>
+</html>
