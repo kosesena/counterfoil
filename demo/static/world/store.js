@@ -127,7 +127,7 @@ export function startPeople({ scene, root, renderer, actors, draw, calm, canvas 
   const pickAny = (arr) => arr[Math.floor(Math.random() * arr.length)];
   function browseNext(st) {
     if (st.picks >= st.goal) return goPay(st);
-    const stop = pickAny(STOPS.filter((p) => p !== st.last)); st.last = stop;
+    const stop = pickAny(STOPS.filter((p) => p !== st.last && !shoppers.some((o) => o !== st && o.last === p))); st.last = stop;
     st.path = rowPath(here(st), stop[0], stop[1]); st.i = 0;
     st.arrive = () => {
       // a cart stays parallel to the shelf and the shopper turns to it; with a basket they face it
@@ -139,11 +139,13 @@ export function startPeople({ scene, root, renderer, actors, draw, calm, canvas 
     };
   }
   function goPay(st) {
+    if (shoppers.some((o) => o !== st && o.atTill)) { st.path = []; st.i = 0; st.arrive = null; st.wait = 1.2; st.then = () => goPay(st); return; } // one customer at the till
+    st.atTill = true;
     st.path = [...rowPath(here(st), TILL_X, 0), [TILL_X, TILL_Z]]; st.i = 0;
     st.arrive = () => {
       st.o.rotation.y = Math.PI * 0.86; st.gestures.push({ g: GESTURES.pay, t0: performance.now() + 200 }); st.wait = 2.6;
       st.then = () => {
-        st.path = [[TILL_X, ROWS[0]], [-5.2, ROWS[0]], [-5.2, DOOR[1]], DOOR]; st.i = 0;
+        st.atTill = false; st.path = [[TILL_X, ROWS[0]], [-5.2, ROWS[0]], [-5.2, DOOR[1]], DOOR]; st.i = 0;
         st.arrive = () => { st.gone = true; st.o.visible = false; st.wait = 5 + Math.random() * 7; st.then = () => comeBack(st); };
       };
     };
@@ -195,15 +197,38 @@ export function startPeople({ scene, root, renderer, actors, draw, calm, canvas 
     j.head?.rotation.set((st.headDown || 0) + off.head[0], look + off.head[1], off.head[2]);
     m.a.pivot.position.y = m.a.base.y + Math.abs(c) * st.bob * w + (st.idleBounce ? Math.abs(Math.sin(t * 3.4 + m.seed)) * st.idleBounce * idle : 0);
   }
+  // Where a person takes up floor: their body, and for a cart the basket pushed ahead of them.
+  const footprint = (o, cart) => (cart ? [[o.position.x, o.position.z], [o.position.x + Math.sin(o.rotation.y) * 0.72, o.position.z + Math.cos(o.rotation.y) * 0.72]] : [[o.position.x, o.position.z]]);
+  const SPACE = 0.68; // metres kept between any two footprint points
+  function others(st) {
+    const list = shoppers.filter((o) => o !== st && !o.gone).map((o) => ({ pts: footprint(o.o, o.cart), who: o }));
+    for (const m of moving) if (Math.abs(m.a.pivot.position.z) < 12 && m.a.name === "Nella") list.push({ pts: footprint(m.a.pivot, false), who: null });
+    return list;
+  }
   function walkShopper(st, dt) {
     if (st.wait > 0) { st.wait -= dt; if (st.wait <= 0 && st.then) { const f = st.then; st.then = null; f(); } return false; }
     const target = st.path[st.i];
     if (!target) { if (st.arrive) { const f = st.arrive; st.arrive = null; f(); } return false; }
     const dx = target[0] - st.o.position.x, dz = target[1] - st.o.position.z, d = Math.hypot(dx, dz), v = st.style.speed * dt;
-    if (d <= v || d < 0.01) { st.o.position.x = target[0]; st.o.position.z = target[1]; st.i++; return true; }
-    st.o.position.x += (dx / d) * v; st.o.position.z += (dz / d) * v;
-    const aim = Math.atan2(dx, dz), turn = Math.atan2(Math.sin(aim - st.o.rotation.y), Math.cos(aim - st.o.rotation.y));
-    st.o.rotation.y += turn * Math.min(1, dt * 9);
+    st.stuck = (st.stuck || 0) + dt;
+    if (d <= Math.max(v, 0.03) || st.stuck > 7) { st.stuck = 0; st.o.position.x = target[0]; st.o.position.z = target[1]; st.i++; return true; }
+    const ux = dx / d, uz = dz / d, near = others(st), mine = footprint(st.o, st.cart);
+    // look ahead: someone in the way means easing off and stepping to the right
+    let side = 0, slow = 1;
+    for (const n of near) for (const q of n.pts) for (const p of mine) {
+      const rx = q[0] - p[0], rz = q[1] - p[1], dist = Math.hypot(rx, rz), ahead = rx * ux + rz * uz;
+      if (ahead > -0.1 && dist < 2.0) { const k = 1 - dist / 2.0; side = Math.max(side, k); if (dist < 1.1) slow = Math.min(slow, Math.max(0.25, dist / 1.1)); }
+    }
+    let mx = ux - uz * side * -0.9, mz = uz + ux * side * -0.9; // the right-hand side of the direction of travel
+    const len = Math.hypot(mx, mz) || 1; mx /= len; mz /= len;
+    st.o.position.x += mx * v * slow; st.o.position.z += mz * v * slow;
+    // never overlap: push this walker clear of anyone it has reached
+    for (const n of near) for (const q of n.pts) for (const p of footprint(st.o, st.cart)) {
+      const rx = p[0] - q[0], rz = p[1] - q[1], dist = Math.hypot(rx, rz) || 0.001;
+      if (dist < SPACE) { st.o.position.x += (rx / dist) * (SPACE - dist); st.o.position.z += (rz / dist) * (SPACE - dist); }
+    }
+    const aim = Math.atan2(mx, mz), turn = Math.atan2(Math.sin(aim - st.o.rotation.y), Math.cos(aim - st.o.rotation.y));
+    st.o.rotation.y += turn * Math.min(1, dt * 7);
     return true;
   }
   renderer.shadowMap.autoUpdate = false; renderer.shadowMap.needsUpdate = true;

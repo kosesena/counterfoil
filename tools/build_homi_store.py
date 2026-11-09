@@ -212,7 +212,6 @@ def lamp(n, x, y, h=1.6):
 lamp("LampA", 6.7, -1.9, 1.6); lamp("LampB", 4.5, -3.9, 1.3)
 b("Armch", (0.85, 0.75, 0.42), (5.4, -2.5, 0.26), "cognac", bevel=0.09); b("ArmchB", (0.85, 0.18, 0.76), (5.4, -2.15, 0.45), "cognac", bevel=0.08)
 cushion("ArmchC", 5.4, -2.6, 0.5, "forest")
-plant("PlantA", -4.7, 3.95, 1.25); plant("PlantB", 4.6, -0.2, 1.15, "pot_cream"); plant("PlantC", -3.8, -3.9, 1.05, "pot_char"); plant("PlantD", 7.1, 0.6, 1.3)
 # furnished rooms on low stages across the front of the store
 STAGE_H = 0.11
 def staged(x, y, w, d, build):
@@ -265,7 +264,6 @@ def dining_room():
         c(f"Plate{i}", 0.13, 0.012, (p_x, p_y, 0.835), "ceramic", segs=18)
     vase("DineV", DX, DY, 0.83, "ceramic_t", 0.36); stand_sign("DineSign", DX + 2.15, DY + 1.1, "DINING")
 staged(DX, DY, 4.2, 3.8, dining_room)
-plant("PlantE", -6.95, -8.4, 1.2); plant("PlantF", 6.95, -8.4, 1.2, "pot_cream")
 # colourful lamps on the display tables
 def table_lamp(n, x, y, z, a_, b_, shade, h=0.3, r=0.065):
     for i in range(6): c(f"{n}R{i}", r, h / 6 + 0.002, (x, y, z + h * (i + 0.5) / 6), a_ if i % 2 else b_, segs=16)
@@ -346,7 +344,6 @@ def upstairs():
     fluted_table("UpCoffee", lx, Y - 0.7, 0.55, 0.26, 0.3)
     bowls("UpCoffeeB", lx, Y - 0.7, 0.4, "ceramic_t", 2)
     fluted_table("UpCentre", 0.0, Y - 0.1, 0.72, 0.3, 0.72); vase("UpCentreV", 0.0, Y - 0.1, 0.83, "forest", 0.36)
-    plant("UpPlantL", -6.9, UY1 - 0.5, 1.15); plant("UpPlantR", 6.95, UY1 - 0.5, 1.15, "pot_cream")
     lamp("UpLampA", 6.3, Y + 1.0, 1.5)
 def table_lamp_early(n, x, y, z):
     c(n + "B", 0.06, 0.2, (x, y, z + 0.1), "lamp_ivory", segs=14); c(n + "S", 0.15, 0.17, (x, y, z + 0.28), "cream", segs=18, r2=0.08)
@@ -365,7 +362,7 @@ b("OfficeBox", (0.3, 0.22, 0.14), (6.05, 2.8, 0.84), "kraft"); b("OfficeLap", (0
 text_mesh("OfficePlate", env, "MANAGER", 0.12, M["cream"], (6.5, 1.46, 2.52), max_w=0.8)
 b("OfficeShelf", (1.6, 0.26, 0.04), (6.5, YB - 0.14, 1.75), "walnut")
 goods("OfficeG", 6.5, YB - 0.14, 1.77, 1.5)
-plant("OfficePlant", 7.4, 4.3, 0.95, "pot_cream"); LIGHTS.append(("Office", (6.5, 3.0, 2.3), 22))
+LIGHTS.append(("Office", (6.5, 3.0, 2.3), 22))
 # ------------------------------------------------------------------ the cast: jointed figures, facing -Y
 ROOTS = []
 def person(name, loc, top, pants, hair, sleeve=None, extras=None, skin="skin", shoes="graphite", leg=1.0, girth=0.19, torso=0.68, head_s=1.25):
