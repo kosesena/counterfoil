@@ -25,19 +25,20 @@ M.update({
     "wax": mat("M_Wax", "#f4ead2", 0.5), "flame": mat("M_Flame", "#ffcf87", 0.3, emit="#ffb65c", emit_strength=5.0),
     "blush_glow": mat("M_RobotBlush", "#ff9d8d", 0.4, emit="#ff8a78", emit_strength=0.8),
     "enamel_ochre": mat("M_EnamelOchre", "#dfa63c", 0.28), "enamel_sage": mat("M_EnamelSage", "#8fab8c", 0.28), "enamel_ivory": mat("M_EnamelIvory", "#efe7d8", 0.3),
+    "sofa": mat("M_SofaTaupe", "#7c6352", 0.85), "sofa_lt": mat("M_CushionSand", "#c9ab84", 0.85), "dark_top": mat("M_DarkOak", "#3f2c20", 0.42), "rug_dark": mat("M_RugCharcoal", "#5c544b", 0.95), "rug_sand": mat("M_RugSand", "#b89a78", 0.95), "chair": mat("M_ChairBoucle", "#e4dccd", 0.9), "lamp_red": mat("M_LampRed", "#c8342c", 0.5), "lamp_ivory": mat("M_LampIvory", "#f3ecdf", 0.4), "mirror": mat("M_Mirror", "#dfe6ea", 0.12, emit="#e6edf1", emit_strength=0.42, metal=0.3), "mirror_in": mat("M_MirrorDeep", "#b9c6cf", 0.1, emit="#c9d6de", emit_strength=0.34, metal=0.3),
     "halo": mat("M_AgentHalo", "#a6ecff", 0.3, emit="#5fd8ff", emit_strength=4.5), "visor": mat("M_AgentVisor", "#9ee8ff", 0.2, emit="#49ccff", emit_strength=3.4),
-    "brand": mat("M_HomiNavy", "#21365c", 0.5), "sky": mat("M_WindowSky", "#dcecf7", 0.5, emit="#e6f2fb", emit_strength=1.25), "skyline": mat("M_Skyline", "#bcd0df", 0.6, emit="#c9dae6", emit_strength=0.75), "skyline2": mat("M_Skyline2", "#a5bdcf", 0.6, emit="#b4c9d9", emit_strength=0.7), "frame": mat("M_WindowFrame", "#21365c", 0.5), "sign": mat("M_SignGlow", "#fff0d6", 0.3, emit="#ffd9a0", emit_strength=3.2),
+    "brand": mat("M_HomiBlack", "#17181b", 0.42), "sky": mat("M_WindowSky", "#dcecf7", 0.5, emit="#e6f2fb", emit_strength=1.25), "skyline": mat("M_Skyline", "#bcd0df", 0.6, emit="#c9dae6", emit_strength=0.75), "skyline2": mat("M_Skyline2", "#a5bdcf", 0.6, emit="#b4c9d9", emit_strength=0.7), "frame": mat("M_WindowFrame", "#8f7a5b", 0.5), "sign": mat("M_SignGlow", "#fff0d6", 0.3, emit="#ffd9a0", emit_strength=3.2),
     "brand_screen": mat("M_ScreenNavy", "#142238", 0.3, emit="#1d3a66", emit_strength=0.9), "brass_m": mat("M_Brass", "#c9a35f", 0.28, metal=0.85),
     "tile": mat("M_TileEntry", "#e8ddca", 0.5), "rubber": mat("M_Rubber", "#2c2d30", 0.6), "esc_step": mat("M_EscStep", "#7c8087", 0.4, metal=0.5),
     "acrylic": mat("SE_GateAcrylic", "#e6f2f6", 0.05, alpha=0.3), "glass_b": mat("M_OfficeGlass", "#dcebf0", 0.05, alpha=0.1),
 })
 # daylight palette: birch, white, HOMI navy, coral
 M.update({
-    "walnut": mat("M_Birch", "#dcc8a6", 0.5), "dark_wood": mat("M_BirchDark", "#bfa67f", 0.55), "dark_cabinet": mat("M_CounterNavy", "#21365c", 0.45),
-    "offwhite": mat("M_ShelfWhite", "#f3efe7", 0.7), "plaster": mat("M_WallWhite", "#f7f4ee", 0.9), "platform": mat("M_PlinthGrey", "#dcd8d0", 0.8),
+    "walnut": mat("M_Birch", "#dcc8a6", 0.5), "dark_wood": mat("M_BirchDark", "#bfa67f", 0.55), "dark_cabinet": mat("M_CounterTimber", "#c9ae85", 0.5),
+    "offwhite": mat("M_ShelfWhite", "#f3efe7", 0.7), "plaster": mat("M_WallCream", "#f4ecde", 0.9), "platform": mat("M_PlinthGrey", "#dcd8d0", 0.8),
     "rattan": mat("M_OpalGlobe", "#fffaf0", 0.25, emit="#fff4df", emit_strength=1.5), "led_2700": mat("M_LedNeutral", "#fff6e6", 0.3, emit="#fff0d6", emit_strength=3.0),
     "led_2700_soft": mat("M_LedNeutralSoft", "#fff6e6", 0.3, emit="#fff0d6", emit_strength=1.3), "cognac": mat("M_Coral", "#e26d55", 0.5), "rust": mat("M_CoralDeep", "#d9604a", 0.75),
-    "sign": mat("M_SignWhite", "#ffffff", 0.3, emit="#ffffff", emit_strength=1.6), "light_oak": mat("M_TopWhite", "#f2eee6", 0.35), "kraft": mat("M_BoxSand", "#d8c4a2", 0.8),
+    "sign": mat("M_SignGold", "#c39a4f", 0.32, emit="#b98a3c", emit_strength=0.55, metal=0.45), "light_oak": mat("M_TimberTop", "#e4d2af", 0.42), "panel": mat("M_SignCream", "#f5eee1", 0.6), "plate_blue": mat("M_PlateBlue", "#6f8fb0", 0.3), "kraft": mat("M_BoxSand", "#d8c4a2", 0.8),
 })
 W, D, H = 15.7, 9.7, 3.0        # room
 XW, YB = W / 2, D / 2           # side walls at +-XW, back wall at +YB
@@ -55,28 +56,24 @@ rounded_slab("Platform", env, W + 0.3, DT + 0.3, 0.32, 0.3, (0, YC, -0.16), M["p
 import numpy as np
 from homi_kit import np_image, tex_material, hex_srgb
 rng = np.random.default_rng(5); N = 1024
-img = np.tile(np.array(hex_srgb("#ece8df")), (N, N, 1)).astype(np.float32)
-base = img[0, 0].copy()
-chips = [np.array(hex_srgb(h), dtype=np.float32) * 0.55 + base * 0.45 for h in ("#21365c", "#e26d55", "#8fab8c", "#bdb6a8", "#ffffff", "#d8c4a2")]
-for _ in range(5200):  # small soft stones, irregular rather than square
-    x0, y0_, r_ = int(rng.integers(N)), int(rng.integers(N)), float(rng.uniform(1.6, 5.2)); col = chips[int(rng.integers(len(chips)))]
-    ax, ay = rng.uniform(0.7, 1.3), rng.uniform(0.7, 1.3); R_ = int(r_ * 1.4) + 1
-    for yy in range(-R_, R_ + 1):
-        for xx in range(-R_, R_ + 1):
-            if (xx / ax) ** 2 + (yy / ay) ** 2 <= r_ * r_: img[(y0_ + yy) % N, (x0 + xx) % N] = col
-oak = tex_material("M_FloorTerrazzo", np_image("terrazzo_img", img), 0.3)
+base_c = np.array(hex_srgb("#ddd6ca"), dtype=np.float32)
+yy, xx = np.mgrid[0:N, 0:N].astype(np.float32)
+veins = np.sin((xx + yy * 0.6) / 37 + 3 * np.sin(yy / 91)) * 0.012 + np.sin((xx * 0.4 - yy) / 19 + 2 * np.sin(xx / 67)) * 0.008
+img = np.clip(base_c[None, None] + (veins + rng.normal(0, 0.004, (N, N)))[..., None], 0, 1).astype(np.float32)
+img[:3, :] = img[N // 2 - 1:N // 2 + 2, :] = np.array(hex_srgb("#bdb5a8")); img[:, :3] = img[:, N // 2 - 1:N // 2 + 2] = np.array(hex_srgb("#bdb5a8"))
+oak = tex_material("M_FloorStone", np_image("stone_img", img), 0.2)
 floor = rounded_slab("Floor", env, W, DT, 0.006, 0.18, (0, YC, 0.0005), oak, edge_bevel=0.002)
 uv = floor.data.uv_layers.new(name="UVMap")
 for lp in floor.data.loops:
-    co = floor.data.vertices[lp.vertex_index].co; uv.data[lp.index].uv = (co.x / 2.8, co.y / 2.8)
-b("EntryMat", (2.4, 3.0, 0.012), (-6.5, -2.7, 0.006), "brand", bevel=0.003)
+    co = floor.data.vertices[lp.vertex_index].co; uv.data[lp.index].uv = (co.x / 3.2, co.y / 3.2)
+b("EntryMat", (2.4, 3.0, 0.012), (-6.5, -2.7, 0.006), "sofa_lt", bevel=0.003)
 b("WallBack", (W + 0.3, 0.2, H), (0, YB + 0.1, H / 2), "plaster")
 for sx, nm in ((-1, "L"), (1, "R")):
     b(f"Wall{nm}Lo", (0.2, DT, H), (sx * (XW + 0.1), YC, H / 2), "plaster")
     b(f"Cap{nm}", (0.26, DT + 0.3, 0.08), (sx * (XW + 0.1), YC, H + 0.04), "walnut")
 b("CapBack", (W + 0.5, 0.26, 0.08), (0, YB + 0.1, H + 0.04), "walnut")
 # wainscot on all walls
-wg = M["brand"]; wa = groove_material("M_Wains", "#e6e1d7", 0.86)
+wg = groove_material("M_TimberRib", "#d6bd94", 0.8); wa = groove_material("M_Wains", "#e6e1d7", 0.86)
 for nm, w_, loc, rz in (("BackL", 4.3, (-5.6, YB - 0.005, 0.6), 0), ("BackR", 2.8, (6.4, YB - 0.005, 0.6), 0)):
     face_plane(f"Wains{nm}", env, w_, 1.2, loc, wa)
 # left wall: fluted sage below, posters above
@@ -108,7 +105,10 @@ def goods(n, x, y, z, w):
     """Fills a shelf run with a mix of homeware."""
     u = -w / 2 + 0.14; i = 0
     while u < w / 2 - 0.12:
-        k = random.randrange(6); t = f"{n}_{i}"; px = x + u
+        k = random.randrange(8); t = f"{n}_{i}"; px = x + u
+        if k >= 6:
+            m_ = "plate_blue" if k == 6 else "ceramic"
+            c(t, 0.125, 0.018, (px, y + 0.06, z + 0.125), m_, segs=24, rot=(78, 0, 0)); c(t + "I", 0.075, 0.021, (px, y + 0.057, z + 0.125), "ceramic" if k == 6 else "plate_blue", segs=20, rot=(78, 0, 0)); u += 0.3; i += 1; continue
         if k == 0: mug(t, px, y, z, random.choice(("ceramic", "ceramic_b", "ceramic_t"))); u += 0.2
         elif k == 1: bowls(t, px, y, z, random.choice(("ceramic", "ceramic_t", "ceramic_b")), 3); u += 0.3
         elif k == 2: vase(t, px, y, z, random.choice(("ceramic_b", "ceramic_t", "forest", "ceramic")), 0.3); u += 0.27
@@ -116,18 +116,24 @@ def goods(n, x, y, z, w):
         elif k == 4: throw(t, px + 0.08, y, z, random.choice(("rust", "ochre", "linen_blue", "blush", "forest")), 0.34); u += 0.46
         else: b(t, (0.2, 0.2, 0.26), (px, y, z + 0.13), random.choice(("kraft", "cream", "navy")), bevel=0.01); u += 0.27
         i += 1
-def bay(n, x, w, levels=(0.55, 1.0, 1.45, 1.9), top=2.35):
-    """Lit walnut shelving against the back wall."""
-    y = YB - 0.2
-    b(n + "Back", (w, 0.03, top), (x, YB - 0.03, top / 2), "offwhite", bevel=0.0)
-    for sx in (-1, 1): b(n + f"Post{sx}", (0.07, 0.4, top), (x + sx * w / 2, y, top / 2), "walnut")
-    b(n + "Base", (w, 0.42, 0.42), (x, y, 0.21), "dark_wood"); b(n + "Top", (w + 0.1, 0.44, 0.07), (x, y, top), "walnut")
-    for i, z in enumerate(levels):
-        b(f"{n}S{i}", (w - 0.04, 0.38, 0.035), (x, y, z), "walnut", bevel=0.004)
-        b(f"{n}Led{i}", (w - 0.12, 0.012, 0.012), (x, y - 0.14, z + 0.4), "led_2700_soft", bevel=0.0)
-        goods(f"{n}G{i}", x, y - 0.02, z + 0.018, w - 0.1)
-    LIGHTS.append((n, (x, y - 0.5, 1.6), 22))
-bay("BayL", -3.1, 2.3, levels=(0.55, 1.0), top=1.42); bay("BayR", 3.1, 2.3, levels=(0.55, 1.0), top=1.42)
+def metal_shelf(n, x, y, w, top=2.5, levels=(0.5, 0.98, 1.46, 1.94), cubes=True, d=0.4):
+    """Open black steel uprights with birch shelves and a few closed timber cubes."""
+    k_ = max(2, round(w / 0.9))
+    for i in range(k_ + 1):
+        px = x - w / 2 + w * i / k_
+        for sy in (-1, 1): b(f"{n}P{i}{sy}", (0.05, 0.05, top), (px, y + sy * d / 2, top / 2), "walnut", bevel=0.006)
+    if y > 3: b(n + "Back", (w, 0.012, top), (x, y + d / 2, top / 2), "offwhite", bevel=0.0)
+    for i, z in enumerate(levels + (top,)):
+        b(f"{n}S{i}", (w - 0.02, d - 0.02, 0.03), (x, y, z + 0.024), "walnut", bevel=0.003)
+        if z < top: goods(f"{n}G{i}", x, y, z + 0.04, w - 0.12)
+        b(f"{n}Led{i}", (w - 0.1, 0.01, 0.01), (x, y - d / 2 + 0.02, z - 0.03), "led_2700_soft", bevel=0.0)
+    if cubes:
+        for j, (ux, lv) in enumerate(((-0.28, 1), (0.3, 2))):
+            b(f"{n}Cube{j}", (w * 0.26, d - 0.04, levels[lv + 1] - levels[lv] - 0.05), (x + w * ux, y, levels[lv] + (levels[lv + 1] - levels[lv]) / 2 + 0.02), "dark_wood", bevel=0.006)
+    LIGHTS.append((n, (x, y - 0.6, min(top, 2.0)), 18))
+def bay(n, x, w, levels=(0.55, 1.0), top=1.42):
+    metal_shelf(n, x, YB - 0.22, w, top=top, levels=levels, cubes=False, d=0.42)
+bay("BayL", -3.1, 2.3); bay("BayR", 3.1, 2.3)
 # shop windows along the back wall, above the low shelving
 def window(n, x0, x1, z0=1.52, z1=2.88):
     w_, xc, h_, zc = x1 - x0, (x0 + x1) / 2, z1 - z0, (z0 + z1) / 2
@@ -141,11 +147,10 @@ def window(n, x0, x1, z0=1.52, z1=2.88):
     for i in range(k_ + 1): b(f"{n}M{i}", (0.05, 0.05, h_), (x0 + w_ * i / k_, YB - 0.03, zc), "frame", bevel=0.0)
 window("WinL", -4.75, -1.95); window("WinR", 1.95, 4.95)
 # feature wall and sign behind the counter
-face_plane("FeatureWall", env, 3.7, H, (0, YB - 0.008, H / 2), wg)
-b("SignPanel", (3.0, 0.08, 0.9), (0, YB - 0.06, 2.1), "brand", bevel=0.03)
-text_mesh("SignHOMI", env, "HOMI", 0.72, M["sign"], (0, YB - 0.105, 2.13), max_w=2.3, extrude=0.012)
-text_mesh("SignSub", env, "HOME GOODS · EST. 2026", 0.11, M["cream"], (0, YB - 0.105, 1.78), max_w=2.1)
-b("SignHalo", (3.12, 0.012, 0.016), (0, YB - 0.1, 1.64), "led_2700", bevel=0.0)
+face_plane("FeatureWall", env, 3.7, H, (0, YB - 0.008, H / 2), M["panel"])
+text_mesh("SignHOMI", env, "HOMI", 0.8, M["sign"], (0, YB - 0.04, 2.13), max_w=2.6, extrude=0.03)
+text_mesh("SignSub", env, "HOME GOODS · EST. 2026", 0.11, M["sign"], (0, YB - 0.02, 1.72), max_w=2.1)
+b("SignShelf", (2.6, 0.26, 0.04), (0, YB - 0.14, 1.32), "walnut", bevel=0.006); goods("SignG", 0, YB - 0.14, 1.34, 2.4)
 LIGHTS.append(("Sign", (0, YB - 0.7, 2.1), 30))
 # ------------------------------------------------------------------ checkout counter
 CW = 8.2; ct = M["counter_top"]
@@ -166,7 +171,7 @@ def till(n, x):
     b(n + "Reader", (0.1, 0.17, 0.03), (x + 0.33, CY - 0.1, TOP + 0.015), "graphite", bevel=0.01, rot=(20, 0, 0))
 till("TillReturns", -3.25); till("TillSale", -1.05)
 for x, t_ in ((-2.6, "RETURNS"), (-0.4, "CHECKOUT")):
-    b(f"Hang{t_}", (1.25, 0.03, 0.36), (x, CY + 0.02, 2.42), "brand", bevel=0.012)
+    b(f"Hang{t_}", (1.25, 0.03, 0.36), (x, CY + 0.02, 2.42), "panel", bevel=0.012)
     text_mesh(f"HangT{t_}", env, t_, 0.15, M["sign"], (x, CY - 0.002, 2.42), max_w=1.05)
     for sx in (-1, 1): c(f"Hang{t_}{sx}", 0.006, 0.42, (x + sx * 0.5, CY + 0.02, 2.82), "black_metal", segs=6)
 for i, (x, m) in enumerate(((-2.05, "kraft"), (-1.75, "cream"), (-1.9, "kraft"))):
@@ -189,22 +194,22 @@ for i, (dx, dy, m) in enumerate(((-0.9, -0.2, "ceramic_t"), (-0.3, 0.25, "cerami
 for i, (dx, dy) in enumerate(((-0.6, 0.3), (0.1, -0.28), (0.9, 0.25))): mug(f"ITM{i}", -2.2 + dx, -1.4 + dy, 0.625, ("ceramic_b", "ceramic_t", "ceramic")[i])
 vase("ITV", -1.25, -1.5, 0.625, "forest", 0.42); candle("ITC0", -1.75, -1.1, 0.625); candle("ITC1", -2.85, -1.7, 0.625)
 c("ITP", 0.13, 0.26, (-3.25, -1.05, 0.755), "ceramic", segs=16)
+for i, (x_, y_, h_) in enumerate(((-2.75, -1.65, 0.3), (-1.85, -1.2, 0.18), (1.55, -1.1, 0.26), (3.1, -1.7, 0.2))):
+    b(f"Block{i}", (0.62, 0.5, h_), (x_, y_, 0.625 + h_ / 2), "walnut", bevel=0.01)
+    for k_ in range(5): c(f"BlockP{i}{k_}", 0.15, 0.016, (x_, y_, 0.625 + h_ + 0.01 + k_ * 0.018), "ceramic" if i % 2 else "plate_blue", segs=22)
 for i, m in enumerate(("rust", "ochre", "linen_blue", "blush", "forest", "cream")):
     cushion(f"IXC{i}", 1.45 + (i % 3) * 0.72, -1.72 + (i // 3) * 0.62, 0.625, m)
     cushion(f"IXD{i}", 1.5 + (i % 3) * 0.7, -1.7 + (i // 3) * 0.6, 0.78, ("ochre", "forest", "rust", "cream", "linen_blue", "blush")[i])
-b("Sign03", (0.72, 0.03, 0.34), (-2.2, -1.4, 1.42), "brand", bevel=0.012); c("Sign03P", 0.012, 0.6, (-2.2, -1.4, 0.94), "brass_m", segs=8)
-text_mesh("Sign03T", env, "TABLEWARE", 0.1, M["cream"], (-2.2, -1.42, 1.42), max_w=0.6)
-b("Sign04", (0.72, 0.03, 0.34), (2.3, -1.4, 1.42), "brand", bevel=0.012); c("Sign04P", 0.012, 0.6, (2.3, -1.4, 0.94), "brass_m", segs=8)
-text_mesh("Sign04T", env, "TEXTILES", 0.1, M["cream"], (2.3, -1.42, 1.42), max_w=0.6)
+b("Sign03", (0.72, 0.03, 0.34), (-2.2, -1.4, 1.42), "panel", bevel=0.012); c("Sign03P", 0.012, 0.6, (-2.2, -1.4, 0.94), "brass_m", segs=8)
+text_mesh("Sign03T", env, "TABLEWARE", 0.1, M["sign"], (-2.2, -1.42, 1.42), max_w=0.6)
+b("Sign04", (0.72, 0.03, 0.34), (2.3, -1.4, 1.42), "panel", bevel=0.012); c("Sign04P", 0.012, 0.6, (2.3, -1.4, 0.94), "brass_m", segs=8)
+text_mesh("Sign04T", env, "TEXTILES", 0.1, M["sign"], (2.3, -1.42, 1.42), max_w=0.6)
 # front tables and rug
 def table(n, x, y, w=1.3):
     b(n, (w, 0.7, 0.05), (x, y, 0.74), "light_oak", bevel=0.012)
     for sx in (-1, 1):
         for sy in (-1, 1): c(f"{n}L{sx}{sy}", 0.025, 0.72, (x + sx * (w / 2 - 0.08), y + sy * 0.27, 0.36), "dark_wood", segs=8)
 table("TabA", -1.1, -3.8); table("TabB", 2.6, -3.75)
-for i, (dx, m, h) in enumerate(((-0.42, "ceramic_t", 0.36), (0.02, "ceramic", 0.26), (0.42, "ceramic_b", 0.44))): vase(f"TAV{i}", -1.1 + dx, -3.8, 0.765, m, h)
-for i in range(4): candle(f"TBC{i}", 2.1 + i * 0.3, -3.65 - (i % 2) * 0.16, 0.765)
-throw("TBT", 2.8, -3.95, 0.765, "ochre", 0.5)
 c("RugR", 1.25, 0.012, (5.3, -2.6, 0.008), "cream", segs=48); c("RugI", 0.95, 0.014, (5.3, -2.6, 0.009), "rust", segs=48)
 def lamp(n, x, y, h=1.6):
     c(n + "B", 0.16, 0.03, (x, y, 0.016), "brass_m", segs=20); c(n + "P", 0.012, h, (x, y, h / 2), "brass_m", segs=8)
@@ -213,21 +218,82 @@ lamp("LampA", 6.7, -1.9, 1.6); lamp("LampB", 4.5, -3.9, 1.3)
 b("Armch", (0.85, 0.75, 0.42), (5.4, -2.5, 0.26), "cognac", bevel=0.09); b("ArmchB", (0.85, 0.18, 0.76), (5.4, -2.15, 0.45), "cognac", bevel=0.08)
 cushion("ArmchC", 5.4, -2.6, 0.5, "forest")
 plant("PlantA", -4.7, 3.95, 1.25); plant("PlantB", 4.6, -0.2, 1.15, "pot_cream"); plant("PlantC", -3.8, -3.9, 1.05, "pot_char"); plant("PlantD", 7.1, 0.6, 1.3)
-# aisles of shelving across the new front of the store
-def gondola(n, x, y, title, w=4.9):
-    b(n + "Base", (w, 0.84, 0.12), (x, y, 0.06), "dark_wood", bevel=0.01)
-    b(n + "Spine", (w, 0.05, 1.42), (x, y, 0.8), "offwhite", bevel=0.0)
-    for sx in (-1, 1): b(f"{n}End{sx}", (0.05, 0.84, 1.45), (x + sx * w / 2, y, 0.74), "walnut", bevel=0.008)
-    for i, z in enumerate((0.42, 0.82, 1.2)):
-        for sy in (-1, 1):
-            b(f"{n}S{i}{sy}", (w - 0.06, 0.34, 0.03), (x, y + sy * 0.21, z), "walnut", bevel=0.003)
-            goods(f"{n}G{i}{sy}", x, y + sy * 0.21, z + 0.015, w - 0.14)
-    b(n + "Sign", (1.15, 0.03, 0.3), (x, y, 1.72), "brand", bevel=0.012)
-    text_mesh(n + "SignT", env, title, 0.13, M["sign"], (x, y - 0.02, 1.72), max_w=0.98)
-    for sx in (-1, 1): c(f"{n}SignP{sx}", 0.008, 0.2, (x + sx * 0.45, y, 1.5), "brass_m", segs=6)
-gondola("AisleA", -3.05, -6.0, "KITCHEN"); gondola("AisleB", 3.05, -6.0, "BATH")
-gondola("AisleC", -3.05, -7.95, "LIVING"); gondola("AisleD", 3.05, -7.95, "LIGHTING")
-plant("PlantE", -6.9, -8.2, 1.2); plant("PlantF", 6.9, -8.2, 1.2, "pot_cream"); plant("PlantG", 0.0, -8.7, 0.9, "pot_char")
+# furnished rooms on low stages across the front of the store
+STAGE_H = 0.11
+def staged(x, y, w, d, build):
+    """Build a room, then lift everything it made onto a pale stage."""
+    before = set(bpy.data.objects); build(); after = [o for o in bpy.data.objects if o not in before and o.parent is None]
+    for o in after: o.location.z += STAGE_H
+    b(f"Stage{x:.0f}", (w, d, STAGE_H), (x, y, STAGE_H / 2), "offwhite", bevel=0.02)
+def lifted(dz, build):
+    """Build something on the ground plane, then raise all of it by dz."""
+    before = set(bpy.data.objects); build()
+    for o in bpy.data.objects:
+        if o not in before and o.parent is None: o.location.z += dz
+def fluted_table(n, x, y, r_top=0.86, r_base=0.36, h=0.72, z=0.0):
+    """A chunky pale-oak round top on a reeded drum."""
+    c(n + "Core", r_base - 0.02, h, (x, y, z + h / 2), "dark_wood", segs=28)
+    rods = max(24, int(2 * math.pi * r_base / 0.055))
+    for i in range(rods):
+        a_ = i * 2 * math.pi / rods
+        c(f"{n}Reed{i}", 0.03, h, (x + math.cos(a_) * r_base, y + math.sin(a_) * r_base, z + h / 2), "light_oak", segs=8)
+    c(n + "Top", r_top, 0.075, (x, y, z + h + 0.03), "light_oak", segs=56); torus(n + "Edge", env, r_top - 0.005, 0.034, (x, y, z + h + 0.03), M["light_oak"], rot=(0, 0, 0))
+def stand_sign(n, x, y, title):
+    c(n + "B", 0.14, 0.02, (x, y, 0.011), "brass_m", segs=18); c(n + "P", 0.012, 1.25, (x, y, 0.64), "brass_m", segs=8)
+    b(n, (0.95, 0.03, 0.32), (x, y, 1.42), "panel", bevel=0.012); text_mesh(n + "T", env, title, 0.13, M["sign"], (x, y - 0.02, 1.42), max_w=0.8)
+LX, LY = -3.55, -7.2
+def living_room():
+    b("LivRug", (4.5, 3.1, 0.016), (LX, LY, 0.009), "rug_dark", bevel=0.004)
+    for i in range(3): b(f"LivRugBand{i}", (4.3, 0.05, 0.004), (LX, LY - 1.2 + i * 1.2, 0.019), "rug_sand", bevel=0.0)
+    b("SofaBack", (3.1, 0.34, 0.74), (LX, LY + 1.05, 0.42), "sofa", bevel=0.11)
+    for i in range(3): b(f"SofaSeat{i}", (1.0, 0.92, 0.3), (LX - 1.04 + i * 1.04, LY + 0.5, 0.26), "sofa", bevel=0.1)
+    b("SofaChaise", (1.0, 1.1, 0.3), (LX - 1.04, LY - 0.5, 0.26), "sofa", bevel=0.1)
+    b("SofaArmR", (0.3, 1.1, 0.5), (LX + 1.68, LY + 0.5, 0.33), "sofa", bevel=0.11)
+    for i, (dx, m) in enumerate(((-0.7, "sofa_lt"), (-0.25, "rust"), (0.62, "sofa_lt"), (1.1, "ochre"))):
+        cushion(f"SofaC{i}", LX + dx, LY + 0.82, 0.48, m)
+    b("CoffeeTop", (1.25, 0.72, 0.09), (LX + 0.55, LY - 0.62, 0.34), "dark_top", bevel=0.02); b("CoffeeBase", (0.95, 0.42, 0.28), (LX + 0.55, LY - 0.62, 0.15), "dark_top", bevel=0.01)
+    vase("CoffeeV", LX + 0.25, LY - 0.62, 0.385, "ceramic", 0.2); bowls("CoffeeB", LX + 0.9, LY - 0.6, 0.385, "ceramic_t", 2)
+    lamp("LivLamp", LX - 2.1, LY + 1.1, 1.55); stand_sign("LivSign", LX + 2.15, LY + 1.1, "LIVING")
+staged(LX, LY, 4.8, 3.4, living_room)
+DX, DY = 3.6, -7.2
+def dining_room():
+    c("DineRug", 1.75, 0.016, (DX, DY, 0.009), "rug_sand", segs=48); torus("DineRugRing", env, 1.55, 0.012, (DX, DY, 0.019), M["dark_top"], rot=(0, 0, 0))
+    fluted_table("DineTable", DX, DY)
+    for i in range(6):
+        a_ = i * math.pi / 3 + 0.3; x_, y_ = DX + math.cos(a_) * 1.2, DY + math.sin(a_) * 1.2
+        c(f"ChairSeat{i}", 0.26, 0.09, (x_, y_, 0.46), "chair", segs=20)
+        bx, by = DX + math.cos(a_) * 1.46, DY + math.sin(a_) * 1.46
+        capsule_between(f"ChairBack{i}", env, 0.07, (bx - math.sin(a_) * 0.18, by + math.cos(a_) * 0.18, 0.72), (bx + math.sin(a_) * 0.18, by - math.cos(a_) * 0.18, 0.72), M["chair"])
+        for sg in (-1, 1): capsule_between(f"ChairPost{i}{sg}", env, 0.03, (DX + math.cos(a_) * 1.38 - math.sin(a_) * sg * 0.14, DY + math.sin(a_) * 1.38 + math.cos(a_) * sg * 0.14, 0.48), (bx - math.sin(a_) * sg * 0.14, by + math.cos(a_) * sg * 0.14, 0.72), M["chair"])
+        c(f"ChairStem{i}", 0.03, 0.42, (x_, y_, 0.22), "brass_m", segs=8); c(f"ChairFoot{i}", 0.17, 0.02, (x_, y_, 0.012), "brass_m", segs=16)
+        p_x, p_y = DX + math.cos(a_) * 0.62, DY + math.sin(a_) * 0.62
+        c(f"Plate{i}", 0.13, 0.012, (p_x, p_y, 0.835), "ceramic", segs=18)
+    vase("DineV", DX, DY, 0.83, "ceramic_t", 0.36); stand_sign("DineSign", DX + 2.15, DY + 1.1, "DINING")
+staged(DX, DY, 4.2, 3.8, dining_room)
+plant("PlantE", -6.95, -8.4, 1.2); plant("PlantF", 6.95, -8.4, 1.2, "pot_cream")
+# colourful lamps on the display tables
+def table_lamp(n, x, y, z, a_, b_, shade, h=0.3, r=0.065):
+    for i in range(6): c(f"{n}R{i}", r, h / 6 + 0.002, (x, y, z + h * (i + 0.5) / 6), a_ if i % 2 else b_, segs=16)
+    c(n + "Sh", 0.2, 0.2, (x, y, z + h + 0.1), shade, segs=22, r2=0.09); s(n + "G", 0.04, (x, y, z + h + 0.02), "bulb", segs=8, rings=6)
+table_lamp("TLa", -1.55, -3.8, 0.765, "lamp_red", "lamp_ivory", "lamp_red"); table_lamp("TLb", -1.05, -3.75, 0.765, "dark_top", "lamp_ivory", "brand", 0.38, 0.075); table_lamp("TLc", -0.6, -3.85, 0.765, "lamp_ivory", "lamp_red", "cream", 0.24)
+table_lamp("TLd", 2.15, -3.75, 0.765, "brand", "lamp_ivory", "lamp_red", 0.34); table_lamp("TLe", 2.65, -3.8, 0.765, "lamp_red", "lamp_ivory", "cream", 0.26); table_lamp("TLf", 3.1, -3.72, 0.765, "dark_top", "cream", "brand", 0.36, 0.07)
+LIGHTS.append(("TableLamps", (0.8, -3.8, 1.5), 20))
+# round mirrors on the left wall, runs of woven rugs on the right
+for i, (y_, r_) in enumerate(((-5.1, 0.56), (-6.45, 0.42), (-7.75, 0.62))):
+    c(f"Mirror{i}", r_, 0.03, (-XW + 0.02, y_, 1.7), "mirror", segs=40, rot=(0, 90, 0)); c(f"MirrorIn{i}", r_ * 0.56, 0.034, (-XW + 0.022, y_, 1.7), "mirror_in", segs=32, rot=(0, 90, 0))
+    torus(f"MirrorRim{i}", env, r_, 0.028, (-XW + 0.035, y_, 1.7), M["brass_m"], rot=(0, 90, 0))
+# a patterned feature wall, circles on deep green
+PN = 512; pat = np.tile(np.array(hex_srgb("#2f5147"), dtype=np.float32), (PN, PN, 1)); yy2, xx2 = np.mgrid[0:PN, 0:PN]
+for cy, cx in ((128, 128), (384, 384), (128, 384), (384, 128)):
+    d_ = np.hypot(xx2 - cx, yy2 - cy); pat[(d_ < 96) & (d_ > 58)] = hex_srgb("#d9cdb6"); pat[d_ < 28] = hex_srgb("#b8924f")
+pm = tex_material("M_PatternWall", np_image("pattern_img", pat.astype(np.float32)), 0.7)
+pw = face_plane("PatternWall", env, 4.4, H - 0.06, (0, 0, 0), pm); pw.rotation_euler = (0, 0, math.radians(90)); pw.location = (XW - 0.012, -6.7, H / 2)
+for lp in pw.data.uv_layers[0].data: lp.uv = (lp.uv[0] * 4.4 / 0.75, lp.uv[1] * (H - 0.06) / 0.75)
+metal_shelf("ShelfFrontL", -6.15, -4.75, 2.7); metal_shelf("ShelfFrontR", 6.3, -4.75, 2.6)
+for y_ in (-4.5, -7.0):
+    c(f"TrackBar{y_}", 0.016, W, (0, y_, 2.92), "panel", segs=8, rot=(0, 90, 0))
+    for i in range(7):
+        x_ = -6.6 + i * 2.2; c(f"Spot{y_}{i}", 0.06, 0.15, (x_, y_, 2.8), "panel", segs=12); c(f"SpotL{y_}{i}", 0.05, 0.01, (x_, y_, 2.722), "bulb", segs=12)
 # rug wall on the right
 for i, (y, m, m2) in enumerate(((-3.2, "rust", "ochre"), (-1.9, "forest", "cream"), (-0.5, "linen_blue", "blush"))):
     b(f"RugWall{i}", (0.04, 1.05, 1.9), (XW - 0.03, y, 1.5), m, bevel=0.008)
@@ -242,8 +308,8 @@ for i, y in enumerate((-3.4, -2.0)):
     b(f"GateLed{i}", (0.135, 0.05, 1.22), (-5.95, y - 0.0, 0.76), "gateled", bevel=0.0)
     b(f"GatePanel{i}", (0.9, 0.03, 1.0), (-5.5, y, 0.72), "acrylic", bevel=0.004)
 # ------------------------------------------------------------------ escalator to the (unseen) upper floor
-EX, EL, RAKE = -6.62, 4.9, 30.0
-y0, z0 = -1.75, 0.06
+EX, EL, RAKE = -6.62, 6.04, 30.0
+y0, z0 = -0.38, 0.06
 cr, sr = math.cos(math.radians(RAKE)), math.sin(math.radians(RAKE))
 cm = (y0 + EL * cr / 2, z0 + EL * sr / 2)
 for sx in (-1, 1):
@@ -252,36 +318,48 @@ for sx in (-1, 1):
     b(f"EscRail{sx}", (0.075, EL + 0.34, 0.075), (EX + sx * 0.6, cm[0], cm[1] + 0.92), "rubber", bevel=0.03, rot=(RAKE, 0, 0))
 b("EscBelly", (1.1, EL + 0.3, 0.1), (EX, cm[0] + 0.1, cm[1] - 0.26), "graphite", bevel=0.0, rot=(RAKE, 0, 0))
 b("EscFloorPlate", (1.24, 0.8, 0.03), (EX, y0 - 0.32, 0.03), "steel", bevel=0.004)
-# the upper floor the escalator arrives at: a mezzanine in the back-left corner with its own furniture department
-DX0, DX1, DY0, DZ = -XW, -4.6, y0 + EL * cr, z0 + EL * sr + 0.04
-DW, DD, DXC, DYC = DX1 - DX0, YB - DY0, (DX0 + DX1) / 2, (YB + DY0) / 2
-U = 4.35  # height of the upper walls
-b("MezzSlab", (DW, DD, 0.26), (DXC, DYC, DZ - 0.13), "offwhite", bevel=0.012)
-b("MezzEdge", (DW + 0.02, 0.04, 0.27), (DXC, DY0 - 0.02, DZ - 0.13), "brand", bevel=0.004)
-b("MezzEdgeR", (0.04, DD, 0.27), (DX1 + 0.02, DYC, DZ - 0.13), "brand", bevel=0.004)
-mz = face_plane("MezzFloor", env, DW, DD, (0, 0, 0), M["light_oak"]); mz.rotation_euler = (math.radians(-90), 0, 0); mz.location = (DXC, DYC, DZ + 0.003)
-b("EscTopPlate", (1.24, 0.5, 0.03), (EX, DY0 + 0.22, DZ + 0.012), "steel", bevel=0.004)
-for x_, y_ in ((DX1 - 0.12, DY0 + 0.12), (DX1 - 0.12, YB - 0.2)): c(f"MezzCol{y_:.1f}", 0.09, DZ - 0.1, (x_, y_, (DZ - 0.1) / 2), "brand", segs=18)
-b("MezzBackWall", (DW + 0.2, 0.2, U - H + 0.05), (DXC, YB + 0.1, (U + H) / 2), "plaster")
-b("MezzSideWall", (0.2, DD + 0.1, U - H + 0.05), (-XW - 0.1, DYC, (U + H) / 2), "plaster")
-b("MezzCapB", (DW + 0.5, 0.26, 0.08), (DXC, YB + 0.1, U + 0.04), "walnut"); b("MezzCapS", (0.26, DD + 0.3, 0.08), (-XW - 0.1, DYC, U + 0.04), "walnut")
-rx0 = EX + 0.72
-b("RailGlassF", (DX1 - rx0, 0.02, 0.86), ((DX1 + rx0) / 2, DY0 + 0.03, DZ + 0.45), "acrylic", bevel=0.0)
-b("RailTopF", (DX1 - rx0 + 0.04, 0.05, 0.05), ((DX1 + rx0) / 2, DY0 + 0.03, DZ + 0.9), "brass_m", bevel=0.012)
-b("RailGlassR", (0.02, DD, 0.86), (DX1 - 0.03, DYC, DZ + 0.45), "acrylic", bevel=0.0)
-b("RailTopR", (0.05, DD + 0.04, 0.05), (DX1 - 0.03, DYC, DZ + 0.9), "brass_m", bevel=0.012)
-# furniture department upstairs
-b("UpRug", (1.7, 1.05, 0.012), (-5.95, 3.75, DZ + 0.01), "linen_blue", bevel=0.002)
-b("UpSofa", (1.25, 0.5, 0.24), (-6.0, 4.3, DZ + 0.22), "rust", bevel=0.07); b("UpSofaB", (1.25, 0.16, 0.42), (-6.0, 4.55, DZ + 0.42), "rust", bevel=0.06)
-for sx in (-1, 1): b(f"UpSofaA{sx}", (0.15, 0.56, 0.36), (-6.0 + sx * 0.65, 4.32, DZ + 0.28), "rust", bevel=0.06)
-cushion("UpC0", -6.3, 4.26, DZ + 0.31, "ochre"); cushion("UpC1", -5.72, 4.26, DZ + 0.31, "cream")
-c("UpTable", 0.27, 0.04, (-5.95, 3.55, DZ + 0.37), "light_oak", segs=26); c("UpTableP", 0.02, 0.35, (-5.95, 3.55, DZ + 0.18), "brass_m", segs=8); vase("UpVase", -5.95, 3.55, DZ + 0.39, "ceramic_b", 0.22)
-lamp_x, lamp_y = -7.35, 4.35
-c("UpLampB", 0.13, 0.025, (lamp_x, lamp_y, DZ + 0.015), "brass_m", segs=18); c("UpLampP", 0.01, 1.15, (lamp_x, lamp_y, DZ + 0.58), "brass_m", segs=8); c("UpLampS", 0.2, 0.26, (lamp_x, lamp_y, DZ + 1.25), "linen", segs=22, r2=0.14)
-LIGHTS.append(("Upstairs", (-6.1, 3.8, DZ + 1.35), 24))
-b("UpShelf", (1.45, 0.24, 0.04), (-5.65, YB - 0.14, DZ + 1.05), "walnut", bevel=0.005); goods("UpG", -5.65, YB - 0.14, DZ + 1.07, 1.35)
-b("UpSign", (1.75, 0.04, 0.34), (DXC, YB - 0.03, DZ + 1.55), "brand", bevel=0.012)
-text_mesh("UpSignT", env, "LEVEL 2 · FURNITURE", 0.13, M["sign"], (DXC, YB - 0.055, DZ + 1.55), max_w=1.5)
+# the upper floor: a full-width furniture storey behind and above the back wall, where the escalator arrives
+DZ = z0 + EL * sr + 0.02; UY0, UY1 = YB + 0.2, YB + 4.6; UD, UYC = UY1 - UY0, (UY0 + UY1) / 2; UW = 1.95
+b("UpSlab", (W + 0.3, UD + 0.02, 0.3), (0, UYC, DZ - 0.15), "offwhite", bevel=0.012)
+upf = rounded_slab("UpFloor", env, W + 0.2, UD, 0.006, 0.05, (0, UYC, DZ + 0.001), oak, edge_bevel=0.002)
+_uv = upf.data.uv_layers.new(name="UVMap")
+for lp in upf.data.loops:
+    co = upf.data.vertices[lp.vertex_index].co; _uv.data[lp.index].uv = (co.x / 3.2, co.y / 3.2)
+b("UpRear", (W + 0.4, 0.2, UW), (0, UY1 + 0.1, DZ + UW / 2), "plaster"); b("UpRearCap", (W + 0.6, 0.26, 0.08), (0, UY1 + 0.1, DZ + UW + 0.04), "walnut")
+for sx in (-1, 1):
+    b(f"UpSide{sx}", (0.2, UD + 0.2, UW), (sx * (XW + 0.1), UYC, DZ + UW / 2), "plaster"); b(f"UpSideCap{sx}", (0.26, UD + 0.4, 0.08), (sx * (XW + 0.1), UYC, DZ + UW + 0.04), "walnut")
+b("EscTopPlate", (1.24, 0.75, 0.03), (EX, YB + 0.4, DZ + 0.018), "steel", bevel=0.004)
+rx0 = EX + 0.74
+b("UpRailGlass", (XW - rx0, 0.02, 0.8), ((XW + rx0) / 2, UY0 + 0.05, DZ + 0.42), "acrylic", bevel=0.0)
+b("UpRailTop", (XW - rx0 + 0.04, 0.05, 0.05), ((XW + rx0) / 2, UY0 + 0.05, DZ + 0.84), "brass_m", bevel=0.012)
+b("UpSign", (2.5, 0.04, 0.44), (0, UY1 - 0.03, DZ + 1.5), "brand", bevel=0.012)
+text_mesh("UpSignT", env, "LEVEL 2 · FURNITURE", 0.15, M["sign"], (0, UY1 - 0.055, DZ + 1.5), max_w=2.0)
+def upstairs():
+    Y = UYC + 0.15
+    # bedroom
+    bx = -3.6
+    b("UpBedRug", (3.5, 2.7, 0.014), (bx, Y, 0.008), "rug_sand", bevel=0.003)
+    b("UpBedBase", (1.9, 2.1, 0.32), (bx, Y + 0.2, 0.2), "walnut", bevel=0.05); b("UpBedDuvet", (1.96, 1.5, 0.16), (bx, Y - 0.1, 0.42), "chair", bevel=0.07); b("UpBedThrow", (1.98, 0.5, 0.17), (bx, Y - 0.55, 0.43), "sofa_lt", bevel=0.05)
+    b("UpBedHead", (2.1, 0.14, 1.05), (bx, Y + 1.28, 0.54), "sofa_lt", bevel=0.05)
+    for i, dx in enumerate((-0.48, 0.48)): cushion(f"UpBedP{i}", bx + dx, Y + 0.9, 0.5, "cream")
+    cushion("UpBedC", bx, Y + 0.68, 0.53, "rust")
+    for sx in (-1, 1):
+        fluted_table(f"UpNight{sx}", bx + sx * 1.42, Y + 1.0, 0.27, 0.17, 0.42)
+        table_lamp_early(f"UpBedL{sx}", bx + sx * 1.42, Y + 1.0, 0.5)
+    # lounge
+    lx = 3.5
+    b("UpLoungeRug", (4.0, 2.7, 0.014), (lx, Y, 0.008), "rug_dark", bevel=0.003)
+    b("UpSofaBack", (2.7, 0.3, 0.72), (lx, Y + 0.95, 0.42), "chair", bevel=0.11)
+    for i in range(3): b(f"UpSofaSeat{i}", (0.88, 0.9, 0.3), (lx - 0.9 + i * 0.9, Y + 0.42, 0.26), "chair", bevel=0.1)
+    for i, (dx, m) in enumerate(((-0.8, "ochre"), (0.0, "rust"), (0.82, "sofa"))): cushion(f"UpSofaC{i}", lx + dx, Y + 0.72, 0.47, m)
+    fluted_table("UpCoffee", lx, Y - 0.7, 0.55, 0.26, 0.3)
+    bowls("UpCoffeeB", lx, Y - 0.7, 0.4, "ceramic_t", 2)
+    fluted_table("UpCentre", 0.0, Y - 0.1, 0.72, 0.3, 0.72); vase("UpCentreV", 0.0, Y - 0.1, 0.83, "forest", 0.36)
+    plant("UpPlantL", -6.9, UY1 - 0.5, 1.15); plant("UpPlantR", 6.95, UY1 - 0.5, 1.15, "pot_cream")
+    lamp("UpLampA", 6.3, Y + 1.0, 1.5)
+def table_lamp_early(n, x, y, z):
+    c(n + "B", 0.06, 0.2, (x, y, z + 0.1), "lamp_ivory", segs=14); c(n + "S", 0.15, 0.17, (x, y, z + 0.28), "cream", segs=18, r2=0.08)
+lifted(DZ, upstairs)
 for n, y_ in (("EscA", y0), ("EscB", y0 + EL * cr)):
     empty(n, env, (EX, y_, z0 + (y_ - y0) * sr / cr))
 # ------------------------------------------------------------------ manager's office

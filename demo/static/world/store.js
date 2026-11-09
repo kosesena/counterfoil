@@ -10,7 +10,7 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 
 export const CAST = { nella: "Nella", reader: "Reader", runner: "Runner", counterfoil: "Counterfoil", manager: "Manager", paypal: "PayPal" };
 const BASE_YAW = { nella: Math.PI / 2 };
-export const VIEW = { target: new THREE.Vector3(0.1, 0.55, 1.9), dir: new THREE.Vector3(4.6, 11.5, 12.5).normalize(), closeDir: new THREE.Vector3(1.4, 3.6, 12).normalize(), width: 22.5, near: 7.4 };
+export const VIEW = { target: new THREE.Vector3(0.1, 1.0, 0.0), dir: new THREE.Vector3(4.6, 11.5, 12.5).normalize(), closeDir: new THREE.Vector3(1.4, 3.6, 12).normalize(), width: 24.5, near: 7.4 };
 const FOV = 30;
 export const fitDistance = (aspect) => Math.max(VIEW.width / aspect, 8.6) / (2 * Math.tan((FOV / 2) * Math.PI / 180));
 
@@ -38,7 +38,7 @@ export function dressStore(scene, root) {
   scene.add(new THREE.HemisphereLight(0xffffff, 0xd6d3cc, 1.75));
   const key = new THREE.DirectionalLight(0xfffaf0, 2.1); key.position.set(-3, 16, 5); key.castShadow = true;
   key.shadow.mapSize.set(2048, 2048); key.shadow.bias = -0.0005; key.shadow.normalBias = 0.02;
-  Object.assign(key.shadow.camera, { left: -13, right: 13, top: 12, bottom: -12, near: 1, far: 44 });
+  Object.assign(key.shadow.camera, { left: -16, right: 16, top: 15, bottom: -15, near: 1, far: 50 });
   scene.add(key);
   const lamps = [];
   root.traverse((o) => {
@@ -110,8 +110,8 @@ function escalator(scene, root) {
 
 // Shoppers browse: walk the aisles to a shelf, look it over, put things in the cart, pay at the till, leave, and later come back.
 // Stops are in three.js metres on rows that run clear of the fixtures; x = 0 is the cross aisle between them.
-const ROWS = [0.45, 3.15, 5.3, 7.15];
-const STOPS = [[-2.9, 0], [-1.5, 0], [1.6, 0], [3.0, 0], [-1.1, 1], [2.6, 1], [-4.3, 2], [-3.0, 2], [-1.6, 2], [1.6, 2], [3.0, 2], [4.4, 2], [-4.0, 3], [-2.2, 3], [2.2, 3], [4.0, 3]];
+const ROWS = [0.45, 3.15, 5.25];
+const STOPS = [[-2.9, 0], [-1.5, 0], [1.6, 0], [3.0, 0], [-1.1, 1], [2.6, 1], [-4.6, 2], [-3.2, 2], [-1.8, 2], [1.9, 2], [3.4, 2], [5.0, 2]];
 const SHOPPERS = [["Shopper1", true], ["Shopper2", false], ["Shopper3", true], ["Shopper4", false]];
 const TILL_X = -1.05, TILL_Z = -1.85, DOOR = [-7.35, 2.6];
 const CART_WALK = { rate: 7.0, stride: 0.42, lean: 0.08, waddle: 0.01, bob: 0.02, speed: 0.85 }, BASKET_WALK = { rate: 7.8, stride: 0.5, lean: 0.04, waddle: 0.03, bob: 0.03, speed: 1.05 };
