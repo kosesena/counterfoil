@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import styles from './crew-journey.module.css';
-import { CounterfoilGaze } from './counterfoil-gaze';
 
 const CREW = [
   { name: 'Reader', type: 'AI agent', role: 'Reads the request', image: 'reader', description: 'Finds the order, returned items and requested amount in the customer’s note. The note is input, not an instruction to move money.' },
@@ -150,7 +149,12 @@ export function ProductIntro() {
       </div>
       <span className={styles.productNote}>Demo only · test payments, no real money</span>
     </div>
-    <div className={styles.productMascot}><CounterfoilGaze/><div className={styles.mascotIdentity}><strong>Meet Counterfoil.</strong><span>A check before money moves.</span><p>Checks each payment request against the store’s rules.</p></div></div>
+    <ol className={styles.productFlow} aria-label="How a refund moves">
+      <li><b>The customer pays with PayPal</b><span>The sale is recorded through Braintree, the PayPal service.</span></li>
+      <li><b>An AI agent asks to refund</b><span>A customer's note can mislead it.</span></li>
+      <li><b>Counterfoil checks the store's records</b><span>Allow it, ask a person, or block it.</span></li>
+      <li><b>Only what is owed goes back</b><span>Sandbox payments, with mocked PayPal accounts.</span></li>
+    </ol>
     <a className={styles.productScroll} href="#simple-example">Understand it with one example <span aria-hidden="true">↓</span></a>
   </section>;
 }

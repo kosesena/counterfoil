@@ -356,3 +356,11 @@
  .productMascot { height: 380px; padding-bottom: 90px; }
  .productMascot :global(.foil) { height: 275px !important; top: 0; }
 }
+
+.productFlow { list-style: none; counter-reset: flow; margin: 0; padding: 0; color: #392432; }
+.productFlow li { counter-increment: flow; position: relative; padding: 20px 0 20px 52px; border-top: 1px solid #d9c8d0; }
+.productFlow li:last-child { border-bottom: 1px solid #d9c8d0; }
+.productFlow li::before { content: counter(flow); position: absolute; left: 0; top: 19px; width: 32px; height: 32px; border: 1px solid #bba1ad; border-radius: 50%; display: grid; place-items: center; font-size: 13px; }
+.productFlow b { display: block; font: 500 clamp(18px,1.7vw,24px)/1.25 var(--cf-serif); }
+.productFlow span { display: block; margin-top: 5px; font-size: 13px; line-height: 1.5; color: #796773; }
+@media (max-width: 760px) { .productFlow { margin-top: 18px; } .productFlow li { padding: 14px 0 14px 46px; } .productFlow li::before { top: 13px; } }

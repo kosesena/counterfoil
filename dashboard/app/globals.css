@@ -587,7 +587,7 @@ main .ag-studio-layout-widget-title { font-family:var(--cf-font) !important; fon
 #crew-results { scroll-margin-top:90px; }
 
 /* The review desk explains the decision before the evidence canvas. */
-.review-intro { padding:48px clamp(20px,5vw,80px) 24px; display:grid; grid-template-columns:1.2fr 1fr; gap:28px 7vw; color:var(--cf-ink); }
+.review-intro { padding:48px clamp(20px,5vw,80px) 24px; display:grid; grid-template-columns:1fr; gap:28px 7vw; color:var(--cf-ink); }
 .review-copy { align-self:center; }
 .review-eyebrow { font-size:10px; letter-spacing:.22em; }
 .review-copy h1 { font:500 clamp(40px,5vw,68px)/1.08 var(--cf-font); letter-spacing:-.05em; margin:22px 0; }
@@ -641,7 +641,7 @@ main .ag-studio-layout-widget-title { font-family:var(--cf-font) !important; fon
 }
 
 .calls-workspace { padding:40px clamp(20px,5vw,80px); color:var(--cf-ink); }
-.calls-hero { display:grid; grid-template-columns:1.2fr 1fr; align-items:center; gap:7vw; }
+.calls-hero { display:grid; grid-template-columns:1fr; align-items:center; gap:7vw; }
 .calls-hero h1 { font:500 clamp(40px,5vw,68px)/1.08 var(--cf-font); letter-spacing:-.05em; margin:22px 0; }
 .calls-hero h1 em { font-family:var(--cf-serif); font-weight:400; }
 .calls-hero p { color:var(--cf-muted); max-width:470px; line-height:1.7; }

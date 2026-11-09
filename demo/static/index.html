@@ -189,7 +189,7 @@ button { border-radius:24px; padding:12px 20px; } button:focus-visible,a:focus-v
 <body>
 <header>
   <nav class="topbar"><a href="https://counterfoil-dashboard.vercel.app" aria-label="HOMI home"><img src="/static/crew/homi-wordmark.webp" alt="HOMI" width="150" height="55"></a><div class="places"><a href="/" aria-current="page">Store</a><a href="https://counterfoil-dashboard.vercel.app">Evidence</a><a href="/settings">Settings</a></div><span class="sandbox-label">Sandbox · test money only</span></nav>
-  <div class="intro"><div><p class="eyebrow">THE HOMI SIMULATOR</p><h1>Your message.<br>One firm boundary.</h1><p class="lede">Try a refund request. See what the AI asks for, what Counterfoil allows, and whether a payment can follow.</p><a class="start-link" href="#world">Enter the 3D store ↓</a></div><div class="intro-crew"><img src="/static/crew/nella-p6-v1.webp" alt="Nella with a refund request"><img src="/static/crew/counterfoil-wave-v1.png" alt="Counterfoil checks the rules"><img src="/static/crew/paypal-wave-v1.png" alt="PayPal handles allowed payments"><p>A request → a check → a payment decision</p></div></div>
+  <div class="intro"><div><p class="eyebrow">THE HOMI SIMULATOR</p><h1>Your message.<br>One firm boundary.</h1><p class="lede">Try a refund request. See what the AI asks for, what Counterfoil allows, and whether a payment can follow.</p><a class="start-link" href="#world">Enter the 3D store ↓</a></div><div class="intro-crew"><p>A request → a check → a payment decision</p></div></div>
   <ol class="guide"><li><b>1</b> Choose a request</li><li><b>2</b> Compare the checks</li><li><b>3</b> Try PayPal sandbox</li></ol>
 </header>
 <main>
@@ -435,7 +435,6 @@ function renderScenarios() {
       "aria-pressed": String(state.scenario === s),
       title: ok ? "" : "No recording available. Requires live AI.",
       onclick: () => { clearComparison(); state.scenario = s; renderScenarios(); showEmail(); } },
-      feature ? h("img", {src: "/static/crew/" + feature[2], alt: ""}) : null,
       h("span", {class: "tag " + s.kind}, s.kind === "attack" ? "Adversarial request" : "Everyday request"),
       h("b", {}, feature ? feature[0] : s.technique),
       h("span", {}, feature ? feature[1] : s.id + (!ok ? " · Live AI required" : "")));

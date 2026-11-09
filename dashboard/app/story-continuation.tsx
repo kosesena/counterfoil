@@ -17,7 +17,6 @@ export function StoryContinuation({ view, onContinue }: Props) {
     <p>{review?'In Overview, Nella pushed the agent to ask for $80 when only $30 was owed. Counterfoil held that request. Here is what the manager does next.':'After the manager rejects the $80 request, Runner starts again with $30. Follow the new request through its own checks and payment result.'}</p>
     <ol className="continuation-steps">{steps.map((step,index)=><li key={step.name} className={!review&&index===2?'continuation-payment':''}>
       <span className="continuation-step"><b>{index+1}</b>{step.name}</span>
-      <img src={`crew/${step.image}`} alt={step.name} width="220" height="260" loading="lazy"/>
       <h3>{step.title}</h3><p>{step.text}</p>
     </li>)}</ol>
     <div className="continuation-outcomes"><div><small>ORIGINAL REQUEST</small><strong>$80 · never sent</strong><span>{review?'Rejected after review':'No Braintree API call for this request'}</span></div><div><small>NEW, SEPARATE REQUEST</small><strong>{review?'$30 · needs a new check':'$30 · refunded in this example'}</strong><span>{review?'Next: Counterfoil checks, then payment can be attempted':'Braintree returns the payment result'}</span></div></div>
