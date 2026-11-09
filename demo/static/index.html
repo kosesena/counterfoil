@@ -818,7 +818,10 @@ async function init() {
   seg("mode", setMode); seg("inputKind", setInput);
   if (new URLSearchParams(location.search).has("break") && config.live_enabled) {
     $("mode").querySelector('[data-v="live"]').click(); $("inputKind").querySelector('[data-v="custom"]').click();
-    $("inputKind").scrollIntoView({ block: "center" });
+    // the 3D store above loads late and pushes the form down, so aim again until the visitor scrolls by hand
+    const target = $("inputKind"); target.style.scrollMarginTop = "90px";
+    let moved = false; for (const ev of ["wheel", "touchmove", "keydown"]) addEventListener(ev, () => { moved = true; }, { once: true, passive: true });
+    for (const ms of [0, 400, 1200, 2500, 4500]) setTimeout(() => { if (!moved) target.scrollIntoView({ block: "start" }); }, ms);
   }
   $("source").addEventListener("change", () => { clearComparison(); renderScenarios(); });
   for (const id of ["cFromOther", "cSubject", "cBody", "cHtml", "cAtt"]) $(id).addEventListener("input", countChars);
