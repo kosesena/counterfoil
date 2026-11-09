@@ -7,7 +7,7 @@ from decimal import Decimal
 from counterfoil.gateway import Context, Gateway
 from counterfoil.rail import FakeRail
 from counterfoil.reconcile import sweep
-from counterfoil.scenarios import load_records
+from counterfoil.scenarios import STORE_AS_OF, load_records
 from counterfoil.store import Store
 
 SINCE = datetime(2026, 10, 1, tzinfo=UTC)
@@ -24,7 +24,7 @@ def test_refunds_the_store_made_or_knows_of_are_not_reported():
     reader = {"istek": "refund", "siparis_no": "ST-1042", "tutar": "30.00", "para_birimi": "USD"}
     assert (
         Gateway(store, rail)
-        .handle(Context("s", "CUS-01", frozenset({"refund"}), reader=reader), "refund", args)
+        .handle(Context("s", "CUS-01", frozenset({"refund"}), reader=reader, as_of=STORE_AS_OF), "refund", args)
         .executed
     )
     report = sweep(store, rail, SINCE)

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
 
@@ -17,6 +17,10 @@ DATA = Path(__file__).resolve().parent.parent / "docs" / "senaryolar"
 def load_scenarios(path: Path = DATA / "scenarios.json") -> list[dict]:
     data = json.loads(path.read_text(encoding="utf-8"))
     return data if isinstance(data, list) else data["scenarios"]
+
+
+# The store records are a fixture frozen in time, so their refund window is judged on this date, not today's.
+STORE_AS_OF = datetime(2026, 10, 23, 12, tzinfo=UTC)
 
 
 def load_records(path: Path = DATA / "store_records.json") -> dict:

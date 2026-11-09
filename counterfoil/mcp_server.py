@@ -39,7 +39,7 @@ from pydantic import BaseModel, Field
 from . import toolkit
 from .gateway import APPROVAL, BLOCK, MONEY_TOOLS, PASS, Context, Gateway, Outcome
 from .rail import FakeRail, Rail, SandboxRail
-from .scenarios import build, load_records, load_scenarios
+from .scenarios import STORE_AS_OF, build, load_records, load_scenarios
 from .store import Store
 
 log = logging.getLogger("counterfoil.mcp")
@@ -82,6 +82,7 @@ class Session:
                 session_id=f"mcp-{uuid.uuid4().hex[:12]}",
                 customer_id=customer["customer_id"] if customer else None,
                 allowed_tools=ALL_TOOLS,
+                as_of=STORE_AS_OF,
             )
         chosen: Rail
         if rail == "fake":
