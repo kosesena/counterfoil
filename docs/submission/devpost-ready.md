@@ -6,7 +6,7 @@ Reviewed 3 November 2026. Packaged on GitHub; not submitted to Devpost or publis
 Counterfoil
 
 ## Short description
-Counterfoil checks AI-requested refunds against merchant records before Braintree moves money, and holds exceptions for human review.
+Counterfoil lets a merchant on PayPal give refunds to an AI agent: each one is checked against the store's records before Braintree, the PayPal service, moves money, and exceptions wait for a person.
 
 ## Links
 - Interactive demo: https://counterfoil-demo.onrender.com
@@ -15,10 +15,10 @@ Counterfoil checks AI-requested refunds against merchant records before Braintre
 - Video: YOUTUBE URL PENDING. After owner review, upload counterfoil-demo-eve-captioned.mp4 to YouTube, make it publicly visible, and insert its URL here and in the submission form.
 
 ## Inspiration
-An AI returns agent can read a convincing email and ask for the wrong refund. A payment provider knows the sale total, but not which items came back or how much the store's return record still allows. We built Counterfoil to check that merchant evidence before an agent's request reaches the payment provider.
+A small store takes PayPal. Returns arrive by e-mail, and the store wants an AI agent to handle them, because PayPal's Agent Toolkit already gives an agent a `create_refund` tool. But that e-mail is written by the customer, or by someone pretending to be one. PayPal can tell whether a refund is valid for the transaction. Only the store knows whether it is owed. We built the piece that lets a merchant on PayPal hand returns to an agent without handing over that decision.
 
 ## What it does
-A Reader extracts structured fields from an email without payment tools. A Runner uses those fields without seeing the original email. Counterfoil checks every payment request against trusted store records and returns PASS, APPROVAL or BLOCK.
+**Counterfoil lets a merchant on PayPal give refunds to an AI agent, and refunds only what came back.** A Reader extracts structured fields from an email without payment tools. A Runner uses those fields without seeing the original email. Counterfoil checks every payment request against trusted store records and returns PASS, APPROVAL or BLOCK.
 
 The checks cover order ownership, remaining refund entitlement, reservations, item prices and quantities, provider line items and disputes. Held requests require a manager's decision. Approvals are bound to the exact request, expire and cannot be reused.
 
