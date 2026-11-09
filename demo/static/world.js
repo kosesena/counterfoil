@@ -1,44 +1,27 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { polishStore } from '/static/world/polish.js';
-import { startLife } from '/static/world/life.js';
+import { VIEW, fitDistance, loadModel, makeView, dressStore, makeCast, startPeople } from '/static/world/store.js';
 const stage=document.getElementById('worldStage');
 const status=document.getElementById('worldStatus');
 const start=document.getElementById('worldLoad');
 const result=document.getElementById('worldResult');
-let renderer,controls,camera,scene,resize,home,loading=false,loadPromise=null;
-const fromBlender=(p)=>new THREE.Vector3(p[0],p[2],-p[1]);
-function draw(){if(!renderer)return;renderer.render(scene,camera);placeBadges();}
+let renderer,controls,camera,scene,resize,renderView,people=null,loading=false,loadPromise=null;
+function draw(){if(!renderer)return;renderView();placeBadges();}
 async function load(){
  if(renderer)return;
  if(loading)return loadPromise;
  loading=true;start.disabled=true;status.textContent='Opening the 3D store…';
  loadPromise=(async()=>{try {
-  const meta=await fetch('/static/world/camera.json').then(r=>{if(!r.ok)throw Error();return r.json();});
-  const draco=new DRACOLoader().setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/libs/draco/gltf/');
-  const model=await new GLTFLoader().setDRACOLoader(draco).loadAsync('/static/world/homi-meshy.glb',e=>{if(e.total)status.textContent=`Opening the 3D store… ${Math.round(e.loaded/e.total*100)}%`;});
-  draco.dispose();
-  scene=new THREE.Scene();scene.background=new THREE.Color('#e9e3da');
-  const r=new THREE.WebGLRenderer({antialias:true});renderer=r;
-  r.setPixelRatio(Math.min(devicePixelRatio,1.5));r.toneMapping=THREE.ACESFilmicToneMapping;r.toneMappingExposure=.8;
-  const pm=new THREE.PMREMGenerator(r);scene.environment=pm.fromScene(new RoomEnvironment(),.04).texture;pm.dispose();
-  scene.add(new THREE.HemisphereLight(0xfff7ee,0xd9cfc2,.45));
-  const sun=new THREE.DirectionalLight(0xffffff,.9);sun.position.set(-6,12,14);scene.add(sun);
-  scene.add(model.scene);
-  polishStore(scene,r,model.scene,draw);
-  buildActors(model.scene);
-  startLife({scene,renderer:r,actors,draw,calm:still});
-  camera=new THREE.OrthographicCamera(-5,5,5,-5,.05,300);
-  home={position:fromBlender(meta.position),target:fromBlender(meta.target),scale:meta.scale};
-  camera.position.copy(home.position);camera.lookAt(home.target);
-  r.domElement.setAttribute('aria-label','Interactive HOMI store with Nella, Reader, Runner, Counterfoil, the store manager and PayPal. Drag to rotate; scroll to zoom.');
+  const model=await loadModel(p=>{status.textContent=`Opening the 3D store… ${p}%`;});
+  const view=makeView(stage.clientWidth,stage.clientHeight);({scene,camera,renderer}=view);renderView=view.render;const r=renderer;
+  dressStore(scene,model.scene);Object.assign(actors,makeCast(model.scene));
+  camera.position.copy(VIEW.target).addScaledVector(VIEW.dir,fitDistance(stage.clientWidth/stage.clientHeight));camera.lookAt(VIEW.target);
+  r.domElement.setAttribute('aria-label','Interactive HOMI store with Nella, Reader, Runner, Counterfoil, the store manager and the payment rail. Drag to rotate; scroll or pinch to zoom.');
   stage.append(r.domElement);
-  controls=new OrbitControls(camera,r.domElement);controls.target.copy(home.target);controls.minZoom=.6;controls.maxZoom=3;controls.maxPolarAngle=Math.PI*.48;controls.enablePan=false;controls.addEventListener('change',draw);controls.update();
-  resize=()=>{const w=stage.clientWidth,h=stage.clientHeight;camera.left=-home.scale/2;camera.right=home.scale/2;camera.top=home.scale*h/w/2;camera.bottom=-home.scale*h/w/2;camera.updateProjectionMatrix();r.setSize(w,h);draw();};
+  controls=new OrbitControls(camera,r.domElement);controls.target.copy(VIEW.target);controls.minDistance=3;controls.maxDistance=60;controls.maxPolarAngle=Math.PI*.48;controls.enablePan=false;controls.addEventListener('change',draw);controls.update();
+  resize=()=>{const w=stage.clientWidth,h=stage.clientHeight;if(!w||!h)return;view.setSize(w,h);const dir=camera.position.clone().sub(controls.target).normalize();camera.position.copy(controls.target).addScaledVector(dir,fitDistance(w/h));controls.update();draw();};
   new ResizeObserver(resize).observe(stage);resize();
+  people=startPeople({scene,root:model.scene,renderer:r,actors,draw,calm:still,canvas:r.domElement});
   stage.classList.add('is-ready');start.hidden=true;document.getElementById('worldReset').disabled=false;
   status.textContent='Drag to look around · scroll or pinch to zoom';
  }catch(e){renderer?.dispose();renderer=null;stage.querySelector('canvas')?.remove();status.textContent='3D could not load. The approved Blender preview is shown; you can still try the simulator below.';start.disabled=false;start.textContent='Retry 3D';}
@@ -46,51 +29,16 @@ async function load(){
  return loadPromise;
 }
 start.addEventListener('click',load);
-document.getElementById('worldReset').addEventListener('click',()=>{if(!controls)return;camera.position.copy(home.position);camera.zoom=1;controls.target.copy(home.target);controls.update();resize();});
+document.getElementById('worldReset').addEventListener('click',()=>{if(!controls)return;controls.target.copy(VIEW.target);camera.position.copy(VIEW.target).addScaledVector(VIEW.dir,fitDistance(stage.clientWidth/stage.clientHeight));camera.zoom=1;controls.update();resize();});
 if(matchMedia('(min-width: 761px)').matches){const io=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting)){io.disconnect();load();}},{rootMargin:'200px'});io.observe(stage);}
 
-// ---- The crew as actors -------------------------------------------------------------------------------
-// Each character is a group of meshes (glTF node names, '|' kept, spaces became '_'). A group is pivoted at
-// the character's feet, so a hop or a head shake turns the whole figure in place. Counterfoil's felt parts
-// arrive as 30 separate meshes; an older GLB where it was merged into the store still gets a badge anchor.
-const ACTORS={nella:'Nella |',reader:'Reader |',runner:'Runner |',counterfoil:'FELT Guest |',manager:'Manager |',paypal:'PayPal |'};
-const FALLBACK={counterfoil:[-12.05,-8.18,2.2]}; // Blender coordinates of the felt Counterfoil's head
+// ---- The cast as actors, made in store.js -------------------------------------------------------------
 const actors={};
-function buildActors(root){
- const groups={};
- root.traverse(o=>{if(!o.isMesh)return;const n=o.name.replace(/_/g,' ');for(const[k,p]of Object.entries(ACTORS))if(n.startsWith(p)){(groups[k]||=[]).push(o);break;}});
- root.updateMatrixWorld(true);
- for(const[k,meshes]of Object.entries(groups)){
-  const box=new THREE.Box3();meshes.forEach(m=>box.expandByObject(m));
-  const pivot=new THREE.Group();pivot.position.set((box.min.x+box.max.x)/2,box.min.y,(box.min.z+box.max.z)/2);root.add(pivot);pivot.updateMatrixWorld(true);
-  meshes.forEach(m=>pivot.attach(m));
-  actors[k]={pivot,height:box.max.y-box.min.y,base:pivot.position.clone()};
- }
- for(const[k,p]of Object.entries(FALLBACK))if(!actors[k]){const v=fromBlender(p);actors[k]={pivot:null,anchor:v,height:0};}
-}
 function headOf(key){const a=actors[key];if(!a)return null;if(!a.pivot)return a.anchor.clone();return a.pivot.position.clone().add(new THREE.Vector3(0,a.height,0));}
 
-// ---- Motion: short, one per click, nothing loops ------------------------------------------------------
+// ---- Motion: one gesture per click -------------------------------------------------------------------
 const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
-let moves=[],ticking=false;
-function animate(key,kind){
- const a=actors[key];if(!a?.pivot||still){draw();return;}
- moves=moves.filter(m=>m.key!==key);a.pivot.position.copy(a.base);a.pivot.rotation.set(0,0,0);
- moves.push({key,kind,t0:performance.now(),ms:kind==='shake'?900:kind==='nod'?800:700});
- if(!ticking){ticking=true;requestAnimationFrame(tick);}
-}
-function tick(now){
- moves=moves.filter(m=>{
-  const a=actors[m.key],t=Math.min(1,(now-m.t0)/m.ms),e=Math.sin(Math.PI*t);
-  if(m.kind==='hop'){a.pivot.position.y=a.base.y+Math.abs(Math.sin(2*Math.PI*t))*.22*(1-t*.4);}
-  else if(m.kind==='shake'){a.pivot.rotation.y=Math.sin(6*Math.PI*t)*.32*(1-t);}
-  else if(m.kind==='nod'){a.pivot.rotation.x=Math.sin(4*Math.PI*t)*.12*(1-t);}
-  if(t>=1){a.pivot.position.copy(a.base);a.pivot.rotation.set(0,0,0);return false;}
-  return true;
- });
- draw();
- if(moves.length)requestAnimationFrame(tick);else ticking=false;
-}
+function animate(key,kind){people?.gesture(key,{hop:'wave',shake:'shake',nod:'nod'}[kind]||kind);}
 
 // ---- Felt speech badges over the store -----------------------------------------------------------------
 const layer=document.createElement('div');layer.className='world-badges';layer.setAttribute('aria-hidden','true');stage.append(layer);

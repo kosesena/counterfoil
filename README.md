@@ -60,7 +60,7 @@ Two AI agents, one gate, one person, one payment rail. And one customer who isn'
 Attack P6-01, told on the shop floor of HOMI, a small homeware store. What a customer types into a returns kiosk reaches HOMI's AI agent, which can move money. The [live demo](https://counterfoil-demo.onrender.com) lets you walk the same floor in 3D.
 
 <p align="center">
-  <img src="demo/static/world/preview.png" alt="HOMI's checkout in felt, the whole crew as Meshy models: the store manager by the exit, Nella with her bag, Counterfoil behind the tills, PayPal, Runner and Reader in the till aisle" width="100%">
+  <img src="demo/static/world/preview.png" alt="HOMI's checkout, the whole crew built in Blender: the store manager by the exit, Nella with her bag, Counterfoil behind the tills, PayPal, Runner and Reader in the till aisle" width="100%">
 </p>
 
 | # | Step | What happens |
@@ -352,7 +352,7 @@ Security: [`docs/threat-model.md`](docs/threat-model.md) (assets, trust boundari
 - **Astropods** and its **Astro AI Gateway** for the cloud models (GPT-5.6 Terra, GPT-5.6 Sol, Claude Haiku 4.5, Claude Sonnet 5, Claude Opus 5.5).
 - **Ollama** for the local models (qwen2.5, qwen3, llama3.1, hermes3, each with an 8k context).
 - **AG Studio** for the results dashboard and its review desk (the case panel is rule-based, not an LLM).
-- **Meshy** for the wool Counterfoil in the dashboard's hero and the characters in the live demo's 3D store; **Blender** for the HOMI store, the 3D story and the renders. The felt portraits and buttons are image-model renders from Codex's prompts; the README's felt headers and cards are rendered from them with Pillow ([`tools/felt_readme.py`](tools/felt_readme.py)).
+- **Meshy** for the wool Counterfoil in the dashboard's hero; **Blender** for the HOMI store and its cast in the live demo ([`tools/build_homi_store.py`](tools/build_homi_store.py)), animated joint by joint in Three.js.
 - **Claude Code** and **OpenAI Codex** as coding agents. Sena Köse set the problem, the design and every decision. Claude Code wrote most of the code (gate, rails, agents, evaluation, dashboard, demo, 3D store scenes). Codex wrote the scenario texts, designed HOMI and the dashboard's felt look, and reviewed the code; every review finding was fixed with a test ([`docs/inceleme/`](docs/inceleme/)).
 
 The agent prompts are deliberately ordinary, not hardened against injection: the evaluation measures the gate.
