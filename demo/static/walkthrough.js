@@ -7,12 +7,8 @@
 // Phones (< 760px) get the approved still and no WebGL.
 
 import * as THREE from "three";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
-import { polishStore } from "/static/world/polish.js";
-import { startLife } from "/static/world/life.js";
+import { CAST, VIEW, fitDistance, loadModel, makeView, dressStore, makeCast, startPeople } from "/static/world/store.js";
 import { storyProps } from "/static/world/story.js";
 
 const $ = (id) => document.getElementById(id);
@@ -28,12 +24,11 @@ const TOTALS = { cf: "0", none: "99", cap: "100", runs: "270", models: 9, genuin
 // ---- the 3D store ----------------------------------------------------------------------------------------------
 const stage = $("stage"), status = $("status"), layer = $("badges");
 const fromBlender = (p) => new THREE.Vector3(p[0], p[2], -p[1]);
-const ACTORS = { nella: "Nella |", reader: "Reader |", runner: "Runner |", counterfoil: "FELT Guest |", manager: "Manager |", paypal: "PayPal |" };
 const NAMES = { nella: "Nella", reader: "Reader", runner: "Runner", counterfoil: "Counterfoil", manager: "Manager", paypal: "PayPal" };
 const actors = {};
-let renderer, camera, scene, controls, home, fly = null, badges = [], props = null;
+let renderer, camera, scene, controls, renderView, fly = null, badges = [], props = null, people = null, focused = null;
 
-function draw() { if (!renderer) return; renderer.render(scene, camera); placeBadges(); }
+function draw() { if (!renderer) return; renderView(); placeBadges(); }
 
 let storeLoading = false;
 async function loadStore() {
@@ -41,42 +36,31 @@ async function loadStore() {
   if (renderer || storeLoading) return;
   storeLoading = true; status.textContent = "Opening the 3D store…";
   try {
-    const meta = await fetch("/static/world/camera.json").then((r) => { if (!r.ok) throw Error(); return r.json(); });
-    const draco = new DRACOLoader().setDecoderPath("https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/libs/draco/gltf/");
-    const model = await new GLTFLoader().setDRACOLoader(draco).loadAsync("/static/world/homi-meshy.glb", (e) => {
-      if (e.total) status.textContent = `Opening the 3D store… ${Math.round((e.loaded / e.total) * 100)}%`;
-    });
-    draco.dispose();
-    scene = new THREE.Scene(); scene.background = new THREE.Color("#e9e3da");
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5)); renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.8;
-    const pm = new THREE.PMREMGenerator(renderer); scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture; pm.dispose();
-    scene.add(new THREE.HemisphereLight(0xfff7ee, 0xd9cfc2, 0.45));
-    const sun = new THREE.DirectionalLight(0xffffff, 0.9); sun.position.set(-6, 12, 14); scene.add(sun);
-    scene.add(model.scene);
-    polishStore(scene, renderer, model.scene, draw);
-    buildActors(model.scene);
-    startLife({ scene, renderer, actors, draw, calm: CALM });
-    props = storyProps({ scene, root: model.scene, draw, calm: CALM });
-    camera = new THREE.OrthographicCamera(-5, 5, 5, -5, 0.05, 300);
-    home = { position: fromBlender(meta.position), target: fromBlender(meta.target), scale: meta.scale };
-    camera.position.copy(home.position); camera.lookAt(home.target);
-    renderer.domElement.setAttribute("aria-label", "The HOMI store with Nella, Reader, Runner, Counterfoil, the manager and PayPal. Drag to rotate; scroll to zoom.");
+    const model = await loadModel((pct) => { status.textContent = `Opening the 3D store… ${pct}%`; });
+    const view = makeView(stage.clientWidth, stage.clientHeight);
+    ({ scene, camera, renderer } = view); renderView = view.render;
+    dressStore(scene, model.scene);
+    Object.assign(actors, makeCast(model.scene));
+    props = storyProps({ scene: view.overlay, root: model.scene, draw, calm: CALM });
+    camera.position.copy(VIEW.target).addScaledVector(VIEW.dir, fitDistance(stage.clientWidth / stage.clientHeight));
+    camera.lookAt(VIEW.target);
+    renderer.domElement.setAttribute("aria-label", "The HOMI store with Nella, Reader, Runner, Counterfoil, the manager and the payment rail. Drag to rotate; scroll to zoom.");
     stage.append(renderer.domElement);
     controls = new OrbitControls(camera, renderer.domElement);
-    controls.target.copy(home.target); controls.minZoom = 0.6; controls.maxZoom = 3.2; controls.maxPolarAngle = Math.PI * 0.48; controls.enablePan = false;
+    controls.target.copy(VIEW.target); controls.minDistance = 3; controls.maxDistance = 60; controls.maxPolarAngle = Math.PI * 0.48; controls.enablePan = false;
     controls.addEventListener("change", draw); controls.update();
     const resize = () => {
-      const w = stage.clientWidth, h = stage.clientHeight;
-      camera.left = -home.scale / 2; camera.right = home.scale / 2; camera.top = (home.scale * h) / w / 2; camera.bottom = (-home.scale * h) / w / 2;
-      camera.updateProjectionMatrix(); renderer.setSize(w, h); draw();
+      const w = stage.clientWidth, h = stage.clientHeight; if (!w || !h) return;
+      view.setSize(w, h);
+      if (!focused && !fly) { camera.position.copy(controls.target).addScaledVector(VIEW.dir, fitDistance(w / h)); controls.update(); }
+      draw();
     };
     new ResizeObserver(resize).observe(stage); resize();
+    people = startPeople({ scene, root: model.scene, renderer, actors, draw, calm: CALM, canvas: renderer.domElement });
     stage.classList.add("is-ready");
     status.textContent = "Drag to look around · scroll to zoom";
     if (location.hash === "#debug") window.__homi = { THREE, actors, camera, controls, scene, draw };
     if (play) show(play.i, true);
-    loadRigs();
   } catch {
     renderer?.dispose(); renderer = null; stage.querySelector("canvas")?.remove();
     status.textContent = "3D could not load; the approved still is shown.";
@@ -85,23 +69,6 @@ async function loadStore() {
   }
 }
 
-function buildActors(root) {
-  const groups = {};
-  root.traverse((o) => {
-    if (!o.isMesh) return;
-    const n = o.name.replace(/_/g, " ");
-    for (const [k, p] of Object.entries(ACTORS)) if (n.startsWith(p)) { (groups[k] ||= []).push(o); break; }
-  });
-  root.updateMatrixWorld(true);
-  for (const [k, meshes] of Object.entries(groups)) {
-    const box = new THREE.Box3(); meshes.forEach((m) => box.expandByObject(m));
-    const pivot = new THREE.Group(); pivot.position.set((box.min.x + box.max.x) / 2, box.min.y, (box.min.z + box.max.z) / 2);
-    root.add(pivot); pivot.updateMatrixWorld(true); meshes.forEach((m) => pivot.attach(m));
-    // base: where Blender placed them; ground: where they stand now (the steps walk them around the floor)
-    actors[k] = { pivot, height: box.max.y - box.min.y, base: pivot.position.clone(), ground: pivot.position.clone() };
-  }
-  if (!actors.counterfoil) actors.counterfoil = { pivot: null, anchor: fromBlender([-12.05, -8.18, 2.2]), height: 0 };
-}
 const headOf = (k) => { const a = actors[k]; if (!a) return null; return a.pivot ? a.pivot.position.clone().add(new THREE.Vector3(0, a.height, 0)) : a.anchor.clone(); };
 const middleOf = (k, at) => { const a = actors[k]; if (!a) return null; return a.pivot ? (at || a.pivot.position).clone().add(new THREE.Vector3(0, a.height * 0.55, 0)) : a.anchor.clone(); };
 
@@ -112,15 +79,13 @@ const middleOf = (k, at) => { const a = actors[k]; if (!a) return null; return a
 // step's layout is known up front, so Back and a click on the rail land in the same place. Forward by one step, they
 // walk; any other jump puts them there at once. The spots were picked from a top-down scan of the floor so that, from
 // the store camera, nobody stands in front of the character a step is about.
-// A character with a rigged model in /static/world/crew/<key>.glb (Meshy auto-rig) plays its walk clip; the others
-// walk like a felt toy: a small bounce and a side-to-side waddle.
-const FACING = 0.43; // rotation 0 faces the store camera; a rigged Meshy model faces +Z, so it is turned by this much
+// A step can also turn someone (`turn: { nella: 1.8 }`, radians, 0 faces the front of the store); that is cumulative too.
 const SPEED = 1.3;   // metres per second
 let walks = [];
 const spot = (k, p) => (p === "home" ? actors[k].base.clone() : new THREE.Vector3(p[0], actors[k].base.y, p[1]));
 function layoutFor(i) {
-  const at = {}, via = {};
-  for (const k of Object.keys(actors)) if (actors[k].pivot) at[k] = actors[k].base.clone();
+  const at = {}, via = {}, yaw = {};
+  for (const k of Object.keys(actors)) if (actors[k].pivot) { at[k] = actors[k].base.clone(); yaw[k] = BASE_YAW[k] || 0; }
   play.steps.slice(0, i + 1).forEach((s, j) => {
     for (const [k, path] of Object.entries(s.at || {})) {
       if (!at[k]) continue;
@@ -128,65 +93,44 @@ function layoutFor(i) {
       at[k] = pts[pts.length - 1];
       if (j === i) via[k] = pts.slice(0, -1);
     }
+    Object.assign(yaw, s.turn || {});
   });
-  return { at, via };
+  return { at, via, yaw };
 }
-function place({ at, via }, walk) {
+function place({ at, via, yaw }, walk) {
   walks = [];
   for (const [k, to] of Object.entries(at)) {
     const a = actors[k];
-    a.pivot.rotation.set(0, 0, 0);
-    if (a.ground.distanceTo(to) < 0.01) { a.pivot.position.copy(to); continue; }
-    if (!walk || CALM) { a.ground.copy(to); a.pivot.position.copy(to); continue; }
+    a.yaw = yaw[k] ?? 0; a.walking = false;
+    if (a.ground.distanceTo(to) < 0.01) { a.pivot.position.copy(to); a.pivot.rotation.y = a.yaw; continue; }
+    if (!walk || CALM) { a.ground.copy(to); a.pivot.position.copy(to); a.pivot.rotation.y = a.yaw; continue; }
     const pts = [a.ground.clone(), ...(via[k] || []), to.clone()];
     let t0 = performance.now() + 350;
     for (let j = 1; j < pts.length; j++) {
       const d = pts[j].clone().sub(pts[j - 1]), ms = (d.length() / SPEED) * 1000;
-      walks.push({ key: k, from: pts[j - 1], to: pts[j], t0, ms, heading: Math.atan2(d.x, d.z) - FACING, last: j === pts.length - 1 });
+      walks.push({ key: k, from: pts[j - 1], to: pts[j], t0, ms, heading: Math.atan2(d.x, d.z), last: j === pts.length - 1 });
       t0 += ms;
     }
     a.ground.copy(to);
   }
   if (walks.length) requestAnimationFrame(tick);
 }
-const RIGGED = ["runner", "manager", "nella"]; // characters with a rigged model in /static/world/crew/<key>.glb; add a key when its file lands
-const rigs = {};
-async function loadRigs() {
-  const loader = new GLTFLoader();
-  await Promise.all(RIGGED.map(async (k) => {
-    const a = actors[k]; if (!a?.pivot) return;
-    let gltf; try { gltf = await loader.loadAsync(`/static/world/crew/${k}.glb`); } catch { return; } // keeps the felt-toy walk
-    const model = gltf.scene, box = new THREE.Box3().setFromObject(model), h = box.max.y - box.min.y;
-    if (!(h > 0)) return;
-    model.scale.setScalar(a.height / h);
-    model.position.set(-(box.min.x + box.max.x) / 2 * model.scale.x, -box.min.y * model.scale.y, -(box.min.z + box.max.z) / 2 * model.scale.z);
-    const holder = new THREE.Group(); holder.rotation.y = FACING; holder.add(model);
-    a.pivot.children.forEach((c) => { c.visible = false; }); a.pivot.add(holder);
-    const mixer = new THREE.AnimationMixer(model);
-    const clip = gltf.animations.find((c) => /walk/i.test(c.name)) || gltf.animations[0];
-    rigs[k] = { mixer, walk: clip ? mixer.clipAction(clip) : null };
-  }));
-  draw();
-}
-
 // Turn the camera to a character (or back to the whole store): keep the viewing direction, move the target, zoom in.
 function focus(key, at) {
   if (!renderer) return;
-  const target = key ? middleOf(key, at) : home.target.clone();
+  const target = key ? middleOf(key, at) : VIEW.target.clone();
   if (!target) return;
-  const offset = home.position.clone().sub(home.target);
-  const to = { target, position: target.clone().add(offset), zoom: key ? 1.9 : 1 };
+  focused = key;
+  const dist = key ? VIEW.near : fitDistance(stage.clientWidth / stage.clientHeight);
+  const to = { target: key ? target : VIEW.target.clone(), position: (key ? target : VIEW.target).clone().addScaledVector(VIEW.dir, dist), zoom: 1 };
   if (CALM) { controls.target.copy(to.target); camera.position.copy(to.position); camera.zoom = to.zoom; camera.updateProjectionMatrix(); controls.update(); return; }
   fly = { t0: performance.now(), ms: 750, from: { target: controls.target.clone(), position: camera.position.clone(), zoom: camera.zoom }, to };
   requestAnimationFrame(tick);
 }
-let moves = [];
-function animate(key, kind) {
-  const a = actors[key]; if (!a?.pivot || CALM || !kind) return;
-  moves = moves.filter((m) => m.key !== key);
-  const after = Math.max(0, ...walks.filter((w) => w.key === key).map((w) => w.t0 + w.ms - performance.now()));
-  moves.push({ key, kind, t0: performance.now() + Math.max(500, after + 150), ms: kind === "shake" ? 900 : 800 });
-  requestAnimationFrame(tick);
+const BASE_YAW = { nella: Math.PI / 2 };
+function perform(list, walkMs) {
+  if (!people || CALM) return;
+  for (const [key, kind, delay = 0] of list || []) people.gesture(key, kind, walkMs + delay);
 }
 let ticking = false, last = 0;
 function tick(now) {
@@ -195,14 +139,12 @@ function tick(now) {
     let busy = false;
     const dt = Math.min(0.05, (t - last) / 1000); last = t;
     walks = walks.filter((w) => {
-      const a = actors[w.key], r = rigs[w.key], k = (t - w.t0) / w.ms;
+      const a = actors[w.key], k = (t - w.t0) / w.ms;
       if (k < 0) { busy = true; return true; }
-      const u = Math.min(1, k);
-      a.pivot.position.lerpVectors(w.from, w.to, u);
-      a.pivot.rotation.y = u < 1 || !w.last ? w.heading : 0;
-      if (r?.walk) { r.walk.play(); r.mixer.update(dt); if (u >= 1 && w.last) { r.walk.stop(); r.mixer.update(0); } }
-      else if (u < 1) { const ph = (t - w.t0) / 1000 * 2 * Math.PI * 2.2; a.pivot.position.y = w.from.y + Math.abs(Math.sin(ph)) * 0.09; a.pivot.rotation.z = Math.sin(ph) * 0.07; }
-      if (u >= 1) { a.pivot.position.copy(w.to); a.pivot.rotation.set(0, w.last ? 0 : w.heading, 0); return false; }
+      const u = Math.min(1, k), y = a.pivot.position.y;
+      a.pivot.position.lerpVectors(w.from, w.to, u); a.pivot.position.y = y; a.walking = u < 1 || !w.last;
+      a.pivot.rotation.y = u < 1 || !w.last ? w.heading : a.yaw;
+      if (u >= 1) { if (w.last) a.pivot.position.copy(w.to); return false; }
       busy = true; return true;
     });
     if (fly) {
@@ -212,17 +154,7 @@ function tick(now) {
       camera.zoom = fly.from.zoom + (fly.to.zoom - fly.from.zoom) * e; camera.updateProjectionMatrix(); controls.update();
       if (k >= 1) fly = null; else busy = true;
     }
-    moves = moves.filter((m) => {
-      const a = actors[m.key], k = (t - m.t0) / m.ms;
-      if (k < 0) { busy = true; return true; }
-      const u = Math.min(1, k);
-      if (m.kind === "hop") a.pivot.position.y = a.ground.y + Math.abs(Math.sin(2 * Math.PI * u)) * 0.22 * (1 - u * 0.4);
-      else if (m.kind === "shake") a.pivot.rotation.y = Math.sin(6 * Math.PI * u) * 0.32 * (1 - u);
-      else if (m.kind === "nod") a.pivot.rotation.x = Math.sin(4 * Math.PI * u) * 0.12 * (1 - u);
-      if (u >= 1) { a.pivot.position.copy(a.ground); a.pivot.rotation.set(0, 0, 0); return false; }
-      busy = true; return true;
-    });
-    draw();
+    if (CALM) draw();
     if (busy) requestAnimationFrame(step); else ticking = false;
   };
   step(now);
@@ -281,14 +213,14 @@ function build(sc, rows) {
   if (mail.body_html) parts.push(`<h3 style="margin-top:12px">HTML part · the Reader sees all of it, a mail app may hide some</h3><pre class="raw">${esc(mail.body_html)}</pre>`);
   if (mail.attachment_text) parts.push(`<h3 style="margin-top:12px">Attachment · extracted text</h3><pre class="raw">${esc(mail.attachment_text)}</pre>`);
   steps.push({
-    key: "nella", short: "E-mail", move: "hop", eager: true, at: { nella: [[-8.6, 12.9], [-5.2, 10.9]] }, title: "The e-mail arrives",
+    key: "nella", short: "E-mail", eager: true, at: { nella: [[-5.2, 2.6], [-4.85, -2.85]] }, turn: { nella: 1.25, reader: -1.15 }, gestures: [["nella", "wave", 200]], title: "The e-mail arrives",
     props: [{ tag: mailTag, from: "outside", to: "nella", ms: 1500, after: "stay" }],
     badges: [{ key: "nella", html: `<b>${esc(mail.from)}</b>“${esc(mail.subject)}”` }],
     body: `<p class="lead">The mail system checks who sent it. Everything else in the e-mail is the sender's own text.</p>
       <div class="card">${kv([["From", esc(mail.from)], ["Subject", esc(mail.subject)]])}</div><div class="card"><h3>Body</h3>${parts.join("")}</div>`,
   });
   steps.push({
-    key: "reader", short: "Reader", move: "hop", title: "The Reader writes a hand-off",
+    key: "reader", short: "Reader", turn: { nella: 1.25, reader: 0 }, gestures: [["reader", "read", 500], ["reader", "handover", 3200]], title: "The Reader writes a hand-off",
     props: [{ tag: mailTag, from: "nella", to: "reader", into: true, ms: 1200, after: "fade" }, ...(handoffTag ? [{ tag: handoffTag, from: "reader", to: "reader", ms: 520, after: "stay" }] : [])],
     badges: [{ key: "reader", html: rd ? `<b>Reader · hands off</b>${esc([rd.siparis_no, rd.istek, rd.tutar && `${rd.tutar} ${rd.para_birimi || ""}`].filter(Boolean).join(" · "))}` : "<b>Reader</b>could not read it" }],
     body: `<p class="lead">An AI Reader reads the whole e-mail and has no tools. It passes on a fixed set of fields; the payments agent never sees the e-mail.</p>
@@ -300,7 +232,7 @@ function build(sc, rows) {
       ]) : "<p>The Reader's answer was not a usable hand-off.</p>"}</div>`,
   });
   steps.push({
-    key: "runner", short: "Agent", move: "hop", at: { runner: [[-12.6, 10.4]] }, title: "The agent asks for a call",
+    key: "runner", short: "Agent", turn: { runner: -0.9 }, gestures: [["runner", "type", 2400]], title: "The agent asks for a call",
     props: [...(handoffTag ? [{ tag: handoffTag, from: "reader", to: "runner", into: true, ms: 1300, after: "fade" }] : []), ...(callTag ? [{ tag: callTag, from: "runner", to: "runner", ms: 520, after: "stay" }] : [])],
     badges: [{ key: "runner", html: calls.length ? `<b>Agent · asks</b>${calls.map(callText).join("<br>")}` : "<b>Agent</b>made no call" }],
     body: `<p class="lead">The payments agent works from the hand-off alone. Every call it makes, reads included, goes to Counterfoil first.</p>
@@ -309,7 +241,7 @@ function build(sc, rows) {
   const dec = worst?.decision || "PASS";
   const reasons = (s) => (s.findings || []).filter((f) => f.severity !== "PASS");
   steps.push({
-    key: "counterfoil", short: "Check", move: dec === "BLOCK" ? "shake" : dec === "APPROVAL" ? "nod" : "hop", tone: dec,
+    key: "counterfoil", short: "Check", at: { runner: [[0.55, -3.45]] }, turn: { runner: 1.35 }, gestures: [["runner", "press", 500], ["runner", dec === "BLOCK" ? "shrug" : "nod", 3300]], tone: dec,
     props: callTag ? [{ tag: callTag, from: "runner", to: "counterfoil", ms: 1300, stamp: { text: label[dec] || dec, tone: dec }, after: dec === "BLOCK" ? "drop" : "stay" }] : [],
     title: { BLOCK: "Counterfoil blocks the call", APPROVAL: "Counterfoil holds the call for a person", PASS: "Counterfoil lets the call through" }[dec] || "Counterfoil checks the call",
     badges: [{ key: "counterfoil", tone: dec, html: `<b>Counterfoil</b>${esc(label[dec] || dec)}${reasons(worst || {})[0] ? ` · <code>${esc(reasons(worst)[0].code)}</code>` : ""}` }],
@@ -319,7 +251,7 @@ function build(sc, rows) {
   });
   if (calls.some((s) => s.decision === "APPROVAL")) {
     steps.push({
-      key: "manager", short: "Manager", move: "hop", at: { manager: [[-13.6, 10.8]] }, tone: "APPROVAL", title: "A person decides",
+      key: "manager", short: "Manager", at: { manager: [[1.95, -3.62]] }, turn: { manager: -1.45 }, gestures: [["manager", "approve", 1500]], tone: "APPROVAL", title: "A person decides",
       props: callTag ? [{ tag: { ...callTag, stamp: "HOLD", tone: "APPROVAL" }, from: "counterfoil", to: "manager", ms: 1300, after: "stay" }] : [],
       badges: [{ key: "manager", tone: "APPROVAL", html: "<b>Store manager</b>a held call is waiting" }],
       body: `<p class="lead">A held call does not move money. The store manager sees the call, the record and the reason, and approves or rejects it. On approval Counterfoil checks the record again, because it may have changed.</p>
@@ -338,7 +270,7 @@ function build(sc, rows) {
   const ghosts = [["none", "No gate"], ["cap", "$200 cap"]].filter(([c]) => rows[c]?.score?.harm && moved(rows[c]).length && !harmCf).map(([c, name]) => ({ tag: { kicker: name, tone: "harm", lines: [`${total(moved(rows[c]))} leaves HOMI`] }, from: "paypal", to: "paypal", away: 3.6, ms: 2700, after: "fade" }));
   const moneyProps = movedCf.length ? [{ tag: { kicker: "Moved", tone: harmCf ? "harm" : "PASS", lines: [total(movedCf)] }, from: "paypal", to: "paypal", ms: 520, after: "stay" }] : [...ghosts, { tag: { kicker: "With Counterfoil", tone: "PASS", lines: ["0.00 moved"] }, from: "paypal", to: "paypal", ms: 520, after: "stay" }];
   steps.push({
-    key: "paypal", short: "Braintree", move: movedCf.length ? "hop" : "nod", at: { runner: movedCf.length ? [[-10.4, 11.9]] : [[-10.4, 10.35], "home"] }, tone: harmNone ? "harm" : "", props: moneyProps, eager: true,
+    key: "paypal", short: "Braintree", at: { runner: movedCf.length ? [[2.35, -3.45]] : ["home"] }, turn: { runner: movedCf.length ? 1.35 : 0, nella: 1.0 }, gestures: [["nella", movedCf.length ? "cheer" : "shrug", 900]], tone: harmNone ? "harm" : "", props: moneyProps, eager: true,
     title: "What reached Braintree",
     badges: [{ key: "paypal", tone: harmCf ? "harm" : movedCf.length ? "PASS" : "", html: `<b>PayPal · Braintree</b>${movedCf.length ? `moved ${movedCf.map(callText).join(", ")}` : "no money moved"}` }],
     body: `<p class="lead">The same hand-off, the same model, three ways to guard the money.${attack && harmNone && !harmCf ? " Without Counterfoil, money the store does not owe leaves HOMI." : ""}</p>
@@ -346,7 +278,7 @@ function build(sc, rows) {
       <p class="note">"Wrong money" means money the store's record does not owe, money on another customer's order, or another customer's data. Scored by <code>counterfoil/evaluate.py</code>.</p>`,
   });
   steps.push({
-    key: null, short: "All runs", at: { nella: [[-8.6, 12.9], "home"], runner: ["home"], manager: ["home"] }, title: `Across ${TOTALS.models} AI models`,
+    key: null, short: "All runs", at: { nella: [[-5.2, 2.6], "home"], runner: ["home"], manager: ["home"] }, turn: { nella: Math.PI / 2, runner: 0, manager: 0 }, title: `Across ${TOTALS.models} AI models`,
     badges: [{ key: "counterfoil", tone: "name", html: "0 wrong money" }],
     body: `<p class="lead">This was one run. The same 14 attacks ran with ${TOTALS.models} AI models, local and cloud, three times each: ${TOTALS.runs} attack runs per guard.</p>
       <div class="big"><div class="cf"><b>${TOTALS.cf}<small>/${TOTALS.runs}</small></b><span>wrong money with Counterfoil</span></div>
@@ -380,12 +312,14 @@ function show(i, quiet = false) {
   $("where").textContent = s.key ? `HOMI store · ${NAMES[s.key]}` : "HOMI store";
   if (renderer) {
     const layout = layoutFor(play.i);
+    people?.clear();
     place(layout, !quiet && play.i === was + 1);
     focus(s.key, s.key && layout.at[s.key]);
     const walked = Math.max(0, ...walks.map((w) => w.t0 + w.ms - performance.now()));
-    props?.play(s.props || [], { animate: !quiet && play.i === was + 1, delay: s.eager ? 900 : Math.max(900, walked + 200), spot: (k) => middleOf(k, layout.at[k]), side: () => new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0).setY(0).normalize() });
+    props?.play(s.props || [], { animate: !quiet && play.i === was + 1, delay: s.eager ? 900 : Math.max(900, walked + 200), onStamp: () => people?.stamp(), spot: (k) => middleOf(k, layout.at[k]), side: () => new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0).setY(0).normalize() });
   }
-  showBadges(s.badges || []); if (!quiet) animate(s.key, s.move);
+  showBadges(s.badges || []);
+  if (!quiet && play.i === was + 1) perform(s.gestures, Math.max(0, ...walks.map((w) => w.t0 + w.ms - performance.now())));
 }
 $("back").addEventListener("click", () => play && show(play.i - 1));
 $("next").addEventListener("click", () => play && show(play.i + 1));

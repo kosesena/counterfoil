@@ -68,7 +68,7 @@ export function storyProps({ scene, root, draw, calm }) {
   function clear() { run++; clock = null; [...live].forEach(drop); setLed(null); }
 
   // ops: { tag, from, to, into, ms, after: "stay" | "fade" | "drop", stamp: { text, tone }, away }
-  function play(ops, { animate, delay, spot, side }) {
+  function play(ops, { animate, delay, spot, side, onStamp }) {
     clear();
     const id = run, rest = (k) => spot(k).add(side().multiplyScalar(1.28)).add(new THREE.Vector3(0, 0.18, 0));
     const start = (op) => (op.from === "outside" ? rest(op.to).add(side().multiplyScalar(-7)).add(new THREE.Vector3(0, 3.4, 0)) : rest(op.from));
@@ -103,7 +103,7 @@ export function storyProps({ scene, root, draw, calm }) {
         it.size(same || op.away ? Math.min(1, 0.4 + u * (op.away ? 6 : 1.2)) : 1); it.mat.rotation = same ? 0 : Math.sin(Math.PI * e) * 0.09;
         if (u < 1) { busy = true; continue; }
         const after = now - j.t0 - j.ms;
-        if (op.stamp && !j.stamped) { j.stamped = true; stampOn(it, { ...op.tag, stamp: op.stamp.text, tone: op.stamp.tone }); setLed(op.stamp.tone); }
+        if (op.stamp && !j.stamped) { j.stamped = true; stampOn(it, { ...op.tag, stamp: op.stamp.text, tone: op.stamp.tone }); setLed(op.stamp.tone); onStamp?.(); }
         if (op.stamp && after < 260) it.size(1 + (1 - after / 260) * 0.34);
         const hold = op.stamp ? 950 : 0;
         if (after < hold) { busy = true; continue; }
