@@ -12,6 +12,8 @@ import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { polishStore } from "/static/world/polish.js";
+import { startLife } from "/static/world/life.js";
+import { storyProps } from "/static/world/story.js";
 
 const $ = (id) => document.getElementById(id);
 const PHONE = matchMedia("(max-width: 760px)");
@@ -29,12 +31,15 @@ const fromBlender = (p) => new THREE.Vector3(p[0], p[2], -p[1]);
 const ACTORS = { nella: "Nella |", reader: "Reader |", runner: "Runner |", counterfoil: "FELT Guest |", manager: "Manager |", paypal: "PayPal |" };
 const NAMES = { nella: "Nella", reader: "Reader", runner: "Runner", counterfoil: "Counterfoil", manager: "Manager", paypal: "PayPal" };
 const actors = {};
-let renderer, camera, scene, controls, home, fly = null, badges = [];
+let renderer, camera, scene, controls, home, fly = null, badges = [], props = null;
 
 function draw() { if (!renderer) return; renderer.render(scene, camera); placeBadges(); }
 
+let storeLoading = false;
 async function loadStore() {
   if (PHONE.matches) { status.textContent = ""; return; }
+  if (renderer || storeLoading) return;
+  storeLoading = true; status.textContent = "Opening the 3D store…";
   try {
     const meta = await fetch("/static/world/camera.json").then((r) => { if (!r.ok) throw Error(); return r.json(); });
     const draco = new DRACOLoader().setDecoderPath("https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/libs/draco/gltf/");
@@ -51,6 +56,8 @@ async function loadStore() {
     scene.add(model.scene);
     polishStore(scene, renderer, model.scene, draw);
     buildActors(model.scene);
+    startLife({ scene, renderer, actors, draw, calm: CALM });
+    props = storyProps({ scene, root: model.scene, draw, calm: CALM });
     camera = new THREE.OrthographicCamera(-5, 5, 5, -5, 0.05, 300);
     home = { position: fromBlender(meta.position), target: fromBlender(meta.target), scale: meta.scale };
     camera.position.copy(home.position); camera.lookAt(home.target);
@@ -73,6 +80,8 @@ async function loadStore() {
   } catch {
     renderer?.dispose(); renderer = null; stage.querySelector("canvas")?.remove();
     status.textContent = "3D could not load; the approved still is shown.";
+  } finally {
+    storeLoading = false;
   }
 }
 
@@ -263,17 +272,24 @@ function build(sc, rows) {
       ])}</div>
       <p class="note">Every figure on the right is a saved run you can replay on the <a href="/">demo page</a>.</p>`,
   });
+  const worst = calls.find((s) => s.decision === "BLOCK") || calls.find((s) => s.decision === "APPROVAL") || calls.find((s) => MONEY.has(s.tool)) || calls[0];
+  const plain = (s) => `${s.tool}(${[s.args?.order_no, s.args?.rma_id, amount(s.args)].filter(Boolean).join(", ")})`;
+  const mailTag = { kicker: "E-mail", mail: true, lines: [mail.subject || ""] };
+  const handoffTag = rd ? { kicker: "Hand-off", lines: [[rd.siparis_no, rd.istek, rd.tutar && `${rd.tutar} ${rd.para_birimi || ""}`].filter(Boolean).join(" · ")] } : null;
+  const callTag = worst ? { kicker: "Agent asks", lines: [plain(worst)] } : null;
   const parts = [`<pre class="mail">${esc(mail.body_text)}</pre>`];
   if (mail.body_html) parts.push(`<h3 style="margin-top:12px">HTML part · the Reader sees all of it, a mail app may hide some</h3><pre class="raw">${esc(mail.body_html)}</pre>`);
   if (mail.attachment_text) parts.push(`<h3 style="margin-top:12px">Attachment · extracted text</h3><pre class="raw">${esc(mail.attachment_text)}</pre>`);
   steps.push({
-    key: "nella", short: "E-mail", move: "hop", at: { nella: [[-8.6, 12.9], [-6.4, 10.6]] }, title: "The e-mail arrives",
+    key: "nella", short: "E-mail", move: "hop", eager: true, at: { nella: [[-8.6, 12.9], [-5.2, 10.9]] }, title: "The e-mail arrives",
+    props: [{ tag: mailTag, from: "outside", to: "nella", ms: 1500, after: "stay" }],
     badges: [{ key: "nella", html: `<b>${esc(mail.from)}</b>“${esc(mail.subject)}”` }],
     body: `<p class="lead">The mail system checks who sent it. Everything else in the e-mail is the sender's own text.</p>
       <div class="card">${kv([["From", esc(mail.from)], ["Subject", esc(mail.subject)]])}</div><div class="card"><h3>Body</h3>${parts.join("")}</div>`,
   });
   steps.push({
     key: "reader", short: "Reader", move: "hop", title: "The Reader writes a hand-off",
+    props: [{ tag: mailTag, from: "nella", to: "reader", into: true, ms: 1200, after: "fade" }, ...(handoffTag ? [{ tag: handoffTag, from: "reader", to: "reader", ms: 520, after: "stay" }] : [])],
     badges: [{ key: "reader", html: rd ? `<b>Reader · hands off</b>${esc([rd.siparis_no, rd.istek, rd.tutar && `${rd.tutar} ${rd.para_birimi || ""}`].filter(Boolean).join(" · "))}` : "<b>Reader</b>could not read it" }],
     body: `<p class="lead">An AI Reader reads the whole e-mail and has no tools. It passes on a fixed set of fields; the payments agent never sees the e-mail.</p>
       <div class="card"><h3>Hand-off</h3>${rd ? kv([
@@ -285,15 +301,16 @@ function build(sc, rows) {
   });
   steps.push({
     key: "runner", short: "Agent", move: "hop", at: { runner: [[-12.6, 10.4]] }, title: "The agent asks for a call",
+    props: [...(handoffTag ? [{ tag: handoffTag, from: "reader", to: "runner", into: true, ms: 1300, after: "fade" }] : []), ...(callTag ? [{ tag: callTag, from: "runner", to: "runner", ms: 520, after: "stay" }] : [])],
     badges: [{ key: "runner", html: calls.length ? `<b>Agent · asks</b>${calls.map(callText).join("<br>")}` : "<b>Agent</b>made no call" }],
     body: `<p class="lead">The payments agent works from the hand-off alone. Every call it makes, reads included, goes to Counterfoil first.</p>
       <div class="card"><h3>Calls, in order</h3>${calls.length ? calls.map((s) => `<div class="call">${callText(s)}</div>`).join("") : "<p>No call.</p>"}</div>`,
   });
-  const worst = calls.find((s) => s.decision === "BLOCK") || calls.find((s) => s.decision === "APPROVAL") || calls.find((s) => MONEY.has(s.tool)) || calls[0];
   const dec = worst?.decision || "PASS";
   const reasons = (s) => (s.findings || []).filter((f) => f.severity !== "PASS");
   steps.push({
     key: "counterfoil", short: "Check", move: dec === "BLOCK" ? "shake" : dec === "APPROVAL" ? "nod" : "hop", tone: dec,
+    props: callTag ? [{ tag: callTag, from: "runner", to: "counterfoil", ms: 1300, stamp: { text: label[dec] || dec, tone: dec }, after: dec === "BLOCK" ? "drop" : "stay" }] : [],
     title: { BLOCK: "Counterfoil blocks the call", APPROVAL: "Counterfoil holds the call for a person", PASS: "Counterfoil lets the call through" }[dec] || "Counterfoil checks the call",
     badges: [{ key: "counterfoil", tone: dec, html: `<b>Counterfoil</b>${esc(label[dec] || dec)}${reasons(worst || {})[0] ? ` · <code>${esc(reasons(worst)[0].code)}</code>` : ""}` }],
     body: `<p class="lead">Counterfoil never reads the e-mail. It compares each call with the store's own record: who owns the order, what the return record approves, what was already refunded or reserved, the catalog price.</p>
@@ -303,6 +320,7 @@ function build(sc, rows) {
   if (calls.some((s) => s.decision === "APPROVAL")) {
     steps.push({
       key: "manager", short: "Manager", move: "hop", at: { manager: [[-13.6, 10.8]] }, tone: "APPROVAL", title: "A person decides",
+      props: callTag ? [{ tag: { ...callTag, stamp: "HOLD", tone: "APPROVAL" }, from: "counterfoil", to: "manager", ms: 1300, after: "stay" }] : [],
       badges: [{ key: "manager", tone: "APPROVAL", html: "<b>Store manager</b>a held call is waiting" }],
       body: `<p class="lead">A held call does not move money. The store manager sees the call, the record and the reason, and approves or rejects it. On approval Counterfoil checks the record again, because it may have changed.</p>
         <p class="note">In the demo page you can play the manager: pay with PayPal in section 3, then approve or reject.</p>`,
@@ -316,8 +334,11 @@ function build(sc, rows) {
     return `<tr class="${c === "counterfoil" ? "us" : ""}"><td>${name}</td><td>${what}</td><td>${verdict}</td></tr>`;
   }).join("");
   const harmNone = rows.none?.score?.harm, harmCf = cf?.score?.harm, movedCf = moved(cf);
+  const total = (list) => { const n = list.reduce((a, s) => a + Number(s.args?.amount || 0), 0); return `${n.toFixed(2)} ${list[0]?.args?.currency || ""}`.trim(); };
+  const ghosts = [["none", "No gate"], ["cap", "$200 cap"]].filter(([c]) => rows[c]?.score?.harm && moved(rows[c]).length && !harmCf).map(([c, name]) => ({ tag: { kicker: name, tone: "harm", lines: [`${total(moved(rows[c]))} leaves HOMI`] }, from: "paypal", to: "paypal", away: 3.6, ms: 2700, after: "fade" }));
+  const moneyProps = movedCf.length ? [{ tag: { kicker: "Moved", tone: harmCf ? "harm" : "PASS", lines: [total(movedCf)] }, from: "paypal", to: "paypal", ms: 520, after: "stay" }] : [...ghosts, { tag: { kicker: "With Counterfoil", tone: "PASS", lines: ["0.00 moved"] }, from: "paypal", to: "paypal", ms: 520, after: "stay" }];
   steps.push({
-    key: "paypal", short: "Braintree", move: movedCf.length ? "hop" : "nod", at: { runner: movedCf.length ? [[-10.4, 11.9]] : [[-10.4, 10.35], "home"] }, tone: harmNone ? "harm" : "",
+    key: "paypal", short: "Braintree", move: movedCf.length ? "hop" : "nod", at: { runner: movedCf.length ? [[-10.4, 11.9]] : [[-10.4, 10.35], "home"] }, tone: harmNone ? "harm" : "", props: moneyProps, eager: true,
     title: "What reached Braintree",
     badges: [{ key: "paypal", tone: harmCf ? "harm" : movedCf.length ? "PASS" : "", html: `<b>PayPal · Braintree</b>${movedCf.length ? `moved ${movedCf.map(callText).join(", ")}` : "no money moved"}` }],
     body: `<p class="lead">The same hand-off, the same model, three ways to guard the money.${attack && harmNone && !harmCf ? " Without Counterfoil, money the store does not owe leaves HOMI." : ""}</p>
@@ -361,6 +382,8 @@ function show(i, quiet = false) {
     const layout = layoutFor(play.i);
     place(layout, !quiet && play.i === was + 1);
     focus(s.key, s.key && layout.at[s.key]);
+    const walked = Math.max(0, ...walks.map((w) => w.t0 + w.ms - performance.now()));
+    props?.play(s.props || [], { animate: !quiet && play.i === was + 1, delay: s.eager ? 900 : Math.max(900, walked + 200), spot: (k) => middleOf(k, layout.at[k]), side: () => new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0).setY(0).normalize() });
   }
   showBadges(s.badges || []); if (!quiet) animate(s.key, s.move);
 }
@@ -373,6 +396,8 @@ addEventListener("keydown", (e) => {
   else if (e.key === "Home") { e.preventDefault(); show(0); }
   else if (e.key === "End") { e.preventDefault(); show(play.steps.length - 1); }
 });
+
+PHONE.addEventListener("change", () => { if (!PHONE.matches) loadStore(); }); // a window opened narrow and widened later still gets the store
 
 async function api(path, body) {
   const r = await fetch(path, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {});
