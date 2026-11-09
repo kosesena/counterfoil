@@ -10,6 +10,7 @@ key), a metered live mode, input limits, and a rail that cannot leave the fixtur
 from __future__ import annotations
 
 import hashlib
+import hmac
 import json
 import logging
 import os
@@ -23,7 +24,7 @@ from typing import Literal
 from fastapi import FastAPI, HTTPException, Request
 from fastapi import Path as PathParam
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -37,6 +38,7 @@ from scripts.run_eval import CONDITIONS, run_one
 
 from .checkout import Checkout
 from .limits import LRU, DailyBudget, MeteredLLM, RateLimiter
+from .outside import OutsideLog
 from .replay import Replays
 from .scope import ScopedRail
 from .settings import Settings
@@ -144,6 +146,11 @@ def _client_ip(request: Request) -> str:
     return request.client.host if request.client else "unknown"
 
 
+def _visitor(request: Request) -> str:
+    """Only for grouping attempts by person; it is hashed before it is kept."""
+    return request.headers.get("x-forwarded-for", "").split(",")[0].strip() or _client_ip(request)
+
+
 def create_app(settings: Settings | None = None, llm_factory=None, results: Path = ROOT / "results") -> FastAPI:
     """`llm_factory(config)` builds the live client; tests pass a scripted fake so live mode runs without a network."""
     settings = settings or Settings.from_env()
@@ -155,6 +162,7 @@ def create_app(settings: Settings | None = None, llm_factory=None, results: Path
     budget = DailyBudget(settings.daily_llm_calls)
     slots = threading.BoundedSemaphore(settings.max_concurrent)
     reader_cache = LRU()
+    outside = OutsideLog()
     live_llm = MeteredLLM(llm_factory(settings.live), budget) if settings.live else None
     checkout = Checkout(settings.braintree, settings.events_db)
 
@@ -229,6 +237,17 @@ def create_app(settings: Settings | None = None, llm_factory=None, results: Path
         if name not in STORY_FILES or not (STORY / name).is_file():
             raise HTTPException(404, "not found")
         return FileResponse(STORY / name, media_type=STORY_FILES[name])
+
+    @app.get("/api/outside/stats")
+    def outside_stats() -> dict:
+        return outside.stats()
+
+    @app.get("/api/outside/export", include_in_schema=False)
+    def outside_export(request: Request) -> PlainTextResponse:
+        given = request.headers.get("authorization", "").removeprefix("Bearer ")
+        if not settings.outside_token or not hmac.compare_digest(given.encode(), settings.outside_token.encode()):
+            raise HTTPException(404, "not found")
+        return PlainTextResponse(outside.export(), media_type="application/x-ndjson")
 
     @app.get("/healthz", include_in_schema=False)
     def healthz():
@@ -425,7 +444,10 @@ def create_app(settings: Settings | None = None, llm_factory=None, results: Path
         row["demo"] = {"mode": "live", "reader_cached": cached}
         if body.email is not None:
             row["email"] = scenario["email"]
-        return redact(row, _secrets())
+        safe = redact(row, _secrets())
+        if body.email is not None:
+            outside.record(safe, _visitor(request))
+        return safe
 
     return app
 

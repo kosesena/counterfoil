@@ -252,6 +252,7 @@ button { border-radius:24px; padding:12px 20px; } button:focus-visible,a:focus-v
       <p class="note scenario-help">Start with one of these examples. Each uses the fictional store’s records.</p><div class="scenarios" id="scenarios"></div><details class="more-scenarios"><summary>Explore all scenarios</summary><div class="scenarios" id="moreScenarios"></div></details>
     </div>
     <div id="customBox" class="hidden" style="margin-top:12px">
+      <p class="note"><b>Attempts are recorded and may be published.</b> Please do not enter personal data.</p>
       <p class="note">Live mode only. Your email is read by the Reader agent against the fictional store below; no
       order outside it can be touched, whatever the email says. Try hiding an instruction in the HTML part.</p>
       <div class="row">
@@ -815,6 +816,10 @@ async function init() {
   const liveBtn = $("mode").querySelector('[data-v="live"]');
   if (!config.live_enabled) { liveBtn.disabled = true; liveBtn.title = config.live_reason; liveBtn.textContent = "Live AI · not connected yet"; }
   seg("mode", setMode); seg("inputKind", setInput);
+  if (new URLSearchParams(location.search).has("break") && config.live_enabled) {
+    $("mode").querySelector('[data-v="live"]').click(); $("inputKind").querySelector('[data-v="custom"]').click();
+    $("inputKind").scrollIntoView({ block: "center" });
+  }
   $("source").addEventListener("change", () => { clearComparison(); renderScenarios(); });
   for (const id of ["cFromOther", "cSubject", "cBody", "cHtml", "cAtt"]) $(id).addEventListener("input", countChars);
   $("runAll").addEventListener("click", runAll);
