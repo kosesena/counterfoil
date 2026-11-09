@@ -4,10 +4,10 @@
 
 <img src="docs/brand/readme/wordmark.png" alt="Counterfoil" width="520">
 
-**A little trust. A firm boundary.**
+**Let an AI agent handle returns on PayPal. Keep the decision on who gets paid.**
 
-A gate between an AI returns agent and Braintree. Every refund or charge the agent asks for is checked against the store's own records before any money moves.<br>
-<b>It refunds only what came back.</b> The return record and Braintree's own line items decide, not the customer's text.
+PayPal's Agent Toolkit gives an agent a `create_refund` tool, and the refund request is written by the customer, or by someone pretending to be one. Counterfoil checks every refund against the store's own records before Braintree, the PayPal service, moves the money.<br>
+<b>It refunds only what came back.</b> PayPal protects the transaction. The store's records decide whether the money is owed.
 
 <sub>Built solo by Sena Köse from Türkiye on <b>Braintree</b>, the PayPal service PayPal's team confirmed for this hackathon where PayPal accounts can't be opened (<a href="docs/adr/0007-braintree-sandbox-with-mocked-paypal.md">ADR 0007</a>).</sub>
 
@@ -19,6 +19,19 @@ A gate between an AI returns agent and Braintree. Every refund or charge the age
 
 > The demo is configured on Render's paid Starter plan (`render.yaml`), with Braintree sandbox payments.
 > The dashboard separates the October multi-model comparison from the November follow-up experiments.
+
+### Built on PayPal, end to end
+
+| PayPal / Braintree piece | What it does in Counterfoil |
+|---|---|
+| **PayPal button** (mocked PayPal account, through Braintree) | The customer pays the store |
+| **`transaction.sale` with line items** | Records what was actually sold |
+| **`transaction_line_item.find_all`** | Before a refund, the gate compares the return with what Braintree says was sold |
+| **`transaction.refund` / `void`** | Moves only what passed, or what a person approved |
+| **Signed dispute webhooks** | A chargeback locks refunds on that sale before the next agent call |
+| **Agent Toolkit's `create_refund`** (same name and parameters, over MCP, Braintree sandbox behind it) | Any MCP client calls it as usual; the answer is `COMPLETED`, `HELD_FOR_APPROVAL` or `BLOCKED` |
+
+Everything here runs in sandbox. Take the rail away and there is nothing to protect and nothing to measure.
 
 > ### Judge this in 90 seconds
 >

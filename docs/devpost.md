@@ -12,9 +12,9 @@ Counterfoil
 
 ## Elevator pitch (≤ 200 characters)
 
-> Across 9 AI models and 270 attack runs, a returns agent moved wrong money 99 times with no gate and 100 times behind a $200 cap. Behind Counterfoil: 0.
+> PayPal's Agent Toolkit lets AI agents refund. Counterfoil checks each refund against the store's records on Braintree: wrong money in 99/270 attack runs without it, 0/270 with it.
 
-(151 characters. Source: `results/2026-10-25-*-r3-*.jsonl` and `results/2026-10-26-dev-r3-current-gate-*.jsonl`,
+(179 characters. Source: `results/2026-10-25-*-r3-*.jsonl` and `results/2026-10-26-dev-r3-current-gate-*.jsonl`,
 re-scored with the current scorer on 5 Nov: none 99/270, cap 100/270, counterfoil 0/270.)
 
 Earlier pitch, kept as the README tagline: *An AI agent can be talked into a refund. A store's records can't.
@@ -39,7 +39,9 @@ paypal, braintree, braintree-python-sdk, paypal-agent-toolkit, mcp, claude, anth
 
 ### Inspiration
 
-Stores are starting to let AI agents answer customer e-mail, and PayPal's own Agent Toolkit already gives an agent a `create_refund` tool. But the e-mail is written by the customer, or by whoever pretends to be one. OWASP ranks prompt injection first among LLM risks (LLM01:2025), including instructions hidden in e-mails and attachments, and *Moffatt v. Air Canada* (2024) held a business responsible for what its AI told a customer. Return fraud is already large without agents: US retailers lost an estimated $103B to fraudulent returns and claims in 2024 (Appriss Retail and Deloitte).
+A small store takes PayPal. Returns arrive by e-mail, and the store wants an AI agent to handle them, because PayPal's Agent Toolkit already gives an agent a `create_refund` tool. But that e-mail is written by the customer, or by someone pretending to be one. PayPal can tell whether a refund is valid for the transaction. Only the store knows whether it is owed. We built the piece that lets a merchant on PayPal hand returns to an agent without handing over that decision.
+
+OWASP ranks prompt injection first among LLM risks (LLM01:2025), including instructions hidden in e-mails and attachments, and *Moffatt v. Air Canada* (2024) held a business responsible for what its AI told a customer. Return fraud is already large without agents: US retailers lost an estimated $103B to fraudulent returns and claims in 2024 (Appriss Retail and Deloitte).
 
 Support bots are already being talked into promises they shouldn't make. In a red-team test of 14 live support chatbots, Reinforce Labs reported that 11 made unapproved commitments such as refunds or warranties (1 Oct 2026; the firm's own account, companies unnamed). A UK shop owner reported that the after-hours bot was flattered into inventing discount codes up to 80% off (Feb 2026, the owner's account). We found no verified case yet of an agent that *moved* money this way, because most bots could only promise. That is changing: PayPal's Agent Toolkit gives an agent `create_refund`, and support agents that can issue refunds are spreading. Counterfoil is meant to be in place before the promise becomes a payment.
 
@@ -51,7 +53,7 @@ Built solo from Türkiye, where PayPal accounts can't be opened, on **Braintree,
 
 ### What it does
 
-**Counterfoil refunds only what came back.** It is a gate between an AI returns agent and the payment rail:
+**Counterfoil lets a merchant on PayPal give refunds to an AI agent, and refunds only what came back.** It is a gate between the agent and Braintree, the PayPal service:
 
 1. **Reader** (an AI agent with no tools) reads the customer's e-mail and hands off fixed fields: order, return record, request, amount, items.
 2. **Runner** (an AI agent that never sees the e-mail) asks to `refund`, `charge`, `void` or `lookup_transaction`.
