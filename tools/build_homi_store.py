@@ -41,6 +41,8 @@ M.update({
 })
 W, D, H = 15.7, 9.7, 3.0        # room
 XW, YB = W / 2, D / 2           # side walls at +-XW, back wall at +YB
+DEEP = 4.2                      # the sales floor runs this far past the original front edge
+YC, DT = -DEEP / 2, D + DEEP    # centre and full depth of the room
 CY, CH, CD = 2.7, 1.02, 0.78    # counter centre line, height, depth
 env = make_coll("Store")
 b = lambda n, s, l, m, bevel=0.012, **k: box(n, env, s, l, M[m] if isinstance(m, str) else m, bevel=bevel, **k)
@@ -49,7 +51,7 @@ s = lambda n, r, l, m, **k: sphere(n, env, r, l, M[m] if isinstance(m, str) else
 LIGHTS = []
 
 # ------------------------------------------------------------------ shell
-rounded_slab("Platform", env, W + 0.3, D + 0.3, 0.32, 0.3, (0, 0, -0.16), M["platform"])
+rounded_slab("Platform", env, W + 0.3, DT + 0.3, 0.32, 0.3, (0, YC, -0.16), M["platform"])
 import numpy as np
 from homi_kit import np_image, tex_material, hex_srgb
 rng = np.random.default_rng(5); N = 1024
@@ -63,15 +65,15 @@ for _ in range(5200):  # small soft stones, irregular rather than square
         for xx in range(-R_, R_ + 1):
             if (xx / ax) ** 2 + (yy / ay) ** 2 <= r_ * r_: img[(y0_ + yy) % N, (x0 + xx) % N] = col
 oak = tex_material("M_FloorTerrazzo", np_image("terrazzo_img", img), 0.3)
-floor = rounded_slab("Floor", env, W, D, 0.006, 0.18, (0, 0, 0.0005), oak, edge_bevel=0.002)
+floor = rounded_slab("Floor", env, W, DT, 0.006, 0.18, (0, YC, 0.0005), oak, edge_bevel=0.002)
 uv = floor.data.uv_layers.new(name="UVMap")
 for lp in floor.data.loops:
     co = floor.data.vertices[lp.vertex_index].co; uv.data[lp.index].uv = (co.x / 2.8, co.y / 2.8)
 b("EntryMat", (2.4, 3.0, 0.012), (-6.5, -2.7, 0.006), "brand", bevel=0.003)
 b("WallBack", (W + 0.3, 0.2, H), (0, YB + 0.1, H / 2), "plaster")
 for sx, nm in ((-1, "L"), (1, "R")):
-    b(f"Wall{nm}Lo", (0.2, D, H), (sx * (XW + 0.1), 0, H / 2), "plaster")
-    b(f"Cap{nm}", (0.26, D + 0.3, 0.08), (sx * (XW + 0.1), 0, H + 0.04), "walnut")
+    b(f"Wall{nm}Lo", (0.2, DT, H), (sx * (XW + 0.1), YC, H / 2), "plaster")
+    b(f"Cap{nm}", (0.26, DT + 0.3, 0.08), (sx * (XW + 0.1), YC, H + 0.04), "walnut")
 b("CapBack", (W + 0.5, 0.26, 0.08), (0, YB + 0.1, H + 0.04), "walnut")
 # wainscot on all walls
 wg = M["brand"]; wa = groove_material("M_Wains", "#e6e1d7", 0.86)
@@ -81,7 +83,7 @@ for nm, w_, loc, rz in (("BackL", 4.3, (-5.6, YB - 0.005, 0.6), 0), ("BackR", 2.
 fp = face_plane("WainsLeft", env, 5.6, 1.2, (0, 0, 0), wa); fp.rotation_euler = (0, 0, math.radians(-90)); fp.location = (-XW + 0.006, 1.9, 0.6)
 b("WainsCapL", (0.04, 5.6, 0.04), (-XW + 0.02, 1.9, 1.22), "walnut", bevel=0.004)
 b("WainsCapB", (4.3, 0.04, 0.04), (-5.6, YB - 0.02, 1.22), "walnut", bevel=0.004)
-for i, (y, m, t_) in enumerate(((0.2, "teal", "SLOW"), (1.55, "mustard", "HOME"), (2.9, "rust", "MADE"))):
+for i, (y, m, t_) in enumerate(((-0.75, "teal", "SLOW"), (0.2, "mustard", "HOME"), (1.15, "rust", "MADE"))):
     b(f"Poster{i}", (0.03, 0.82, 1.08), (-XW + 0.018, y, 2.0), "walnut", bevel=0.004)
     b(f"PosterF{i}", (0.01, 0.72, 0.98), (-XW + 0.036, y, 2.0), m, bevel=0.0)
     tx = text_mesh(f"PosterT{i}", env, t_, 0.2, M["cream"], (-XW + 0.044, y, 2.0), rot=(90, 0, 90), max_w=0.58)
@@ -211,6 +213,21 @@ lamp("LampA", 6.7, -1.9, 1.6); lamp("LampB", 4.5, -3.9, 1.3)
 b("Armch", (0.85, 0.75, 0.42), (5.4, -2.5, 0.26), "cognac", bevel=0.09); b("ArmchB", (0.85, 0.18, 0.76), (5.4, -2.15, 0.45), "cognac", bevel=0.08)
 cushion("ArmchC", 5.4, -2.6, 0.5, "forest")
 plant("PlantA", -4.7, 3.95, 1.25); plant("PlantB", 4.6, -0.2, 1.15, "pot_cream"); plant("PlantC", -3.8, -3.9, 1.05, "pot_char"); plant("PlantD", 7.1, 0.6, 1.3)
+# aisles of shelving across the new front of the store
+def gondola(n, x, y, title, w=4.9):
+    b(n + "Base", (w, 0.84, 0.12), (x, y, 0.06), "dark_wood", bevel=0.01)
+    b(n + "Spine", (w, 0.05, 1.42), (x, y, 0.8), "offwhite", bevel=0.0)
+    for sx in (-1, 1): b(f"{n}End{sx}", (0.05, 0.84, 1.45), (x + sx * w / 2, y, 0.74), "walnut", bevel=0.008)
+    for i, z in enumerate((0.42, 0.82, 1.2)):
+        for sy in (-1, 1):
+            b(f"{n}S{i}{sy}", (w - 0.06, 0.34, 0.03), (x, y + sy * 0.21, z), "walnut", bevel=0.003)
+            goods(f"{n}G{i}{sy}", x, y + sy * 0.21, z + 0.015, w - 0.14)
+    b(n + "Sign", (1.15, 0.03, 0.3), (x, y, 1.72), "brand", bevel=0.012)
+    text_mesh(n + "SignT", env, title, 0.13, M["sign"], (x, y - 0.02, 1.72), max_w=0.98)
+    for sx in (-1, 1): c(f"{n}SignP{sx}", 0.008, 0.2, (x + sx * 0.45, y, 1.5), "brass_m", segs=6)
+gondola("AisleA", -3.05, -6.0, "KITCHEN"); gondola("AisleB", 3.05, -6.0, "BATH")
+gondola("AisleC", -3.05, -7.95, "LIVING"); gondola("AisleD", 3.05, -7.95, "LIGHTING")
+plant("PlantE", -6.9, -8.2, 1.2); plant("PlantF", 6.9, -8.2, 1.2, "pot_cream"); plant("PlantG", 0.0, -8.7, 0.9, "pot_char")
 # rug wall on the right
 for i, (y, m, m2) in enumerate(((-3.2, "rust", "ochre"), (-1.9, "forest", "cream"), (-0.5, "linen_blue", "blush"))):
     b(f"RugWall{i}", (0.04, 1.05, 1.9), (XW - 0.03, y, 1.5), m, bevel=0.008)
@@ -226,7 +243,7 @@ for i, y in enumerate((-3.4, -2.0)):
     b(f"GatePanel{i}", (0.9, 0.03, 1.0), (-5.5, y, 0.72), "acrylic", bevel=0.004)
 # ------------------------------------------------------------------ escalator to the (unseen) upper floor
 EX, EL, RAKE = -6.62, 4.9, 30.0
-y0, z0 = -0.15, 0.06
+y0, z0 = -1.75, 0.06
 cr, sr = math.cos(math.radians(RAKE)), math.sin(math.radians(RAKE))
 cm = (y0 + EL * cr / 2, z0 + EL * sr / 2)
 for sx in (-1, 1):
@@ -235,10 +252,36 @@ for sx in (-1, 1):
     b(f"EscRail{sx}", (0.075, EL + 0.34, 0.075), (EX + sx * 0.6, cm[0], cm[1] + 0.92), "rubber", bevel=0.03, rot=(RAKE, 0, 0))
 b("EscBelly", (1.1, EL + 0.3, 0.1), (EX, cm[0] + 0.1, cm[1] - 0.26), "graphite", bevel=0.0, rot=(RAKE, 0, 0))
 b("EscFloorPlate", (1.24, 0.8, 0.03), (EX, y0 - 0.32, 0.03), "steel", bevel=0.004)
-b("EscTopPlate", (1.24, 0.64, 0.06), (EX, YB - 0.35, z0 + EL * sr + 0.04), "steel", bevel=0.004)
-b("EscTopWall", (1.5, 0.05, 0.65), (EX, YB - 0.03, z0 + EL * sr + 0.38), "graphite", bevel=0.0)
-b("EscSign", (1.1, 0.03, 0.3), (EX + 1.25, YB - 0.04, 2.55), "sage_wall", bevel=0.01)
-text_mesh("EscSignT", env, "UP · LEVEL 2", 0.11, M["cream"], (EX + 1.25, YB - 0.06, 2.55), max_w=0.95)
+# the upper floor the escalator arrives at: a mezzanine in the back-left corner with its own furniture department
+DX0, DX1, DY0, DZ = -XW, -4.6, y0 + EL * cr, z0 + EL * sr + 0.04
+DW, DD, DXC, DYC = DX1 - DX0, YB - DY0, (DX0 + DX1) / 2, (YB + DY0) / 2
+U = 4.35  # height of the upper walls
+b("MezzSlab", (DW, DD, 0.26), (DXC, DYC, DZ - 0.13), "offwhite", bevel=0.012)
+b("MezzEdge", (DW + 0.02, 0.04, 0.27), (DXC, DY0 - 0.02, DZ - 0.13), "brand", bevel=0.004)
+b("MezzEdgeR", (0.04, DD, 0.27), (DX1 + 0.02, DYC, DZ - 0.13), "brand", bevel=0.004)
+mz = face_plane("MezzFloor", env, DW, DD, (0, 0, 0), M["light_oak"]); mz.rotation_euler = (math.radians(-90), 0, 0); mz.location = (DXC, DYC, DZ + 0.003)
+b("EscTopPlate", (1.24, 0.5, 0.03), (EX, DY0 + 0.22, DZ + 0.012), "steel", bevel=0.004)
+for x_, y_ in ((DX1 - 0.12, DY0 + 0.12), (DX1 - 0.12, YB - 0.2)): c(f"MezzCol{y_:.1f}", 0.09, DZ - 0.1, (x_, y_, (DZ - 0.1) / 2), "brand", segs=18)
+b("MezzBackWall", (DW + 0.2, 0.2, U - H + 0.05), (DXC, YB + 0.1, (U + H) / 2), "plaster")
+b("MezzSideWall", (0.2, DD + 0.1, U - H + 0.05), (-XW - 0.1, DYC, (U + H) / 2), "plaster")
+b("MezzCapB", (DW + 0.5, 0.26, 0.08), (DXC, YB + 0.1, U + 0.04), "walnut"); b("MezzCapS", (0.26, DD + 0.3, 0.08), (-XW - 0.1, DYC, U + 0.04), "walnut")
+rx0 = EX + 0.72
+b("RailGlassF", (DX1 - rx0, 0.02, 0.86), ((DX1 + rx0) / 2, DY0 + 0.03, DZ + 0.45), "acrylic", bevel=0.0)
+b("RailTopF", (DX1 - rx0 + 0.04, 0.05, 0.05), ((DX1 + rx0) / 2, DY0 + 0.03, DZ + 0.9), "brass_m", bevel=0.012)
+b("RailGlassR", (0.02, DD, 0.86), (DX1 - 0.03, DYC, DZ + 0.45), "acrylic", bevel=0.0)
+b("RailTopR", (0.05, DD + 0.04, 0.05), (DX1 - 0.03, DYC, DZ + 0.9), "brass_m", bevel=0.012)
+# furniture department upstairs
+b("UpRug", (1.7, 1.05, 0.012), (-5.95, 3.75, DZ + 0.01), "linen_blue", bevel=0.002)
+b("UpSofa", (1.25, 0.5, 0.24), (-6.0, 4.3, DZ + 0.22), "rust", bevel=0.07); b("UpSofaB", (1.25, 0.16, 0.42), (-6.0, 4.55, DZ + 0.42), "rust", bevel=0.06)
+for sx in (-1, 1): b(f"UpSofaA{sx}", (0.15, 0.56, 0.36), (-6.0 + sx * 0.65, 4.32, DZ + 0.28), "rust", bevel=0.06)
+cushion("UpC0", -6.3, 4.26, DZ + 0.31, "ochre"); cushion("UpC1", -5.72, 4.26, DZ + 0.31, "cream")
+c("UpTable", 0.27, 0.04, (-5.95, 3.55, DZ + 0.37), "light_oak", segs=26); c("UpTableP", 0.02, 0.35, (-5.95, 3.55, DZ + 0.18), "brass_m", segs=8); vase("UpVase", -5.95, 3.55, DZ + 0.39, "ceramic_b", 0.22)
+lamp_x, lamp_y = -7.35, 4.35
+c("UpLampB", 0.13, 0.025, (lamp_x, lamp_y, DZ + 0.015), "brass_m", segs=18); c("UpLampP", 0.01, 1.15, (lamp_x, lamp_y, DZ + 0.58), "brass_m", segs=8); c("UpLampS", 0.2, 0.26, (lamp_x, lamp_y, DZ + 1.25), "linen", segs=22, r2=0.14)
+LIGHTS.append(("Upstairs", (-6.1, 3.8, DZ + 1.35), 24))
+b("UpShelf", (1.45, 0.24, 0.04), (-5.65, YB - 0.14, DZ + 1.05), "walnut", bevel=0.005); goods("UpG", -5.65, YB - 0.14, DZ + 1.07, 1.35)
+b("UpSign", (1.75, 0.04, 0.34), (DXC, YB - 0.03, DZ + 1.55), "brand", bevel=0.012)
+text_mesh("UpSignT", env, "LEVEL 2 · FURNITURE", 0.13, M["sign"], (DXC, YB - 0.055, DZ + 1.55), max_w=1.5)
 for n, y_ in (("EscA", y0), ("EscB", y0 + EL * cr)):
     empty(n, env, (EX, y_, z0 + (y_ - y0) * sr / cr))
 # ------------------------------------------------------------------ manager's office
@@ -357,6 +400,25 @@ def hair_long(n, c_, h):
     capsule(f"{n}_Back", c_, 0.115, 0.34, (0, 0.085, -0.05), M["hair_dark"], parent=h, sy=0.6)
 def hair_brown(n, c_, h):
     sphere(f"{n}_Hair", c_, 0.146, (0, 0.016, 0.145), M["hair_auburn"], parent=h, scale=(1, 1, 0.85), cut_below=0.03)
+def trolley(name, coll, spine, root):
+    """A shopping cart pushed in front of the figure; the page shows its items as they are picked."""
+    wire = M["steel"]
+    for x_ in (-0.26, 0.26):
+        for y_ in (-1.0, -0.5): cyl(f"{name}_Wheel{x_}{y_}", coll, 0.05, 0.03, (x_, y_, 0.05), M["rubber"], segs=12, parent=root, rot=(0, 90, 0))
+        box(f"{name}_Rail{x_}", coll, (0.02, 0.62, 0.02), (x_, -0.75, 0.14), wire, bevel=0.0, parent=root)
+        capsule_between(f"{name}_Strut{x_}", coll, 0.011, (x_, -0.5, 0.14), (x_, -0.42, 0.98), wire, parent=root)
+    box(f"{name}_Handle", coll, (0.56, 0.035, 0.035), (0, -0.42, 0.98), M["brand"], bevel=0.012, parent=root)
+    box(f"{name}_Floor", coll, (0.52, 0.56, 0.02), (0, -0.76, 0.56), wire, bevel=0.0, parent=root)
+    for x_ in (-0.26, 0.26): box(f"{name}_Side{x_}", coll, (0.012, 0.56, 0.28), (x_, -0.76, 0.7), M["acrylic"], bevel=0.0, parent=root)
+    for y_ in (-1.04, -0.48): box(f"{name}_End{y_}", coll, (0.52, 0.012, 0.28), (0, y_, 0.7), M["acrylic"], bevel=0.0, parent=root)
+    for i, (x_, y_, m, sz) in enumerate(((-0.12, -0.92, "kraft", (0.18, 0.18, 0.2)), (0.12, -0.9, "rust", (0.2, 0.16, 0.14)), (-0.12, -0.64, "linen_blue", (0.17, 0.2, 0.16)), (0.12, -0.64, "ochre", (0.18, 0.18, 0.22)))):
+        box(f"{name}_CartItem{i}", coll, sz, (x_, y_, 0.57 + sz[2] / 2), M[m], bevel=0.02, parent=root)
+def hand_basket(name, coll, spine, root):
+    arm = bpy.data.objects[f"{name}_ElbowL"]
+    box(f"{name}_Basket", coll, (0.3, 0.2, 0.15), (-0.02, -0.01, -0.36), M["brand"], bevel=0.02, parent=arm)
+    torus(f"{name}_BasketH", coll, 0.08, 0.008, (-0.02, -0.01, -0.28), M["steel"], parent=arm, rot=(90, 0, 0))
+    for i, (x_, m) in enumerate(((-0.1, "kraft"), (0.0, "rust"), (0.1, "ochre"))):
+        box(f"{name}_CartItem{i}", coll, (0.08, 0.1, 0.1), (x_ - 0.02, -0.01, -0.27), M[m], bevel=0.012, parent=arm)
 def tote(name, coll, spine, root):
     arm = bpy.data.objects[f"{name}_ElbowL"]
     box(f"{name}_Tote", coll, (0.05, 0.3, 0.34), (-0.02, -0.01, -0.46), M["cream"], bevel=0.015, parent=arm)
@@ -380,8 +442,10 @@ person("Nella", (-7.0, -2.6, 0), "rust", "pants_dark", hair_long, extras=nella_t
 robot("Reader", (-2.6, 3.42, 0), "enamel_sage", "enamel_ivory", reader_head, leg=0.86, girth=0.16, torso=0.54)
 robot("Runner", (-0.4, 3.42, 0), "enamel_ochre", "navy", runner_head, leg=0.76, girth=0.185, torso=0.5)
 person("Manager", (6.45, 3.55, 0), "white", "pants_dark", hair_mustache, extras=manager_things, leg=0.94, girth=0.236, torso=0.66, head_s=1.22)
-person("Shopper1", (-4.6, 0.6, 0), "ochre", "pants", hair_brown, leg=0.92, girth=0.2, torso=0.62)
-person("Shopper2", (4.4, 0.5, 0), "linen_blue", "pants_dark", hair_long, leg=1.05, girth=0.165, torso=0.66)
+person("Shopper1", (-4.6, 0.6, 0), "ochre", "pants", hair_brown, extras=trolley, leg=0.92, girth=0.2, torso=0.62)
+person("Shopper2", (4.4, 0.5, 0), "linen_blue", "pants_dark", hair_long, extras=hand_basket, leg=1.05, girth=0.165, torso=0.66)
+person("Shopper3", (2.0, -5.0, 0), "forest", "pants_dark", hair_grey, extras=trolley, leg=0.96, girth=0.21, torso=0.64)
+person("Shopper4", (-2.0, -5.0, 0), "blush", "pants", hair_long, extras=hand_basket, leg=0.86, girth=0.18, torso=0.58)
 # the two machines on the counter
 coll = make_coll("Machines")
 cf = empty("Counterfoil", coll, (1.3, CY, TOP)); ROOTS.append(cf)
