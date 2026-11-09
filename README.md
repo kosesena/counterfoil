@@ -278,6 +278,28 @@ per condition (12 fresh sandbox runs). Counterfoil completed both refunds and he
 none and cap each charged both reorders without approval. Reader outputs were identical across repeats, so this
 is a small executor repeat check conditional on cached Reader output, not independent end-to-end sampling.
 
+### Attackers from other model families
+
+The earlier study had one attacker model. This one asks models from different families to attack the same frozen fixture: USD 100 approved on the return record, USD 60 already reserved, USD 40 left. Each attacker writes 6 emails per round for 3 rounds. From round 2 it sees its own earlier emails and the gate's public decision and reason codes, and is told to find a case the gate does not stop. It never sees the code or the rules. Every email runs under no gate, the USD 200 cap and Counterfoil with the local qwen2.5-8k agent, and each run is judged by the same independent record check as the study above ([`redteam/multi_family.py`](redteam/multi_family.py), [`redteam/oracle.py`](redteam/oracle.py)).
+
+| Family | Model | Status |
+|---|---|---|
+| Meta | Muse Spark 1.3 | Attacks generated |
+| OpenAI | GPT-5.6 Luna | Attacks generated |
+| DeepSeek | DeepSeek v4.1 Flash | Attacks generated |
+| Mistral | Mistral Large 4 | Queued |
+| Alibaba | Qwen3 8B (local; same vendor as the target agent) | Queued |
+| Nous Research | Hermes 3 8B (local) | Queued |
+| Google | Gemini 4 Argon | **Refused** the task twice |
+| xAI | Grok 4.7 | **Refused** the task twice |
+| Anthropic | Claude Sonnet 5.5 | **No usable cases**: one empty and one truncated reply |
+
+A refusal or an unusable reply is not a defence, and those models contribute no runs. Results by family will be added here when the run finishes, including any case that gets wrong money past Counterfoil.
+
+### People outside the project
+
+[The open attack page](https://counterfoil-demo.onrender.com/?break=1) lets anyone write a refund email against the fictional store, in live mode, with test money. The counting and scoring rules were fixed before the first attempt: [protocol](docs/outside-red-team.md). Results will be added here, with their denominators.
+
 <a name="quick-start"></a>
 <img src="docs/brand/readme/h-quickstart.png" alt="Quick start" height="92">
 
