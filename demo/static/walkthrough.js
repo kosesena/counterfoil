@@ -107,7 +107,7 @@ function place({ at, via, yaw }, walk) {
     const pts = [a.ground.clone(), ...(via[k] || []), to.clone()];
     let t0 = performance.now() + 350;
     for (let j = 1; j < pts.length; j++) {
-      const d = pts[j].clone().sub(pts[j - 1]), ms = (d.length() / SPEED) * 1000;
+      const d = pts[j].clone().sub(pts[j - 1]), ms = (d.length() / (a.speed || SPEED)) * 1000;
       walks.push({ key: k, from: pts[j - 1], to: pts[j], t0, ms, heading: Math.atan2(d.x, d.z), last: j === pts.length - 1 });
       t0 += ms;
     }
@@ -122,7 +122,7 @@ function focus(key, at) {
   if (!target) return;
   focused = key;
   const dist = key ? VIEW.near : fitDistance(stage.clientWidth / stage.clientHeight);
-  const to = { target: key ? target : VIEW.target.clone(), position: (key ? target : VIEW.target).clone().addScaledVector(VIEW.dir, dist), zoom: 1 };
+  const to = { target: key ? target : VIEW.target.clone(), position: (key ? target : VIEW.target).clone().addScaledVector(key ? VIEW.closeDir : VIEW.dir, dist), zoom: 1 };
   if (CALM) { controls.target.copy(to.target); camera.position.copy(to.position); camera.zoom = to.zoom; camera.updateProjectionMatrix(); controls.update(); return; }
   fly = { t0: performance.now(), ms: 750, from: { target: controls.target.clone(), position: camera.position.clone(), zoom: camera.zoom }, to };
   requestAnimationFrame(tick);
