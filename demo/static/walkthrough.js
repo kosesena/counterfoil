@@ -120,7 +120,7 @@ function focus(key, at) {
   if (!renderer) return;
   const target = key ? middleOf(key, at) : VIEW.target.clone();
   if (!target) return;
-  focused = key;
+  focused = key; people?.quiet(!!key);
   const dist = key ? VIEW.near : fitDistance(stage.clientWidth / stage.clientHeight);
   const to = { target: key ? target : VIEW.target.clone(), position: (key ? target : VIEW.target).clone().addScaledVector(key ? VIEW.closeDir : VIEW.dir, dist), zoom: 1 };
   if (CALM) { controls.target.copy(to.target); camera.position.copy(to.position); camera.zoom = to.zoom; camera.updateProjectionMatrix(); controls.update(); return; }
@@ -187,9 +187,30 @@ const label = { BLOCK: "BLOCK", APPROVAL: "HOLD", PASS: "PASS", PARSE_ERROR: "BA
 const pill = (d) => `<span class="pill ${esc(d)}">${esc(label[d] || d)}</span>`;
 const kv = (rows) => `<dl class="kv">${rows.filter(Boolean).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${v}</dd>`).join("")}</dl>`;
 
+// What a rule means, in the words a shop owner would use. The numbers come from the recorded decision.
+function arithmetic(f) {
+  const m = /^([\d.]+) requested; ([\d.]+) refunded and ([\d.]+) reserved of ([\d.]+) approved; ([\d.]+) left/.exec(f?.detail || "");
+  return m && { asked: m[1], refunded: m[2], reserved: m[3], approved: m[4], left: m[5] };
+}
+function plainWhy(f, cur) {
+  if (!f) return "";
+  const m = arithmetic(f);
+  if (m) return `Only ${cur} ${m.left} is left on this return.`;
+  return { SCOPE_NOT_ALLOWED: "This order belongs to another customer.", RMA_ALREADY_REFUNDED: "This return was already refunded.", READER_INCOMPLETE: "The hand-off has no amount, so a person must check it.", CHARGE_NEEDS_CONFIRMATION: "A person confirms every new charge.", AUTO_REFUND_LIMIT_EXCEEDED: "This is above the store's automatic refund limit." }[f.code] || f.detail;
+}
+const totalOf = (list) => { const n = list.reduce((a, s) => a + Number(s.args?.amount || 0), 0); return `${list[0]?.args?.currency || ""} ${n.toFixed(2)}`.trim(); };
+
 function build(sc, rows) {
   const cf = rows.counterfoil, attack = sc.kind === "attack", mail = sc.email || {}, rd = cf?.reader, calls = cf?.steps || [];
   const steps = [];
+  const worst = calls.find((s) => s.decision === "BLOCK") || calls.find((s) => s.decision === "APPROVAL") || calls.find((s) => MONEY.has(s.tool)) || calls[0];
+  const plain = (s) => `${s.tool}(${[s.args?.order_no, s.args?.rma_id, amount(s.args)].filter(Boolean).join(", ")})`;
+  const mailTag = { kicker: "E-mail", mail: true, lines: [mail.subject || ""] };
+  const handoffTag = rd ? { kicker: "Hand-off", lines: [[rd.siparis_no, rd.istek, rd.tutar && `${rd.tutar} ${rd.para_birimi || ""}`].filter(Boolean).join(" · ")] } : null;
+  const callTag = worst ? { kicker: "Agent asks", lines: [plain(worst)] } : null;
+  const reasonsOf = (s) => (s?.findings || []).filter((f) => f.severity !== "PASS");
+  const first = reasonsOf(worst)[0], cur = worst?.args?.currency || "USD", why = plainWhy(first, cur), sums = arithmetic(first);
+  const dec0 = worst?.decision || "PASS", leftNone = moved(rows.none);
   steps.push({
     key: null, short: "Store", title: attack ? `${sc.id} · ${sc.technique}` : `${sc.id} · a genuine request`,
     badges: Object.keys(NAMES).map((k) => ({ key: k, tone: "name", html: NAMES[k] })),
@@ -197,6 +218,8 @@ function build(sc, rows) {
       ? `A customer of HOMI e-mails the store. The e-mail carries an attack: ${esc((sc.attacker_goal || "it tries to move money the store does not owe").replace(/\.$/, ""))}.`
       : "A customer of HOMI e-mails the store with a request the store's records support."}
       Follow it through the store, one step at a time.</p>
+      ${sums ? `<div class="sum"><div><b>${esc(sums.approved)}</b><span>return approved</span></div><div><b>${esc(sums.reserved)}</b><span>already reserved</span></div><div class="ok"><b>${esc(sums.left)}</b><span>left to refund</span></div><div class="bad"><b>${esc(sums.asked)}</b><span>the e-mail asks for</span></div></div>` : ""}
+      ${worst ? `<div class="stake"><p>${why ? `<b>${esc(why)}</b> ` : ""}Counterfoil: ${pill(dec0)}</p>${attack && rows.none?.score?.harm && leftNone.length ? `<p class="m">With no gate, ${esc(totalOf(leftNone))} leaves the store.</p>` : ""}</div>` : ""}
       <div class="card"><h3>This walkthrough</h3>${kv([
         ["Recorded run", `${esc(cf?.model || "?")} as Reader and agent`],
         ["Store", "HOMI · Braintree sandbox · USD"],
@@ -204,11 +227,6 @@ function build(sc, rows) {
       ])}</div>
       <p class="note">Every figure on the right is a saved run you can replay on the <a href="/">demo page</a>.</p>`,
   });
-  const worst = calls.find((s) => s.decision === "BLOCK") || calls.find((s) => s.decision === "APPROVAL") || calls.find((s) => MONEY.has(s.tool)) || calls[0];
-  const plain = (s) => `${s.tool}(${[s.args?.order_no, s.args?.rma_id, amount(s.args)].filter(Boolean).join(", ")})`;
-  const mailTag = { kicker: "E-mail", mail: true, lines: [mail.subject || ""] };
-  const handoffTag = rd ? { kicker: "Hand-off", lines: [[rd.siparis_no, rd.istek, rd.tutar && `${rd.tutar} ${rd.para_birimi || ""}`].filter(Boolean).join(" · ")] } : null;
-  const callTag = worst ? { kicker: "Agent asks", lines: [plain(worst)] } : null;
   const parts = [`<pre class="mail">${esc(mail.body_text)}</pre>`];
   if (mail.body_html) parts.push(`<h3 style="margin-top:12px">HTML part · the Reader sees all of it, a mail app may hide some</h3><pre class="raw">${esc(mail.body_html)}</pre>`);
   if (mail.attachment_text) parts.push(`<h3 style="margin-top:12px">Attachment · extracted text</h3><pre class="raw">${esc(mail.attachment_text)}</pre>`);
@@ -241,12 +259,12 @@ function build(sc, rows) {
   const dec = worst?.decision || "PASS";
   const reasons = (s) => (s.findings || []).filter((f) => f.severity !== "PASS");
   steps.push({
-    key: "counterfoil", short: "Check", at: { runner: [[0.55, -3.45]] }, turn: { runner: 1.35 }, gestures: [["runner", "press", 500], ["runner", dec === "BLOCK" ? "shrug" : "nod", 3300]], tone: dec,
-    props: callTag ? [{ tag: callTag, from: "runner", to: "counterfoil", ms: 1300, stamp: { text: label[dec] || dec, tone: dec }, after: dec === "BLOCK" ? "drop" : "stay" }] : [],
+    key: "counterfoil", short: "Check", at: { runner: [[0.25, -3.42]] }, turn: { runner: 1.2 }, gestures: [["runner", "press", 500], ["runner", dec === "BLOCK" ? "shrug" : "nod", 3300]], tone: dec,
+    props: callTag ? [{ tag: why ? { ...callTag, lines: [...callTag.lines, why] } : callTag, from: "runner", to: "counterfoil", ms: 1300, stamp: { text: label[dec] || dec, tone: dec }, after: dec === "BLOCK" ? "drop" : "stay" }] : [],
     title: { BLOCK: "Counterfoil blocks the call", APPROVAL: "Counterfoil holds the call for a person", PASS: "Counterfoil lets the call through" }[dec] || "Counterfoil checks the call",
-    badges: [{ key: "counterfoil", tone: dec, html: `<b>Counterfoil</b>${esc(label[dec] || dec)}${reasons(worst || {})[0] ? ` · <code>${esc(reasons(worst)[0].code)}</code>` : ""}` }],
+    badges: [{ key: "counterfoil", tone: dec, html: `<b>Counterfoil</b>${esc(label[dec] || dec)}${why ? ` · ${esc(why)}` : ""}` }],
     body: `<p class="lead">Counterfoil never reads the e-mail. It compares each call with the store's own record: who owns the order, what the return record approves, what was already refunded or reserved, the catalog price.</p>
-      <div class="card"><h3>Decisions</h3>${calls.length ? calls.map((s) => `<div class="call">${callText(s)} ${pill(s.decision)}${reasons(s).map((f) => `<span class="why"><code>${esc(f.code)}</code> · ${esc(f.detail)}</span>`).join("")}</div>`).join("") : "<p>No call reached the gate.</p>"}</div>
+      <div class="card"><h3>Decisions</h3>${calls.length ? calls.map((s) => `<div class="call">${callText(s)} ${pill(s.decision)}${reasons(s).map((f) => `<span class="why"><b>${esc(plainWhy(f, s.args?.currency || "USD"))}</b> <code>${esc(f.code)}</code></span>`).join("")}</div>`).join("") : "<p>No call reached the gate.</p>"}</div>
       ${attack && sc.expected_reason ? `<p class="note">The rule behind it: ${esc(sc.expected_reason)}</p>` : ""}`,
   });
   if (calls.some((s) => s.decision === "APPROVAL")) {
@@ -266,7 +284,7 @@ function build(sc, rows) {
     return `<tr class="${c === "counterfoil" ? "us" : ""}"><td>${name}</td><td>${what}</td><td>${verdict}</td></tr>`;
   }).join("");
   const harmNone = rows.none?.score?.harm, harmCf = cf?.score?.harm, movedCf = moved(cf);
-  const total = (list) => { const n = list.reduce((a, s) => a + Number(s.args?.amount || 0), 0); return `${n.toFixed(2)} ${list[0]?.args?.currency || ""}`.trim(); };
+  const total = totalOf;
   const ghosts = [["none", "No gate"], ["cap", "$200 cap"]].filter(([c]) => rows[c]?.score?.harm && moved(rows[c]).length && !harmCf).map(([c, name]) => ({ tag: { kicker: name, tone: "harm", lines: [`${total(moved(rows[c]))} leaves HOMI`] }, from: "paypal", to: "paypal", away: 3.6, ms: 2700, after: "fade" }));
   const moneyProps = movedCf.length ? [{ tag: { kicker: "Moved", tone: harmCf ? "harm" : "PASS", lines: [total(movedCf)] }, from: "paypal", to: "paypal", ms: 520, after: "stay" }] : [...ghosts, { tag: { kicker: "With Counterfoil", tone: "PASS", lines: ["0.00 moved"] }, from: "paypal", to: "paypal", ms: 520, after: "stay" }];
   steps.push({
@@ -284,6 +302,7 @@ function build(sc, rows) {
       <div class="big"><div class="cf"><b>${TOTALS.cf}<small>/${TOTALS.runs}</small></b><span>wrong money with Counterfoil</span></div>
         <div class="ng"><b>${TOTALS.none}<small>/${TOTALS.runs}</small></b><span>with no gate</span></div>
         <div class="cap"><b>${TOTALS.cap}<small>/${TOTALS.runs}</small></b><span>behind a $200 cap</span></div></div>
+      <p class="next-run"><a href="?test=${attack ? "CLEAN-01" : "P6-01"}">${attack ? "See a genuine refund go through →" : "See an attack get stopped →"}</a></p>
       <p class="note">The agent was fooled about as often under every guard; Counterfoil stops a fooled agent from moving the money. Genuine requests completed: ${TOTALS.genuine} under all three. Simulated rail with the sandbox's limits; the real-sandbox rows and every limit are in the <a href="https://counterfoil-dashboard.vercel.app">dashboard</a> and the README.</p>`,
   });
   return steps;
@@ -359,7 +378,8 @@ async function start() {
   const pick = $("pick");
   const group = (kind, title) => {
     const g = document.createElement("optgroup"); g.label = title;
-    for (const s of scenarios.filter((x) => x.kind === kind)) { const o = document.createElement("option"); o.value = s.id; o.textContent = `${s.id} · ${s.technique || s.family}`; g.append(o); }
+    for (const s of scenarios.filter((x) => x.kind === kind && x.split !== "holdout")) { // holdout runs are scored, not replayed here
+      const o = document.createElement("option"); o.value = s.id; o.textContent = `${s.id} · ${s.technique || s.family}`; g.append(o); }
     pick.append(g);
   };
   group("attack", "Attacks"); group("clean", "Genuine requests");

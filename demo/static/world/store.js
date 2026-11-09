@@ -118,6 +118,7 @@ export function startPeople({ scene, root, renderer, actors, draw, calm, canvas 
   const irises = ["Reader_IrisL", "Reader_IrisR"].map((n) => root.getObjectByName(n)).filter(Boolean).map((o) => ({ o, x: o.position.x, y: o.position.y }));
   const api = {
     gesture(key, kind, delay = 0) { const m = moving.find((x) => x.a === actors[key]); if (m && GESTURES[kind] && !calm) m.gestures.push({ g: GESTURES[kind], t0: performance.now() + delay }); },
+    quiet(on) { shoppers.forEach((st) => { st.o.visible = !on; }); }, // close-ups belong to the story
     clear() { moving.forEach((m) => { m.gestures = []; }); stampAt = -1e9; },
     stamp() { stampAt = performance.now(); },
   };
