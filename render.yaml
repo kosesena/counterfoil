@@ -16,6 +16,8 @@ services:
       - key: ANTHROPIC_API_KEY
         sync: false
       # abuse limits (defaults shown)
+      - key: DEMO_OUTSIDE_TOKEN  # unlocks /api/outside/export; set by hand
+        sync: false
       - key: DEMO_DAILY_LLM_CALLS
         value: "300"
       - key: DEMO_RATE_LIMIT

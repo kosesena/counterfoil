@@ -40,6 +40,7 @@ class Settings:
     live_reason: str = "no model configured on the server (set DEMO_MODEL or LLM_BASE_URL/LLM_MODEL/LLM_API_KEY)"
     braintree: bool = False
     paypal_rest: bool = False  # DEMO_RAIL=paypal + PAYPAL_CLIENT_ID/SECRET: live runs refund via PayPal REST
+    outside_token: str = ""  # DEMO_OUTSIDE_TOKEN: unlocks /api/outside/export; empty keeps that route closed
     events_db: str = ":memory:"  # DEMO_EVENTS_DB: SQLite file for Braintree webhook events and dispute locks
 
     @classmethod
@@ -57,6 +58,7 @@ class Settings:
             braintree=os.environ.get("BRAINTREE_ENVIRONMENT") == "sandbox"
             and all(os.environ.get(v) for v in BRAINTREE_VARS),
             paypal_rest=os.environ.get("DEMO_RAIL") == "paypal" and paypal.configured(),
+            outside_token=os.environ.get("DEMO_OUTSIDE_TOKEN", ""),
             events_db=os.environ.get("DEMO_EVENTS_DB", ":memory:"),
         )
         live, reason = live_config()
