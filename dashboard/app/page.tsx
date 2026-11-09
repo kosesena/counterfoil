@@ -14,7 +14,7 @@ import { CASE_WIDGET } from './case-file';
 import { buildCaseHarness } from './case-agent';
 import { Story3D, StoryStrip } from './story-3d';
 import { ClosingBand, Crew, Hero, ResultBand, StoryAside, useFeltConditions } from './felt';
-import { CrewJourney, ProductIntro } from './crew-journey';
+import { ProductIntro } from './crew-journey';
 import { EvidenceBoard } from './evidence';
 import { RailChecksBoard } from './rail-checks';
 import { RecentEvidence } from './recent-evidence';
@@ -116,7 +116,6 @@ export default function Page() {
           <CompareTable data={data} />
           <RecentEvidence />
           <div className="story-next-wrap"><button className="continuation-next" onClick={() => { openPage('review'); window.scrollTo({ top: 0 }); }}>Next: see how the manager reviews $80 →</button></div>
-          <details className="simple-disclosure"><summary>Meet the crew and explore Nella’s other tricks</summary><p className="evidence-context">A separate teaching story using $60 and $40, plus examples of other attacks. These scenes are illustrations, not transaction replays.</p><CrewJourney /></details>
           <details id="crew-results" className="simple-disclosure"><summary>Technical details · test results and evidence</summary>
           <div className="crew-results">
             <span className="crew-results-kicker">THE RESULTS</span>
