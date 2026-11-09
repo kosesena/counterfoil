@@ -34,6 +34,14 @@ code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 .tools button + button { border-top: 1px solid var(--line); }
 .tools button:hover { background: var(--soft); }
 
+.sum { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 14px 0 10px; }
+.sum div { padding: 12px 8px; border: 1.5px dashed #cdbfae; border-radius: 12px; text-align: center; background: #fffaf2; }
+.sum b { display: block; font-size: 26px; line-height: 1.1; }
+.sum span { display: block; margin-top: 3px; font-size: 11.5px; color: #6d645a; }
+.sum .ok { border-color: #2f7d55; } .sum .ok b { color: #2f7d55; }
+.sum .bad { border-color: #c8452e; background: #fbeae5; } .sum .bad b { color: #c8452e; }
+.stake { margin: 0 0 14px; font-size: 15.5px; } .stake p { margin: 0; } .stake .m { margin-top: 4px; color: #a2331f; font-weight: 600; }
+.next-run { margin: 14px 0 0; font-weight: 700; } .next-run a { color: #21365c; }
 /* felt speech badge over a character (same patch as the demo's store) */
 .badges { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
 .badge { position: absolute; transform: translate(-50%, calc(-100% - 14px)); max-width: min(300px, 48%); padding: 11px 15px 12px; border-radius: 16px; background: var(--card); color: var(--ink);
