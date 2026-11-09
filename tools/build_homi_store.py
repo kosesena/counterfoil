@@ -171,20 +171,15 @@ def till(n, x):
     b(n + "Reader", (0.1, 0.17, 0.03), (x + 0.33, CY - 0.1, TOP + 0.015), "graphite", bevel=0.01, rot=(20, 0, 0))
 till("TillReturns", -3.25); till("TillSale", -1.05)
 for x, t_ in ((-2.6, "RETURNS"), (-0.4, "CHECKOUT")):
-    b(f"Hang{t_}", (1.25, 0.03, 0.36), (x, CY + 0.02, 2.42), "panel", bevel=0.012)
-    text_mesh(f"HangT{t_}", env, t_, 0.15, M["sign"], (x, CY - 0.002, 2.42), max_w=1.05)
-    for sx in (-1, 1): c(f"Hang{t_}{sx}", 0.006, 0.42, (x + sx * 0.5, CY + 0.02, 2.82), "black_metal", segs=6)
+    b(f"Hang{t_}", (1.25, 0.03, 0.36), (x, CY + 0.12, 2.42), "panel", bevel=0.012)
+    text_mesh(f"HangT{t_}", env, t_, 0.15, M["sign"], (x, CY + 0.098, 2.42), max_w=1.05)
+    for sx in (-1, 1): c(f"Hang{t_}{sx}", 0.014, 2.3 - CH, (x + sx * 0.5, CY + 0.12, (2.3 + CH) / 2), "brass_m", segs=8)
 for i, (x, m) in enumerate(((-2.05, "kraft"), (-1.75, "cream"), (-1.9, "kraft"))):
     b(f"RetBox{i}", (0.3, 0.3, 0.24), (x, CY + 0.05, TOP + 0.12 + (0.25 if i == 2 else 0)), m, bevel=0.01)
 for i in range(5): b(f"BagStack{i}", (0.34, 0.24, 0.02), (3.85, CY - 0.05, TOP + 0.012 + i * 0.022), "kraft", bevel=0.002)
 # pendant rail above the counter
-b("RailBar", (8.4, 0.05, 0.05), (0, CY + 0.02, 2.82), "black_metal")
-for sx in (-1, 1): b(f"RailArm{sx}", (0.05, YB - CY, 0.05), (sx * 3.9, (YB + CY) / 2, 2.82), "black_metal")
 for i, x in enumerate((-3.9, -1.6, 2.2, 4.0)):
-    if abs(x + 0.4) < 0.3: continue
-    c(f"PendW{i}", 0.005, 0.42, (x, CY + 0.02, 2.6), "black_metal", segs=6)
-    sphere(f"PendS{i}", env, 0.15, (x, CY + 0.02, 2.2), M["rattan"], segs=24, rings=16)
-    c(f"PendC{i}", 0.03, 0.05, (x, CY + 0.02, 2.37), "brass_m", segs=12); LIGHTS.append((f"Pend{i}", (x, CY - 0.15, 1.9), 26))
+    LIGHTS.append((f"Counter{i}", (x, CY - 0.15, 1.9), 26))
 # ------------------------------------------------------------------ the floor displays
 def island(n, x, y, w=2.6, d=1.1):
     b(n + "Body", (w, d, 0.55), (x, y, 0.3), "walnut", bevel=0.02); b(n + "Top", (w + 0.1, d + 0.1, 0.05), (x, y, 0.6), "light_oak", bevel=0.012)
@@ -290,10 +285,6 @@ pm = tex_material("M_PatternWall", np_image("pattern_img", pat.astype(np.float32
 pw = face_plane("PatternWall", env, 4.4, H - 0.06, (0, 0, 0), pm); pw.rotation_euler = (0, 0, math.radians(90)); pw.location = (XW - 0.012, -6.7, H / 2)
 for lp in pw.data.uv_layers[0].data: lp.uv = (lp.uv[0] * 4.4 / 0.75, lp.uv[1] * (H - 0.06) / 0.75)
 metal_shelf("ShelfFrontL", -6.15, -4.75, 2.7); metal_shelf("ShelfFrontR", 6.3, -4.75, 2.6)
-for y_ in (-4.5, -7.0):
-    c(f"TrackBar{y_}", 0.016, W, (0, y_, 2.92), "panel", segs=8, rot=(0, 90, 0))
-    for i in range(7):
-        x_ = -6.6 + i * 2.2; c(f"Spot{y_}{i}", 0.06, 0.15, (x_, y_, 2.8), "panel", segs=12); c(f"SpotL{y_}{i}", 0.05, 0.01, (x_, y_, 2.722), "bulb", segs=12)
 # rug wall on the right
 for i, (y, m, m2) in enumerate(((-3.2, "rust", "ochre"), (-1.9, "forest", "cream"), (-0.5, "linen_blue", "blush"))):
     b(f"RugWall{i}", (0.04, 1.05, 1.9), (XW - 0.03, y, 1.5), m, bevel=0.008)
