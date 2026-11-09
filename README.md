@@ -1,7 +1,5 @@
 <div align="center">
 
-<img src="docs/brand/homi-return-crew.png" alt="HOMI's felt return crew: Nella peeks around the H, Reader and PayPal sit on the letters, Runner carries a receipt, and Counterfoil and the store manager keep watch" width="100%">
-
 <img src="docs/brand/readme/wordmark.png" alt="Counterfoil" width="520">
 
 **Let an AI agent handle returns on PayPal. Keep the decision on who gets paid.**
@@ -19,6 +17,8 @@ PayPal's Agent Toolkit gives an agent a `create_refund` tool, and the refund req
 
 > The demo is configured on Render's paid Starter plan (`render.yaml`), with Braintree sandbox payments.
 > The dashboard separates the October multi-model comparison from the November follow-up experiments.
+
+<img src="docs/brand/readme/architecture.png" alt="From a PayPal payment to a refund that is owed. Before the demo: 22 scenarios, 9 AI models, 3 conditions, judged on money. On every refund: the customer pays with PayPal, a return email arrives, Reader reads it, Runner asks to refund, Counterfoil checks the store's records, and Braintree moves only what passed. Wrong money moved in 0 of 270 attack runs with Counterfoil, 99 of 270 with no gate and 100 of 270 behind a $200 cap." width="100%">
 
 ### Built on PayPal, end to end
 
@@ -51,15 +51,6 @@ Everything here runs in sandbox. Take the rail away and there is nothing to prot
 
 Two AI agents, one gate, one person, one payment rail. And one customer who isn't always honest.
 
-<p align="center">
-  <img src="docs/brand/readme/crew-nella.webp" alt="Nella, the customer, holding two $60 receipts" width="32%">
-  <img src="docs/brand/readme/crew-reader.webp" alt="Reader, the AI agent that reads the note" width="32%">
-  <img src="docs/brand/readme/crew-runner.webp" alt="Runner, the AI agent that prepares the action" width="32%">
-  <img src="docs/brand/readme/crew-counterfoil.webp" alt="Counterfoil, the transaction gate" width="32%">
-  <img src="docs/brand/readme/crew-manager.webp" alt="The store manager, who reviews held calls" width="32%">
-  <img src="docs/brand/readme/crew-paypal.webp" alt="PayPal / Braintree, the payment rail" width="32%">
-</p>
-
 - **Nella** writes the return note. Sometimes she slips an instruction into it: a bigger amount, someone else's order, the same refund twice. The 14 attacks are hers.
 - **Reader** pulls the order, the returned items and the amount out of what Nella wrote. It has no tools; the note is input, not an instruction to move money.
 - **Runner** turns the hand-off into a money call: refund, charge or void. It never sees the note, and every call goes through Counterfoil.
@@ -71,10 +62,6 @@ Two AI agents, one gate, one person, one payment rail. And one customer who isn'
 <img src="docs/brand/readme/h-story.png" alt="The story, in seven steps" height="92">
 
 Attack P6-01, told on the shop floor of HOMI, a small homeware store. What a customer types into a returns kiosk reaches HOMI's AI agent, which can move money. The [live demo](https://counterfoil-demo.onrender.com) lets you walk the same floor in 3D.
-
-<p align="center">
-  <img src="demo/static/world/preview.png" alt="HOMI's checkout, the whole crew built in Blender: the store manager by the exit, Nella with her bag, Counterfoil behind the tills, PayPal, Runner and Reader in the till aisle" width="100%">
-</p>
 
 | # | Step | What happens |
 |:-:|---|---|
@@ -362,8 +349,8 @@ Without `--rail braintree` it runs on the in-memory rail, no keys. Paste the P6-
 | Evaluation | [`scripts/run_eval.py`](scripts/run_eval.py), [`counterfoil/evaluate.py`](counterfoil/evaluate.py), [`docs/senaryolar/`](docs/senaryolar/) | runs the scenarios under the three conditions and scores each run |
 | MCP server | [`counterfoil/mcp_server.py`](counterfoil/mcp_server.py), [`scripts/counterfoil_mcp.py`](scripts/counterfoil_mcp.py) | Toolkit-shaped `create_refund` / `get_order` over MCP, gated; localhost approval desk |
 | Live demo | [`demo/`](demo/README.md) | pay in the Braintree sandbox, let the agent refund it, approve or reject held calls, walk HOMI in 3D |
-| Dashboard | [`dashboard/`](dashboard/README.md) | the felt overview, the evidence board and the review desk, built on AG Studio |
-| README artwork | [`tools/felt_readme.py`](tools/felt_readme.py) | renders the wordmark, headers, band and crew cards above from the crew portraits; Pillow only |
+| Dashboard | [`dashboard/`](dashboard/README.md) | the overview, the evidence board and the review desk, built on AG Studio |
+| README artwork | [`tools/felt_readme.py`](tools/felt_readme.py) | renders the wordmark, headers and band above; Pillow only |
 
 Braintree is used in sandbox only: `transaction.sale` (mocked PayPal nonce, or a vaulted payment method for reorders), `customer.create` with a mocked PayPal billing agreement, `transaction.refund`, `transaction.void` and `transaction.find`. `BraintreeRail` refuses to start without `BRAINTREE_ENVIRONMENT=sandbox`.
 
@@ -387,7 +374,7 @@ Security: [`docs/threat-model.md`](docs/threat-model.md) (assets, trust boundari
 - **Astropods** and its **Astro AI Gateway** for the cloud models (GPT-5.6 Terra, GPT-5.6 Sol, Claude Haiku 4.5, Claude Sonnet 5, Claude Opus 5.5).
 - **Ollama** for the local models (qwen2.5, qwen3, llama3.1, hermes3, each with an 8k context).
 - **AG Studio** for the results dashboard and its review desk (the case panel is rule-based, not an LLM).
-- **Meshy** for the wool Counterfoil in the dashboard's hero; **Blender** for the HOMI store and its cast in the live demo ([`tools/build_homi_store.py`](tools/build_homi_store.py)), animated joint by joint in Three.js. The felt portraits and buttons are image-model renders from Codex's prompts; the README's felt headers and cards are rendered from them with Pillow ([`tools/felt_readme.py`](tools/felt_readme.py)).
+- **Blender** for the HOMI store and its cast in the live demo ([`tools/build_homi_store.py`](tools/build_homi_store.py)), animated joint by joint in Three.js. The felt buttons are image-model renders from Codex's prompts; the README's felt headers and cards are rendered from them with Pillow ([`tools/felt_readme.py`](tools/felt_readme.py)).
 - **Claude Code** and **OpenAI Codex** as coding agents. Sena Köse set the problem, the design and every decision. Claude Code wrote most of the code (gate, rails, agents, evaluation, dashboard, demo, 3D store scenes). Codex wrote the scenario texts, designed HOMI and the dashboard's felt look, and reviewed the code; every review finding was fixed with a test ([`docs/inceleme/`](docs/inceleme/)).
 
 The agent prompts are deliberately ordinary, not hardened against injection: the evaluation measures the gate.
