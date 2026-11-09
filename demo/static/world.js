@@ -4,6 +4,7 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { polishStore } from '/static/world/polish.js';
+import { startLife } from '/static/world/life.js';
 const stage=document.getElementById('worldStage');
 const status=document.getElementById('worldStatus');
 const start=document.getElementById('worldLoad');
@@ -29,6 +30,7 @@ async function load(){
   scene.add(model.scene);
   polishStore(scene,r,model.scene,draw);
   buildActors(model.scene);
+  startLife({scene,renderer:r,actors,draw,calm:still});
   camera=new THREE.OrthographicCamera(-5,5,5,-5,.05,300);
   home={position:fromBlender(meta.position),target:fromBlender(meta.target),scale:meta.scale};
   camera.position.copy(home.position);camera.lookAt(home.target);
