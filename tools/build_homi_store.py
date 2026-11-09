@@ -23,10 +23,21 @@ M.update({
     "ochre": mat("M_Ochre", "#d9a441", 0.85), "blush": mat("M_Blush", "#e3b2a0", 0.9), "forest": mat("M_Forest", "#3f6650", 0.85),
     "ceramic": mat("M_Ceramic", "#f2ebdd", 0.32), "ceramic_b": mat("M_CeramicBlue", "#4d6f8c", 0.3), "ceramic_t": mat("M_CeramicTerra", "#c47a55", 0.34),
     "wax": mat("M_Wax", "#f4ead2", 0.5), "flame": mat("M_Flame", "#ffcf87", 0.3, emit="#ffb65c", emit_strength=5.0),
-    "brand": mat("M_HomiNavy", "#21365c", 0.5), "sign": mat("M_SignGlow", "#fff0d6", 0.3, emit="#ffd9a0", emit_strength=3.2),
+    "blush_glow": mat("M_RobotBlush", "#ff9d8d", 0.4, emit="#ff8a78", emit_strength=0.8),
+    "enamel_ochre": mat("M_EnamelOchre", "#dfa63c", 0.28), "enamel_sage": mat("M_EnamelSage", "#8fab8c", 0.28), "enamel_ivory": mat("M_EnamelIvory", "#efe7d8", 0.3),
+    "halo": mat("M_AgentHalo", "#a6ecff", 0.3, emit="#5fd8ff", emit_strength=4.5), "visor": mat("M_AgentVisor", "#9ee8ff", 0.2, emit="#49ccff", emit_strength=3.4),
+    "brand": mat("M_HomiNavy", "#21365c", 0.5), "sky": mat("M_WindowSky", "#dcecf7", 0.5, emit="#e6f2fb", emit_strength=1.25), "skyline": mat("M_Skyline", "#bcd0df", 0.6, emit="#c9dae6", emit_strength=0.75), "skyline2": mat("M_Skyline2", "#a5bdcf", 0.6, emit="#b4c9d9", emit_strength=0.7), "frame": mat("M_WindowFrame", "#21365c", 0.5), "sign": mat("M_SignGlow", "#fff0d6", 0.3, emit="#ffd9a0", emit_strength=3.2),
     "brand_screen": mat("M_ScreenNavy", "#142238", 0.3, emit="#1d3a66", emit_strength=0.9), "brass_m": mat("M_Brass", "#c9a35f", 0.28, metal=0.85),
     "tile": mat("M_TileEntry", "#e8ddca", 0.5), "rubber": mat("M_Rubber", "#2c2d30", 0.6), "esc_step": mat("M_EscStep", "#7c8087", 0.4, metal=0.5),
     "acrylic": mat("SE_GateAcrylic", "#e6f2f6", 0.05, alpha=0.3), "glass_b": mat("M_OfficeGlass", "#dcebf0", 0.05, alpha=0.1),
+})
+# daylight palette: birch, white, HOMI navy, coral
+M.update({
+    "walnut": mat("M_Birch", "#dcc8a6", 0.5), "dark_wood": mat("M_BirchDark", "#bfa67f", 0.55), "dark_cabinet": mat("M_CounterNavy", "#21365c", 0.45),
+    "offwhite": mat("M_ShelfWhite", "#f3efe7", 0.7), "plaster": mat("M_WallWhite", "#f7f4ee", 0.9), "platform": mat("M_PlinthGrey", "#dcd8d0", 0.8),
+    "rattan": mat("M_OpalGlobe", "#fffaf0", 0.25, emit="#fff4df", emit_strength=1.5), "led_2700": mat("M_LedNeutral", "#fff6e6", 0.3, emit="#fff0d6", emit_strength=3.0),
+    "led_2700_soft": mat("M_LedNeutralSoft", "#fff6e6", 0.3, emit="#fff0d6", emit_strength=1.3), "cognac": mat("M_Coral", "#e26d55", 0.5), "rust": mat("M_CoralDeep", "#d9604a", 0.75),
+    "sign": mat("M_SignWhite", "#ffffff", 0.3, emit="#ffffff", emit_strength=1.6), "light_oak": mat("M_TopWhite", "#f2eee6", 0.35), "kraft": mat("M_BoxSand", "#d8c4a2", 0.8),
 })
 W, D, H = 15.7, 9.7, 3.0        # room
 XW, YB = W / 2, D / 2           # side walls at +-XW, back wall at +YB
@@ -39,20 +50,23 @@ LIGHTS = []
 
 # ------------------------------------------------------------------ shell
 rounded_slab("Platform", env, W + 0.3, D + 0.3, 0.32, 0.3, (0, 0, -0.16), M["platform"])
-oak = bpy.data.materials.new("M_FloorOak"); oak.use_nodes = True
-nt = oak.node_tree; bsdf = next(n for n in nt.nodes if n.type == "BSDF_PRINCIPLED")
-for key, fn, data in (("Base Color", "floor-oak.jpg", False), ("Normal", "floor-oak-nor.jpg", True)):
-    t = nt.nodes.new("ShaderNodeTexImage"); t.image = bpy.data.images.load(os.path.join(WORLD, fn)); t.image.pack()
-    if data:
-        t.image.colorspace_settings.name = "Non-Color"; n = nt.nodes.new("ShaderNodeNormalMap"); n.inputs["Strength"].default_value = 0.7
-        nt.links.new(t.outputs["Color"], n.inputs["Color"]); nt.links.new(n.outputs["Normal"], bsdf.inputs["Normal"])
-    else:
-        nt.links.new(t.outputs["Color"], bsdf.inputs[key])
-bsdf.inputs["Roughness"].default_value = 0.36
+import numpy as np
+from homi_kit import np_image, tex_material, hex_srgb
+rng = np.random.default_rng(5); N = 1024
+img = np.tile(np.array(hex_srgb("#ece8df")), (N, N, 1)).astype(np.float32)
+base = img[0, 0].copy()
+chips = [np.array(hex_srgb(h), dtype=np.float32) * 0.55 + base * 0.45 for h in ("#21365c", "#e26d55", "#8fab8c", "#bdb6a8", "#ffffff", "#d8c4a2")]
+for _ in range(5200):  # small soft stones, irregular rather than square
+    x0, y0_, r_ = int(rng.integers(N)), int(rng.integers(N)), float(rng.uniform(1.6, 5.2)); col = chips[int(rng.integers(len(chips)))]
+    ax, ay = rng.uniform(0.7, 1.3), rng.uniform(0.7, 1.3); R_ = int(r_ * 1.4) + 1
+    for yy in range(-R_, R_ + 1):
+        for xx in range(-R_, R_ + 1):
+            if (xx / ax) ** 2 + (yy / ay) ** 2 <= r_ * r_: img[(y0_ + yy) % N, (x0 + xx) % N] = col
+oak = tex_material("M_FloorTerrazzo", np_image("terrazzo_img", img), 0.3)
 floor = rounded_slab("Floor", env, W, D, 0.006, 0.18, (0, 0, 0.0005), oak, edge_bevel=0.002)
 uv = floor.data.uv_layers.new(name="UVMap")
 for lp in floor.data.loops:
-    co = floor.data.vertices[lp.vertex_index].co; uv.data[lp.index].uv = (co.x / 1.7, co.y / 1.7)
+    co = floor.data.vertices[lp.vertex_index].co; uv.data[lp.index].uv = (co.x / 2.8, co.y / 2.8)
 b("EntryMat", (2.4, 3.0, 0.012), (-6.5, -2.7, 0.006), "brand", bevel=0.003)
 b("WallBack", (W + 0.3, 0.2, H), (0, YB + 0.1, H / 2), "plaster")
 for sx, nm in ((-1, "L"), (1, "R")):
@@ -60,10 +74,10 @@ for sx, nm in ((-1, "L"), (1, "R")):
     b(f"Cap{nm}", (0.26, D + 0.3, 0.08), (sx * (XW + 0.1), 0, H + 0.04), "walnut")
 b("CapBack", (W + 0.5, 0.26, 0.08), (0, YB + 0.1, H + 0.04), "walnut")
 # wainscot on all walls
-wg = groove_material("M_Fluted", "#5f4230"); wa = groove_material("M_Wains", "#8fa389", 0.75)
+wg = M["brand"]; wa = groove_material("M_Wains", "#e6e1d7", 0.86)
 for nm, w_, loc, rz in (("BackL", 4.3, (-5.6, YB - 0.005, 0.6), 0), ("BackR", 2.8, (6.4, YB - 0.005, 0.6), 0)):
     face_plane(f"Wains{nm}", env, w_, 1.2, loc, wa)
-# left wall: fluted sage below, posters above; string lights along both side walls and the back
+# left wall: fluted sage below, posters above
 fp = face_plane("WainsLeft", env, 5.6, 1.2, (0, 0, 0), wa); fp.rotation_euler = (0, 0, math.radians(-90)); fp.location = (-XW + 0.006, 1.9, 0.6)
 b("WainsCapL", (0.04, 5.6, 0.04), (-XW + 0.02, 1.9, 1.22), "walnut", bevel=0.004)
 b("WainsCapB", (4.3, 0.04, 0.04), (-5.6, YB - 0.02, 1.22), "walnut", bevel=0.004)
@@ -71,15 +85,6 @@ for i, (y, m, t_) in enumerate(((0.2, "teal", "SLOW"), (1.55, "mustard", "HOME")
     b(f"Poster{i}", (0.03, 0.82, 1.08), (-XW + 0.018, y, 2.0), "walnut", bevel=0.004)
     b(f"PosterF{i}", (0.01, 0.72, 0.98), (-XW + 0.036, y, 2.0), m, bevel=0.0)
     tx = text_mesh(f"PosterT{i}", env, t_, 0.2, M["cream"], (-XW + 0.044, y, 2.0), rot=(90, 0, 90), max_w=0.58)
-def strand(n, a_, b_, count, sag=0.16):
-    a_, b_ = Vector(a_), Vector(b_); prev = a_
-    for i in range(1, count + 1):
-        u = i / count; p_ = a_.lerp(b_, u); p_.z -= sag * 4 * u * (1 - u)
-        capsule_between(f"{n}W{i}", env, 0.005, tuple(prev), tuple(p_), M["black_metal"])
-        s_ = p_.copy(); s_.z -= 0.05
-        s(f"{n}B{i}", 0.04, tuple(s_), "fairy", segs=8, rings=6); prev = p_
-for n, a_, b_ in (("StrA", (-XW + 0.1, -4.6, 2.86), (-XW + 0.1, -0.3, 2.86)), ("StrB", (XW - 0.1, -4.6, 2.86), (XW - 0.1, 0.0, 2.86)), ("StrC", (XW - 0.1, 0.0, 2.86), (XW - 0.1, 1.4, 2.86)), ("StrD", (4.3, YB - 0.1, 2.86), (XW - 0.1, YB - 0.1, 2.86))):
-    strand(n, a_, b_, 14)
 # ------------------------------------------------------------------ products
 def mug(n, x, y, z, m="ceramic"):
     c(n, 0.05, 0.1, (x, y, z + 0.05), m, segs=14); torus(n + "H", env, 0.03, 0.009, (x + 0.06, y, z + 0.05), M[m], rot=(90, 0, 0))
@@ -120,7 +125,19 @@ def bay(n, x, w, levels=(0.55, 1.0, 1.45, 1.9), top=2.35):
         b(f"{n}Led{i}", (w - 0.12, 0.012, 0.012), (x, y - 0.14, z + 0.4), "led_2700_soft", bevel=0.0)
         goods(f"{n}G{i}", x, y - 0.02, z + 0.018, w - 0.1)
     LIGHTS.append((n, (x, y - 0.5, 1.6), 22))
-bay("BayL", -3.1, 2.3); bay("BayR", 3.1, 2.3)
+bay("BayL", -3.1, 2.3, levels=(0.55, 1.0), top=1.42); bay("BayR", 3.1, 2.3, levels=(0.55, 1.0), top=1.42)
+# shop windows along the back wall, above the low shelving
+def window(n, x0, x1, z0=1.52, z1=2.88):
+    w_, xc, h_, zc = x1 - x0, (x0 + x1) / 2, z1 - z0, (z0 + z1) / 2
+    face_plane(n + "Sky", env, w_, h_, (xc, YB - 0.012, zc), M["sky"])
+    random.seed(int(abs(x0) * 10)); u = x0 + 0.1
+    while u < x1 - 0.15:
+        bw, bh = random.uniform(0.28, 0.6), random.uniform(0.3, 0.95); bw = min(bw, x1 - u - 0.02)
+        b(f"{n}B{u:.2f}", (bw, 0.006, bh), (u + bw / 2, YB - 0.017, z0 + bh / 2), random.choice(("skyline", "skyline2")), bevel=0.0); u += bw + random.uniform(0.0, 0.1)
+    for z_ in (z0, z1): b(f"{n}F{z_}", (w_ + 0.1, 0.05, 0.05), (xc, YB - 0.03, z_), "frame", bevel=0.0)
+    k_ = max(2, round(w_ / 0.85))
+    for i in range(k_ + 1): b(f"{n}M{i}", (0.05, 0.05, h_), (x0 + w_ * i / k_, YB - 0.03, zc), "frame", bevel=0.0)
+window("WinL", -4.75, -1.95); window("WinR", 1.95, 4.95)
 # feature wall and sign behind the counter
 face_plane("FeatureWall", env, 3.7, H, (0, YB - 0.008, H / 2), wg)
 b("SignPanel", (3.0, 0.08, 0.9), (0, YB - 0.06, 2.1), "brand", bevel=0.03)
@@ -156,12 +173,11 @@ for i in range(5): b(f"BagStack{i}", (0.34, 0.24, 0.02), (3.85, CY - 0.05, TOP +
 # pendant rail above the counter
 b("RailBar", (8.4, 0.05, 0.05), (0, CY + 0.02, 2.82), "black_metal")
 for sx in (-1, 1): b(f"RailArm{sx}", (0.05, YB - CY, 0.05), (sx * 3.9, (YB + CY) / 2, 2.82), "black_metal")
-for i, x in enumerate((-3.7, -1.5, 0.75, 2.35, 3.9)):
+for i, x in enumerate((-3.9, -1.6, 2.2, 4.0)):
     if abs(x + 0.4) < 0.3: continue
     c(f"PendW{i}", 0.005, 0.42, (x, CY + 0.02, 2.6), "black_metal", segs=6)
-    sphere(f"PendS{i}", env, 0.2, (x, CY + 0.02, 2.2), M["rattan"], scale=(1, 1, 1.12), segs=20, rings=12)
-    torus(f"PendB{i}", env, 0.2, 0.012, (x, CY + 0.02, 2.2), M["rattan_dark"], rot=(0, 0, 0))
-    s(f"PendG{i}", 0.05, (x, CY + 0.02, 1.98), "bulb", segs=10, rings=8); LIGHTS.append((f"Pend{i}", (x, CY - 0.15, 1.9), 26))
+    sphere(f"PendS{i}", env, 0.15, (x, CY + 0.02, 2.2), M["rattan"], segs=24, rings=16)
+    c(f"PendC{i}", 0.03, 0.05, (x, CY + 0.02, 2.37), "brass_m", segs=12); LIGHTS.append((f"Pend{i}", (x, CY - 0.15, 1.9), 26))
 # ------------------------------------------------------------------ the floor displays
 def island(n, x, y, w=2.6, d=1.1):
     b(n + "Body", (w, d, 0.55), (x, y, 0.3), "walnut", bevel=0.02); b(n + "Top", (w + 0.1, d + 0.1, 0.05), (x, y, 0.6), "light_oak", bevel=0.012)
@@ -240,48 +256,98 @@ goods("OfficeG", 6.5, YB - 0.14, 1.77, 1.5)
 plant("OfficePlant", 7.4, 4.3, 0.95, "pot_cream"); LIGHTS.append(("Office", (6.5, 3.0, 2.3), 22))
 # ------------------------------------------------------------------ the cast: jointed figures, facing -Y
 ROOTS = []
-def person(name, loc, top, pants, hair, sleeve=None, extras=None, skin="skin", shoes="graphite"):
+def person(name, loc, top, pants, hair, sleeve=None, extras=None, skin="skin", shoes="graphite", leg=1.0, girth=0.19, torso=0.68, head_s=1.25):
+    """leg scales the legs, girth is the torso radius, torso its length, head_s the head: toy proportions, one silhouette each."""
     coll = make_coll(name); sleeve = M[sleeve or top]; top_m, pants_m, skin_m = M[top], M[pants], M[skin]
     root = empty(name, coll, loc); ROOTS.append(root)
+    k = torso / 0.68; hip_z = 0.84 * leg; leg_x = 0.085 + (girth - 0.19) * 0.6
     for sx, t in ((-1, "L"), (1, "R")):
-        hip = empty(f"{name}_Leg{t}", coll, (sx * 0.085, 0, 0.84), parent=root)
-        capsule_between(f"{name}_Thigh{t}", coll, 0.078, (0, 0, 0), (0, 0, -0.4), pants_m, parent=hip)
-        knee = empty(f"{name}_Knee{t}", coll, (0, 0, -0.42), parent=hip)
-        capsule_between(f"{name}_Shin{t}", coll, 0.066, (0, 0, 0), (0, 0, -0.34), pants_m, parent=knee)
-        box(f"{name}_Shoe{t}", coll, (0.115, 0.22, 0.07), (0, -0.04, -0.385), M[shoes], bevel=0.03, parent=knee)
-    spine = empty(f"{name}_Spine", coll, (0, 0, 0.86), parent=root)
-    capsule(f"{name}_Torso", coll, 0.19, 0.68, (0, 0, 0.2), top_m, parent=spine, sy=0.72)
-    head = empty(f"{name}_Head", coll, (0, 0, 0.56), parent=spine)
+        hip = empty(f"{name}_Leg{t}", coll, (sx * leg_x, 0, hip_z), parent=root)
+        capsule_between(f"{name}_Thigh{t}", coll, 0.078, (0, 0, 0), (0, 0, -0.4 * leg), pants_m, parent=hip)
+        knee = empty(f"{name}_Knee{t}", coll, (0, 0, -0.42 * leg), parent=hip)
+        capsule_between(f"{name}_Shin{t}", coll, 0.066, (0, 0, 0), (0, 0, -0.34 * leg), pants_m, parent=knee)
+        box(f"{name}_Shoe{t}", coll, (0.115, 0.22, 0.07), (0, -0.04, -0.385 * leg), M[shoes], bevel=0.03, parent=knee)
+    spine = empty(f"{name}_Spine", coll, (0, 0, hip_z + 0.02), parent=root)
+    capsule(f"{name}_Torso", coll, girth, torso, (0, 0, 0.2 * k), top_m, parent=spine, sy=0.74)
+    head = empty(f"{name}_Head", coll, (0, 0, 0.56 * k), parent=spine); head.scale = (head_s, head_s, head_s)
     cyl(f"{name}_Neck", coll, 0.05, 0.1, (0, 0, 0), skin_m, segs=12, parent=head)
     sphere(f"{name}_Skull", coll, 0.135, (0, 0, 0.11), skin_m, parent=head)
     for sx in (-1, 1):
-        sphere(f"{name}_Eye{sx}", coll, 0.015, (sx * 0.046, -0.125, 0.125), M["eye"], parent=head, segs=8, rings=6)
-    box(f"{name}_Mouth", coll, (0.04, 0.006, 0.006), (0, -0.131, 0.06), M["burgundy"], bevel=0.0, parent=head)
+        sphere(f"{name}_Eye{sx}", coll, 0.02, (sx * 0.048, -0.121, 0.13), M["eye"], parent=head, segs=10, rings=8, scale=(1, 0.6, 1.2))
+        sphere(f"{name}_Glint{sx}", coll, 0.006, (sx * 0.042, -0.134, 0.14), M["paper"], parent=head, segs=6, rings=4)
+        box(f"{name}_Brow{sx}", coll, (0.05, 0.008, 0.01), (sx * 0.05, -0.128, 0.175), M["hair_dark"], bevel=0.003, parent=head, rot=(0, sx * 9, 0))
+        sphere(f"{name}_Cheek{sx}", coll, 0.024, (sx * 0.078, -0.108, 0.078), M["blush"], parent=head, segs=8, rings=6, scale=(1, 0.3, 0.75))
+    sphere(f"{name}_Nose", coll, 0.015, (0, -0.135, 0.1), skin_m, parent=head, segs=8, rings=6)
+    for i, (x_, z_, r_) in enumerate(((-0.03, 0.058, 16), (-0.012, 0.05, 6), (0.012, 0.05, -6), (0.03, 0.058, -16))):
+        box(f"{name}_Smile{i}", coll, (0.022, 0.006, 0.007), (x_, -0.13 + abs(x_) * 0.18, z_), M["burgundy"], bevel=0.0, parent=head, rot=(0, r_, 0))
     hair(name, coll, head)
+    sh_x = girth + 0.03
     for sx, t in ((-1, "L"), (1, "R")):
-        sh = empty(f"{name}_Arm{t}", coll, (sx * 0.215, 0, 0.43), parent=spine)
+        sh = empty(f"{name}_Arm{t}", coll, (sx * sh_x, 0, 0.43 * k), parent=spine)
         capsule_between(f"{name}_Upper{t}", coll, 0.056, (0, 0, 0), (sx * 0.015, 0, -0.26), sleeve, parent=sh)
         el = empty(f"{name}_Elbow{t}", coll, (sx * 0.015, 0, -0.27), parent=sh)
         capsule_between(f"{name}_Fore{t}", coll, 0.05, (0, 0, 0), (0, -0.01, -0.2), sleeve, parent=el)
         sphere(f"{name}_Hand{t}", coll, 0.048, (0, -0.012, -0.25), skin_m, parent=el, segs=12, rings=8)
     if extras: extras(name, coll, spine, root)
     return root
-def apron(colour):
-    def f(name, coll, spine, root):
-        box(f"{name}_Apron", coll, (0.34, 0.03, 0.54), (0, -0.14, 0.12), M[colour], bevel=0.02, parent=spine)
-        box(f"{name}_Bib", coll, (0.22, 0.03, 0.2), (0, -0.14, 0.41), M[colour], bevel=0.015, parent=spine)
-        box(f"{name}_Pocket", coll, (0.17, 0.008, 0.08), (0, -0.157, 0.05), M["cream"], bevel=0.004, parent=spine)
-        cyl(f"{name}_Badge", coll, 0.03, 0.006, (0.07, -0.158, 0.41), M["brass_m"], segs=14, parent=spine, rot=(90, 0, 0))
-    return f
-def hair_bun(n, c_, h):
-    sphere(f"{n}_Hair", c_, 0.148, (0, 0.012, 0.128), M["hair_auburn"], parent=h, scale=(1, 1, 0.95), cut_below=-0.05)
-    sphere(f"{n}_Bun", c_, 0.07, (0, 0.11, 0.22), M["hair_auburn"], parent=h, segs=14, rings=8)
-    for sx in (-1, 1): torus(f"{n}_Lens{sx}", c_, 0.031, 0.0045, (sx * 0.047, -0.137, 0.125), M["graphite"], parent=h)
-    box(f"{n}_Bridge", c_, (0.03, 0.008, 0.008), (0, -0.139, 0.13), M["graphite"], bevel=0.0, parent=h)
-def hair_cap(n, c_, h):
-    sphere(f"{n}_Hair", c_, 0.145, (0, 0.015, 0.14), M["hair_dark"], parent=h, scale=(1, 1, 0.85), cut_below=0.05)
-    sphere(f"{n}_Cap", c_, 0.15, (0, 0.0, 0.17), M["navy"], parent=h, scale=(1, 1, 0.72), cut_below=0.2)
-    box(f"{n}_Peak", c_, (0.2, 0.13, 0.02), (0, -0.15, 0.185), M["navy"], bevel=0.008, parent=h)
+def robot(name, loc, shell, trim, head_build, leg=0.75, girth=0.17, torso=0.5, head_s=1.0):
+    """An AI agent: a round enamel toy with stubby limbs and a big head, on the same joints as a person so it walks and gestures."""
+    coll = make_coll(name); S, T = M[shell], M[trim]; joint = M["brass_m"]
+    root = empty(name, coll, loc); ROOTS.append(root)
+    k = torso / 0.68; hip_z = 0.84 * leg; leg_x = 0.1
+    for sx, t in ((-1, "L"), (1, "R")):
+        hip = empty(f"{name}_Leg{t}", coll, (sx * leg_x, 0, hip_z), parent=root)
+        capsule_between(f"{name}_Thigh{t}", coll, 0.07, (0, 0, 0), (0, 0, -0.38 * leg), S, parent=hip)
+        knee = empty(f"{name}_Knee{t}", coll, (0, 0, -0.42 * leg), parent=hip)
+        sphere(f"{name}_KneeBall{t}", coll, 0.05, (0, 0, 0), joint, parent=knee, segs=12, rings=8)
+        capsule_between(f"{name}_Shin{t}", coll, 0.066, (0, 0, 0), (0, 0, -0.3 * leg), S, parent=knee)
+        sphere(f"{name}_Foot{t}", coll, 0.1, (0, -0.04, -0.385 * leg + 0.015), T, parent=knee, segs=16, rings=10, scale=(0.95, 1.3, 0.55))
+    spine = empty(f"{name}_Spine", coll, (0, 0, hip_z + 0.02), parent=root)
+    sphere(f"{name}_Torso", coll, girth, (0, 0, 0.2 * k), S, parent=spine, scale=(1, 0.88, 1.28 * torso / 0.5), segs=24, rings=16)
+    sphere(f"{name}_Tummy", coll, girth * 0.62, (0, -girth * 0.56, 0.17 * k), T, parent=spine, scale=(1, 0.45, 1.1), segs=18, rings=12)
+    sphere(f"{name}_Heart", coll, 0.03, (0, -girth * 0.84, 0.22 * k), M["halo"], parent=spine, segs=10, rings=8)
+    torus(f"{name}_Collar", coll, 0.078, 0.016, (0, 0, 0.545 * k), M["halo"], parent=spine, rot=(0, 0, 0))
+    head = empty(f"{name}_Head", coll, (0, 0, 0.56 * k), parent=spine); head.scale = (head_s, head_s, head_s)
+    head_build(name, coll, head)
+    sh_x = girth + 0.05
+    for sx, t in ((-1, "L"), (1, "R")):
+        sh = empty(f"{name}_Arm{t}", coll, (sx * sh_x, 0, 0.43 * k), parent=spine)
+        capsule_between(f"{name}_Upper{t}", coll, 0.056, (0, 0, 0), (sx * 0.012, 0, -0.2), S, parent=sh)
+        el = empty(f"{name}_Elbow{t}", coll, (sx * 0.012, 0, -0.21), parent=sh)
+        sphere(f"{name}_ElbowBall{t}", coll, 0.042, (0, 0, 0), joint, parent=el, segs=12, rings=8)
+        capsule_between(f"{name}_Fore{t}", coll, 0.052, (0, 0, 0), (0, -0.01, -0.13), S, parent=el)
+        sphere(f"{name}_Hand{t}", coll, 0.075, (0, -0.012, -0.185), T, parent=el, segs=14, rings=10)
+def cute_cheeks(n, c_, h, x, y, z):
+    for sx in (-1, 1): sphere(f"{n}_Blush{sx}", c_, 0.036, (sx * x, y, z), M["blush_glow"], parent=h, segs=10, rings=8, scale=(1, 0.28, 0.72))
+def cute_smile(n, c_, h, z, y, m):
+    for i, (x_, z_, r_) in enumerate(((-0.034, z + 0.012, 34), (-0.012, z, 10), (0.012, z, -10), (0.034, z + 0.012, -34))):
+        box(f"{n}_Smile{i}", c_, (0.028, 0.008, 0.011), (x_, y, z_), M[m], bevel=0.003, parent=h, rot=(0, r_, 0))
+def runner_head(n, c_, h):
+    cyl(f"{n}_Neck", c_, 0.04, 0.07, (0, 0, 0.02), M["navy"], segs=10, parent=h)
+    sphere(f"{n}_Shell", c_, 0.24, (0, 0, 0.23), M["enamel_ochre"], parent=h, scale=(1.08, 0.92, 0.95), segs=32, rings=22)
+    sphere(f"{n}_Screen", c_, 0.19, (0, -0.19, 0.23), M["brand_screen"], parent=h, scale=(1.05, 0.26, 0.76), segs=28, rings=18)
+    for sx, t in ((-1, "L"), (1, "R")):
+        sphere(f"{n}_Eye{t}", c_, 0.052, (sx * 0.08, -0.236, 0.25), M["visor"], parent=h, segs=18, rings=12, scale=(1, 0.42, 1.1))
+        sphere(f"{n}_Glint{t}", c_, 0.015, (sx * 0.08 - 0.018, -0.262, 0.272), M["paper"], parent=h, segs=8, rings=6)
+        sphere(f"{n}_Ear{t}", c_, 0.058, (sx * 0.262, 0, 0.23), M["navy"], parent=h, segs=14, rings=10, scale=(0.5, 1, 1))
+    cute_cheeks(n, c_, h, 0.135, -0.228, 0.19); cute_smile(n, c_, h, 0.16, -0.238, "visor")
+    capsule_between(f"{n}_Aerial", c_, 0.01, (0.05, 0, 0.44), (0.1, 0, 0.56), M["navy"], parent=h)
+    sphere(f"{n}_AerialTip", c_, 0.04, (0.11, 0, 0.59), M["halo"], parent=h, segs=12, rings=10)
+def reader_head(n, c_, h):
+    cyl(f"{n}_Neck", c_, 0.04, 0.07, (0, 0, 0.02), M["enamel_ivory"], segs=10, parent=h)
+    sphere(f"{n}_Shell", c_, 0.25, (0, 0, 0.24), M["enamel_sage"], parent=h, scale=(1.04, 0.9, 1.0), segs=32, rings=22)
+    for sx, t in ((-1, "L"), (1, "R")):
+        x_ = sx * 0.105
+        cyl(f"{n}_White{t}", c_, 0.092, 0.014, (x_, -0.213, 0.265), M["paper"], segs=32, parent=h, rot=(90, 0, 0))
+        iris = cyl(f"{n}_Iris{t}", c_, 0.06, 0.01, (x_, -0.222, 0.262), M["forest"], segs=26, parent=h, rot=(90, 0, 0))
+        cyl(f"{n}_Pupil{t}", c_, 0.04, 0.006, (0, 0, 0.008), M["eye"], segs=20, parent=iris)
+        cyl(f"{n}_Glint{t}", c_, 0.016, 0.005, (-0.018, 0.022, 0.013), M["paper"], segs=12, parent=iris)
+        torus(f"{n}_Rim{t}", c_, 0.11, 0.019, (x_, -0.228, 0.265), M["brass_m"], parent=h)
+        capsule_between(f"{n}_Temple{t}", c_, 0.011, (sx * 0.214, -0.222, 0.27), (sx * 0.262, -0.02, 0.27), M["brass_m"], parent=h)
+    capsule_between(f"{n}_Bridge", c_, 0.011, (-0.03, -0.24, 0.285), (0.03, -0.24, 0.285), M["brass_m"], parent=h)
+    cute_cheeks(n, c_, h, 0.175, -0.18, 0.13); cute_smile(n, c_, h, 0.1, -0.226, "brand")
+    capsule_between(f"{n}_Sprout", c_, 0.011, (0, 0, 0.47), (0, 0, 0.55), M["forest"], parent=h)
+    for sx in (-1, 1): sphere(f"{n}_Leaf{sx}", c_, 0.052, (sx * 0.05, 0, 0.58), M["leaf_light"], parent=h, scale=(1.15, 0.45, 0.6), segs=12, rings=8)
 def hair_grey(n, c_, h):
     sphere(f"{n}_Hair", c_, 0.146, (0, 0.016, 0.135), M["hair_grey"], parent=h, scale=(1, 1, 0.9), cut_below=0.08)
     for az, rr in ((-60, 0.06), (60, 0.06), (0, 0.065), (-120, 0.06), (120, 0.06), (180, 0.065)):
@@ -295,31 +361,42 @@ def tote(name, coll, spine, root):
     arm = bpy.data.objects[f"{name}_ElbowL"]
     box(f"{name}_Tote", coll, (0.05, 0.3, 0.34), (-0.02, -0.01, -0.46), M["cream"], bevel=0.015, parent=arm)
     torus(f"{name}_ToteH", coll, 0.07, 0.008, (-0.02, -0.01, -0.27), M["kraft"], parent=arm, rot=(0, 90, 0))
-def vest(name, coll, spine, root):
-    capsule(f"{name}_Vest", coll, 0.198, 0.62, (0, 0, 0.2), M["burgundy"], parent=spine, sy=0.74)
-    box(f"{name}_Collar", coll, (0.12, 0.02, 0.12), (0, -0.14, 0.44), M["white"], bevel=0.01, parent=spine, rot=(-12, 0, 0))
-person("Nella", (-7.0, -2.6, 0), "rust", "pants_dark", hair_long, extras=tote)
-person("Reader", (-2.6, 3.42, 0), "green", "pants", hair_bun, extras=apron("cream"))
-person("Runner", (-0.4, 3.42, 0), "white", "pants_dark", hair_cap, extras=apron("navy"))
-person("Manager", (6.45, 3.55, 0), "white", "pants_dark", hair_grey, extras=vest)
-person("Shopper1", (-4.6, 0.6, 0), "ochre", "pants", hair_brown)
-person("Shopper2", (4.4, 0.5, 0), "linen_blue", "pants_dark", hair_long)
+def manager_things(name, coll, spine, root):
+    capsule(f"{name}_Vest", coll, 0.244, 0.68, (0, 0, 0.194), M["burgundy"], parent=spine, sy=0.76)
+    box(f"{name}_Collar", coll, (0.14, 0.02, 0.12), (0, -0.18, 0.44), M["white"], bevel=0.01, parent=spine, rot=(-14, 0, 0))
+    for sx in (-1, 1):
+        capsule_between(f"{name}_Lanyard{sx}", coll, 0.007, (sx * 0.075, -0.15, 0.48), (0, -0.2, 0.2), M["navy"], parent=spine)
+    torus(f"{name}_KeyRing", coll, 0.03, 0.006, (0, -0.205, 0.165), M["brass_m"], parent=spine)
+    for i, sx in enumerate((-0.03, 0.0, 0.03)):
+        box(f"{name}_Key{i}", coll, (0.014, 0.006, 0.085), (sx, -0.21, 0.095 + abs(sx) * 0.4), M["brass_m"], bevel=0.0, parent=spine, rot=(0, sx * 300, 0))
+def hair_mustache(n, c_, h):
+    hair_grey(n, c_, h)
+    for sx in (-1, 1): capsule_between(f"{n}_Tache{sx}", c_, 0.02, (0, -0.138, 0.09), (sx * 0.075, -0.122, 0.078), M["hair_grey"], parent=h)
+def nella_things(name, coll, spine, root):
+    tote(name, coll, spine, root)
+    torus(f"{name}_Scarf", coll, 0.1, 0.038, (0, -0.005, 0.47), M["ochre"], parent=spine, rot=(0, 0, 0))
+    capsule_between(f"{name}_ScarfTail", coll, 0.034, (0.05, -0.15, 0.44), (0.07, -0.2, 0.18), M["ochre"], parent=spine)
+person("Nella", (-7.0, -2.6, 0), "rust", "pants_dark", hair_long, extras=nella_things, leg=0.8, girth=0.215, torso=0.56, head_s=1.32)
+robot("Reader", (-2.6, 3.42, 0), "enamel_sage", "enamel_ivory", reader_head, leg=0.86, girth=0.16, torso=0.54)
+robot("Runner", (-0.4, 3.42, 0), "enamel_ochre", "navy", runner_head, leg=0.76, girth=0.185, torso=0.5)
+person("Manager", (6.45, 3.55, 0), "white", "pants_dark", hair_mustache, extras=manager_things, leg=0.94, girth=0.236, torso=0.66, head_s=1.22)
+person("Shopper1", (-4.6, 0.6, 0), "ochre", "pants", hair_brown, leg=0.92, girth=0.2, torso=0.62)
+person("Shopper2", (4.4, 0.5, 0), "linen_blue", "pants_dark", hair_long, leg=1.05, girth=0.165, torso=0.66)
 # the two machines on the counter
 coll = make_coll("Machines")
 cf = empty("Counterfoil", coll, (1.3, CY, TOP)); ROOTS.append(cf)
 box("CF_Body", coll, (0.78, 0.5, 0.52), (0, 0.02, 0.26), M["walnut"], bevel=0.03, parent=cf)
 box("CF_Trim", coll, (0.82, 0.54, 0.035), (0, 0.02, 0.53), M["brass_m"], bevel=0.008, parent=cf)
-box("CF_Face", coll, (0.6, 0.012, 0.28), (0, -0.23, 0.33), M["brand_screen"], bevel=0.0, parent=cf)
-text_mesh("CF_Name", coll, "COUNTERFOIL", 0.075, M["sign"], (0, -0.238, 0.37), parent=cf, max_w=0.52)
+box("CF_Face", coll, (0.6, 0.012, 0.28), (0, -0.23, 0.33), M["brand"], bevel=0.0, parent=cf)
+text_mesh("CF_Name", coll, "COUNTERFOIL", 0.075, M["cream"], (0, -0.238, 0.37), parent=cf, max_w=0.52)
 text_mesh("CF_Sub", coll, "CHECKS THE RECORD", 0.03, M["cream"], (0, -0.238, 0.29), parent=cf, max_w=0.44)
 box("CF_Status", coll, (0.6, 0.014, 0.035), (0, -0.232, 0.13), M["gateled"], bevel=0.0, parent=cf)
-box("CF_Pad", coll, (0.3, 0.26, 0.022), (0, -0.46, 0.012), M["graphite"], bevel=0.006, parent=cf)
-post = cyl("CF_Post", coll, 0.03, 0.34, (0.3, 0.14, 0.72), M["brass_m"], segs=10, parent=cf)
-arm = empty("Counterfoil_Arm", coll, (0, 0.14, 0.86), parent=cf)
-box("CF_Beam", coll, (0.66, 0.05, 0.05), (0.0, 0, 0), M["brass_m"], bevel=0.012, parent=arm)
-box("CF_ArmBar", coll, (0.05, 0.6, 0.05), (0, -0.3, 0), M["brass_m"], bevel=0.012, parent=arm)
-cyl("CF_StampStem", coll, 0.024, 0.2, (0, -0.6, -0.1), M["brass_m"], segs=10, parent=arm)
-cyl("CF_StampHead", coll, 0.1, 0.08, (0, -0.6, -0.23), M["burgundy"], segs=20, parent=arm)
+box("CF_Pad", coll, (0.24, 0.2, 0.022), (0.57, -0.26, 0.012), M["graphite"], bevel=0.006, parent=cf)
+cyl("CF_Post", coll, 0.03, 0.54, (0.57, 0.12, 0.27), M["brass_m"], segs=10, parent=cf)
+arm = empty("Counterfoil_Arm", coll, (0.57, 0.12, 0.53), parent=cf)
+box("CF_ArmBar", coll, (0.05, 0.44, 0.05), (0, -0.2, 0), M["brass_m"], bevel=0.012, parent=arm)
+cyl("CF_StampStem", coll, 0.022, 0.12, (0, -0.38, -0.07), M["brass_m"], segs=10, parent=arm)
+cyl("CF_StampHead", coll, 0.08, 0.07, (0, -0.38, -0.16), M["burgundy"], segs=20, parent=arm)
 pp = empty("PayPal", coll, (3.05, CY, TOP)); ROOTS.append(pp)
 box("PP_Body", coll, (0.52, 0.34, 0.66), (0, 0.04, 0.33), M["brand"], bevel=0.05, parent=pp)
 box("PP_Face", coll, (0.4, 0.012, 0.3), (0, -0.135, 0.44), M["brand_screen"], bevel=0.0, parent=pp)
