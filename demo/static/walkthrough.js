@@ -11,6 +11,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { polishStore } from "/static/world/polish.js";
 
 const $ = (id) => document.getElementById(id);
 const PHONE = matchMedia("(max-width: 760px)");
@@ -48,6 +49,7 @@ async function loadStore() {
     scene.add(new THREE.HemisphereLight(0xfff7ee, 0xd9cfc2, 0.45));
     const sun = new THREE.DirectionalLight(0xffffff, 0.9); sun.position.set(-6, 12, 14); scene.add(sun);
     scene.add(model.scene);
+    polishStore(scene, renderer, model.scene, draw);
     buildActors(model.scene);
     camera = new THREE.OrthographicCamera(-5, 5, 5, -5, 0.05, 300);
     home = { position: fromBlender(meta.position), target: fromBlender(meta.target), scale: meta.scale };
