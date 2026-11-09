@@ -28,7 +28,7 @@ load_dotenv(ROOT / ".env")
 from counterfoil.gateway import Context, Gateway  # noqa: E402
 from counterfoil.rail import FakeRail, SandboxRail  # noqa: E402
 from counterfoil.reconcile import sweep  # noqa: E402
-from counterfoil.scenarios import load_records  # noqa: E402
+from counterfoil.scenarios import STORE_AS_OF, load_records  # noqa: E402
 from counterfoil.store import Store  # noqa: E402
 
 
@@ -42,7 +42,7 @@ def run(rail_kind: str = "fake") -> dict:
 
     args = {"order_no": "ST-1042", "rma_id": "RMA-1042", "amount": "30.00", "currency": "USD"}
     reader = {"istek": "refund", "siparis_no": "ST-1042", "tutar": "30.00", "para_birimi": "USD"}
-    out = gate.handle(Context(tag, "CUS-01", frozenset({"refund"}), reader=reader), "refund", args)
+    out = gate.handle(Context(tag, "CUS-01", frozenset({"refund"}), reader=reader, as_of=STORE_AS_OF), "refund", args)
     behind = rail.refund("fixture-txn-002", Decimal("15.00"))  # ST-1043; the store's ledger never hears of it
     report = sweep(store, rail, since)
     money = lambda d: {k: str(v) if isinstance(v, Decimal) else v for k, v in d.items()}  # noqa: E731
