@@ -12,9 +12,9 @@ Counterfoil
 
 ## Elevator pitch (≤ 200 characters)
 
-> PayPal's Agent Toolkit lets AI agents refund. Counterfoil checks each refund against the store's records on Braintree: wrong money in 99/270 attack runs without it, 0/270 with it.
+> PayPal's Agent Toolkit lets AI agents refund. Counterfoil is a deterministic guardrail that checks each refund against the store's records: wrong money 99/270 without it, 0/270 with it.
 
-(179 characters. Source: `results/2026-10-25-*-r3-*.jsonl` and `results/2026-10-26-dev-r3-current-gate-*.jsonl`,
+(185 characters. Source: `results/2026-10-25-*-r3-*.jsonl` and `results/2026-10-26-dev-r3-current-gate-*.jsonl`,
 re-scored with the current scorer on 5 Nov: none 99/270, cap 100/270, counterfoil 0/270.)
 
 Earlier pitch, kept as the README tagline: *An AI agent can be talked into a refund. A store's records can't.
@@ -53,7 +53,7 @@ Built solo from Türkiye, where PayPal accounts can't be opened, on **Braintree,
 
 ### What it does
 
-**Counterfoil lets a merchant on PayPal give refunds to an AI agent, and refunds only what came back.** It is a gate between the agent and Braintree, the PayPal service:
+**Counterfoil lets a merchant on PayPal give refunds to an AI agent, and refunds only what came back.** It is a deterministic guardrail for agentic commerce, between the agent and Braintree, the PayPal service. The model is probabilistic; the gate is plain code, and what the store's records can't settle goes to a person:
 
 1. **Reader** (an AI agent with no tools) reads the customer's e-mail and hands off fixed fields: order, return record, request, amount, items.
 2. **Runner** (an AI agent that never sees the e-mail) asks to `refund`, `charge`, `void` or `lookup_transaction`.

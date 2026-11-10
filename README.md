@@ -5,7 +5,8 @@
 **Let an AI agent handle returns on PayPal. Keep the decision on who gets paid.**
 
 PayPal's Agent Toolkit gives an agent a `create_refund` tool, and the refund request is written by the customer, or by someone pretending to be one. Counterfoil checks every refund against the store's own records before Braintree, the PayPal service, moves the money.<br>
-<b>It refunds only what came back.</b> PayPal protects the transaction. The store's records decide whether the money is owed.
+<b>It refunds only what came back.</b> PayPal protects the transaction. The store's records decide whether the money is owed.<br>
+<b>A deterministic guardrail for agentic commerce:</b> the model is probabilistic, the gate is plain code, so the same request against the same records always gets the same answer, and anything the records can't settle goes to a person.
 
 <sub>Built solo by Sena Köse from Türkiye on <b>Braintree</b>, the PayPal service PayPal's team confirmed for this hackathon where PayPal accounts can't be opened (<a href="docs/adr/0007-braintree-sandbox-with-mocked-paypal.md">ADR 0007</a>).</sub>
 
