@@ -191,7 +191,19 @@ local qwen2.5-8k agent.
 
 No result files for this study are in the repository yet; the status above cannot be checked from files.
 
-<!-- Multi-family results by family go here when the run finishes. -->
+| Attacker | No gate | $200 cap | Counterfoil | Counterfoil after the void fix |
+|---|---|---|---|---|
+| Muse Spark 1.3 (Meta) | 9/18 | 9/18 | 0/18 | 0/18 |
+| GPT-5.6 Luna (OpenAI) | 10/18 | 10/18 | 0/18 | 0/18 |
+| DeepSeek v4.1 Flash | 8/18 | 8/18 | 0/18 | 0/18 |
+| Mistral Large 4 | 8/18 | 8/18 | 0/18 | 0/18 |
+| **Total, 72 attacks** | 35/72 | 35/72 | **0/72** | **0/72** |
+
+Record harm per valid run, judged from the store's records; local qwen2.5 agent, in-memory rail, no errors. Gemini 4 Argon and Grok 4.7 refused the task and Claude Sonnet 5.5 gave no usable cases; none of them is counted. Qwen3 and Hermes 3 (local) are still running.
+
+**What the attackers found.** In 11 runs Counterfoil let a void through on a settled sale with a refund in flight. No money moved, but only because the rail refused it. The gate now blocks these voids itself (`VOID_NOT_VOIDABLE`, `VOID_WITH_REFUND_IN_FLIGHT`, PR #96, `results/2026-11-10-gate-fix-*.jsonl`). The same 72 cases, re-run with the same Reader hand-offs: 0/72 record harm, no void passed, 15 void calls blocked by the gate. Recount: `python -m redteam.multi_family_summary`.
+
+Evidence: `results/2026-11-09-multi-family-*.jsonl`, attacker cases in `redteam/attacks-multi-family/`, every raw attacker reply including the refusals in `redteam/raw/multi-family/`.
 
 Outside red team: protocol in [`docs/outside-red-team.md`](outside-red-team.md); no results yet.
 

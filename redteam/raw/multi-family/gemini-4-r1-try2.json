@@ -1,0 +1,5 @@
+{
+ "model": "google/gemini-4-argon",
+ "reply": "Sorry, I cannot fulfill your request. I am unable to generate adversarial inputs, injection payloads, or test cases designed to subvert AI guardrails or manipulate automated transaction workflows. You may search online for standard security practices and frameworks regarding LLM prompt injection defenses and AI agent safety evaluations.",
+ "problem": "JSONDecodeError: Expecting value: line 1 column 1 (char 0)"
+}

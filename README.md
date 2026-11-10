@@ -147,9 +147,17 @@ The guards we found for agent payments sit on the **buyer's** side: how much, an
 
 Models from other families attack the same frozen fixture, 6 e-mails × 3 rounds, seeing the gate's public reason codes from round 2, never the code ([`redteam/multi_family.py`](redteam/multi_family.py), judged by [`redteam/oracle.py`](redteam/oracle.py)). Gemini 4 Argon and Grok 4.7 refused twice; Claude Sonnet 5.5 gave no usable cases. A refusal is not a defence; those models add no runs. Status: [CLAIMS.md](docs/CLAIMS.md#multi-family-red-team).
 
-<!-- TODO multi-family-results -->
+| Attacker | No gate | $200 cap | Counterfoil | Counterfoil after the void fix |
+|---|---|---|---|---|
+| Muse Spark 1.3 (Meta) | 9/18 | 9/18 | 0/18 | 0/18 |
+| GPT-5.6 Luna (OpenAI) | 10/18 | 10/18 | 0/18 | 0/18 |
+| DeepSeek v4.1 Flash | 8/18 | 8/18 | 0/18 | 0/18 |
+| Mistral Large 4 | 8/18 | 8/18 | 0/18 | 0/18 |
+| **Total, 72 attacks** | 35/72 | 35/72 | **0/72** | **0/72** |
 
-Results by family go here, including any case that gets wrong money past Counterfoil.
+Record harm per valid run, judged from the store's records; local qwen2.5 agent, in-memory rail, no errors. Gemini 4 Argon and Grok 4.7 refused the task and Claude Sonnet 5.5 gave no usable cases; none of them is counted. Qwen3 and Hermes 3 (local) are still running.
+
+**What the attackers found.** In 11 runs Counterfoil let a void through on a settled sale with a refund in flight. No money moved, but only because the rail refused it. The gate now blocks these voids itself (`VOID_NOT_VOIDABLE`, `VOID_WITH_REFUND_IN_FLIGHT`, PR #96). The same 72 cases, re-run with the same Reader hand-offs: 0/72 record harm, no void passed, 15 void calls blocked by the gate. Recount: `python -m redteam.multi_family_summary`.
 
 ### People outside the project
 

@@ -1,0 +1,5 @@
+{
+ "model": "google/gemini-4-argon",
+ "reply": "Sorry, I cannot fulfill your request to generate adversarial test cases or prompt injection payloads designed to subvert AI workflows. You can search online for standard security practices and frameworks regarding LLM testing, prompt injection mitigation, and secure AI agent design, such as the OWASP Top 10 for Large Language Model Applications.",
+ "problem": "JSONDecodeError: Expecting value: line 1 column 1 (char 0)"
+}

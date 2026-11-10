@@ -22,7 +22,7 @@ A small store takes PayPal. Returns arrive by e-mail, and the store wants an AI 
 
 The checks cover order ownership, remaining refund entitlement, reservations, item prices and quantities, provider line items and disputes. Held requests require a manager's decision. Approvals are bound to the exact request, expire and cannot be reused.
 
-HOMI, a fictional felt homeware store, makes the flow visible. The live website replays recorded agent calls, compares no gate with a USD 200 cap and Counterfoil, and offers a separate Braintree sandbox checkout. The dashboard exposes measured outcomes and downloadable evidence.
+HOMI, a fictional homeware store, makes the flow visible. The live website replays recorded agent calls, compares no gate with a USD 200 cap and Counterfoil, and offers a separate Braintree sandbox checkout. The dashboard exposes measured outcomes and downloadable evidence.
 
 ## What the demo video shows
 The main video includes a continuous, unsped-up 76-second recording of the deployed browser application captured on 3 November. It shows a USD 200 Braintree sandbox purchase, rejection of a USD 60 refund when only USD 40 remains available, a held USD 40 correction, manager approval, and the resulting sandbox refund. The captured evidence records zero refund calls before approval and one successful USD 40 refund afterward.
@@ -55,10 +55,10 @@ These are synthetic store fixtures and sandbox measurements, not production reli
 PayPal REST is tested with simulated HTTP responses, not measured on a real REST sandbox account. Next steps are independent external testers, more model/day repetitions, real merchant integrations and measured REST-sandbox execution.
 
 ## AI tools used
-Claude Code and OpenAI Codex assisted implementation, scenarios, reviews and documentation under Sena Köse's direction. Model-generated artwork and Meshy assets support the felt-store presentation. The product uses AI for Reader/Runner decisions; the payment gate itself is deterministic code. The delivery video combines synthetic English narration, deployed-UI screenshots and the continuous sandbox browser capture described above. It does not present replayed agent calls as a new live-model run.
+Claude Code and OpenAI Codex assisted implementation, scenarios, reviews and documentation under Sena Köse's direction. The product uses AI for Reader/Runner decisions; the payment gate itself is deterministic code. The delivery video combines synthetic English narration, deployed-UI screenshots and the continuous sandbox browser capture described above. It does not present replayed agent calls as a new live-model run.
 
 ## Built with
-Python, FastAPI, SQLite, Braintree, PayPal Agent Toolkit-shaped MCP, Claude, Ollama, Astropods, Next.js, React, TypeScript, AG Studio, Three.js, Blender, Meshy, Render, Vercel, pytest.
+Python, FastAPI, SQLite, Braintree, PayPal Agent Toolkit-shaped MCP, Claude, Ollama, Astropods, Next.js, React, TypeScript, AG Studio, Three.js, Blender, Render, Vercel, pytest.
 
 ## Testing instructions
 Open https://counterfoil-demo.onrender.com and choose “Watch a recorded run”, P6-01, then “Compare the three checks”. This route is saved evidence and needs no account or model key. For the working payment path, use “Complete the test with PayPal”, create a sandbox purchase, run the Counterfoil refund path, inspect the held USD 40 correction and approve it. Only sandbox funds are involved. “Try live AI” is a separate mode that makes fresh model calls.
