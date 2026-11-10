@@ -6,7 +6,7 @@ Reviewed 3 November 2026. Packaged on GitHub; not submitted to Devpost or publis
 Counterfoil
 
 ## Short description
-Counterfoil lets a merchant on PayPal give refunds to an AI agent: each one is checked against the store's records before Braintree, the PayPal service, moves money, and exceptions wait for a person.
+Counterfoil is a deterministic guardrail for agentic commerce: a merchant on PayPal can give refunds to an AI agent, each one is checked against the store's records before Braintree moves money, and exceptions wait for a person.
 
 ## Links
 - Interactive demo: https://counterfoil-demo.onrender.com
