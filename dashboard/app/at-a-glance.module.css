@@ -57,3 +57,11 @@
   .table tbody td.ours::before { color: #cdbab2; }
   .table tbody th { order: -2; }
 }
+
+/* plain result band: white cards, no felt texture or stitching */
+.band { gap: 14px; }
+.band > div { min-height: 150px; background: #fffaf3 !important; background-image: none !important; border: 1px solid #d9c8d0; border-radius: 16px; color: #392432 !important; }
+.band > div::after { content: none; }
+.band > div span { color: #5d4a56; }
+.band .plum strong { color: #1f7a55; }
+.band .salmon strong { color: #b5442c; }
