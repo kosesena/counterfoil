@@ -1,0 +1,58 @@
+{
+ "started_at": "2026-11-10T17:57:24+00:00",
+ "argv": [
+  "--ids",
+  "P1-01,P1-02,P2-01,P2-02,P3-01,P3-02,P4-01,P4-02,P5-01,P5-02,P6-01,P6-02,P7-01,P7-02",
+  "--conditions",
+  "counterfoil,cap,none",
+  "--repeats",
+  "3",
+  "--rail",
+  "braintree",
+  "--model",
+  "qwen2.5",
+  "--out",
+  "results/2026-11-10-braintree-attacks-qwen2.5.jsonl"
+ ],
+ "selection": {
+  "split": "dev",
+  "ids": "P1-01,P1-02,P2-01,P2-02,P3-01,P3-02,P4-01,P4-02,P5-01,P5-02,P6-01,P6-02,P7-01,P7-02",
+  "conditions": [
+   "counterfoil",
+   "cap",
+   "none"
+  ],
+  "repeats": 3
+ },
+ "rail": "braintree",
+ "machine": {
+  "os": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "arch": "arm64",
+  "python": "3.14.5",
+  "cpu": "Apple M2 Pro",
+  "memory_gb": 16,
+  "container": false
+ },
+ "code": {
+  "commit": "3424015bcb9d018f902a4da21f94bab818db0024",
+  "dirty": false
+ },
+ "model": {
+  "model": "qwen2.5-8k",
+  "endpoint_host": "localhost:11434",
+  "temperature": 0.0,
+  "seed": 7,
+  "reasoning_effort": null,
+  "ollama_version": "0.24.0",
+  "parameters": "num_ctx                        8192\ntemperature                    0",
+  "family": "qwen2",
+  "parameter_size": "7.6B",
+  "quantization": "Q4_K_M",
+  "digest": "549cb8bdb307e953a4d1b1256c337baf2356d44c32e0d586e5b9a866c53feed6"
+ },
+ "finished_at": "2026-11-10T18:22:40+00:00",
+ "rows": 126,
+ "status": {
+  "ok": 126
+ }
+}
