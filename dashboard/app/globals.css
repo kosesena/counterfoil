@@ -902,3 +902,8 @@ main .ag-studio-layout-widget-title { font-family:var(--cf-font) !important; fon
   #simple-example .payment-scene-world { padding: 16px 0 8px; }
   #simple-example .scene-caption { margin: 6px 0 0; }
 }
+
+/* two-line page headings: room between the lines and around them */
+.calls-hero h1, .review-intro h1 { line-height: 1.22; margin: 26px 0 28px; }
+.calls-hero h1 em, .review-intro h1 em { display: inline-block; margin-top: .06em; }
+.calls-hero p, .review-intro .review-copy p { margin: 0 0 14px; }
