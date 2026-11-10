@@ -884,3 +884,21 @@ main .ag-studio-layout-widget-title { font-family:var(--cf-font) !important; fon
  .crew-header nav button { white-space: nowrap; }
 }
 .evidence-context { font-size: 13px; line-height: 1.7; color: #6d5d67; padding: 14px 0; max-width: 850px; }
+
+/* the illustrated example fits one screen on a desktop */
+@media (min-width: 1000px) {
+  #simple-example.simple-story { max-width: 1320px; padding: 20px 40px 28px; scroll-margin-top: 76px; }
+  #simple-example .payment-scene { margin: 0; display: grid; grid-template-columns: 1fr auto; column-gap: 32px; align-items: end; }
+  #simple-example .payment-scene > * { grid-column: 1 / -1; }
+  #simple-example .payment-scene-heading { grid-column: 1; max-width: none; }
+  #simple-example .payment-scene-heading h2 { font-size: clamp(24px, 2.1vw, 32px); margin: 6px 0 4px; white-space: nowrap; }
+  #simple-example .payment-scene-heading h2 em::before { content: ' '; white-space: pre; }
+  #simple-example .payment-scene-heading h2 br { display: none; }
+  #simple-example .payment-scene-heading p { margin: 0; font-size: 14px; line-height: 1.5; }
+  #simple-example .payment-scene-controls { grid-column: 2; margin: 0; }
+  #simple-example .scene-sequence { margin: 16px 0 6px; }
+  #simple-example .scene-reading-guide { display: none; }
+  #simple-example .scene-sequence { margin: 12px 0 10px; }
+  #simple-example .payment-scene-world { padding: 16px 0 8px; }
+  #simple-example .scene-caption { margin: 6px 0 0; }
+}

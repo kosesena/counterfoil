@@ -9,7 +9,7 @@ function HoldBadge() {
 export function PaymentScene() {
   const [corrected, setCorrected] = useState(false);
   return <section className="payment-scene" aria-label="From customer message to payment">
-    <div className="payment-scene-heading"><span className="review-eyebrow">HOMI RETURNS DESK · ILLUSTRATED EXAMPLE</span><h2>AI asks. Counterfoil checks.<br/><em>PayPal moves the money.</em></h2><p>An invented teaching example, not a replay of a recorded transaction. Follow two separate requests; the original $80 request never reaches the payment service.</p></div>
+    <div className="payment-scene-heading"><span className="review-eyebrow">HOMI RETURNS DESK · ILLUSTRATED EXAMPLE</span><h2>AI asks. Counterfoil checks.<br/><em>PayPal moves the money.</em></h2><p>HOMI is the fictional homeware store in this demo. An invented teaching example, not a replay of a recorded transaction: the original $80 request never reaches the payment service.</p></div>
     <div className="payment-scene-controls" role="group" aria-label="Choose an example request">
       <button aria-pressed={!corrected} onClick={()=>setCorrected(false)}>A · $80 request held</button>
       <button aria-pressed={corrected} onClick={()=>setCorrected(true)}>B · New $30 request passes</button>
