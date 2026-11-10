@@ -140,9 +140,9 @@ export function CrewJourney() {
 export function ProductIntro() {
   return <section className={styles.productIntro} aria-labelledby="product-title">
     <div className={styles.productCopy}>
-      <span className={styles.eyebrow}>PROTECTED BY COUNTERFOIL</span>
+      <span className={styles.eyebrow}>HOMI · A DEMO STORE PROTECTED BY COUNTERFOIL</span>
       <h1 id="product-title">AI handles refunds.<br/><em>You keep control.</em></h1>
-      <p>An AI agent is software that acts for your store. Counterfoil checks its payment requests before money is sent, helping prevent refunds to the wrong person or for the wrong amount.</p>
+      <p><b>HOMI is a fictional homeware store that takes PayPal.</b> Its AI agent handles refunds. <b>Counterfoil</b> checks every refund the agent asks for against the store’s records before money is sent, so nothing goes to the wrong person or for the wrong amount.</p>
       <div className={styles.productActions}>
         <a href="https://counterfoil-demo.onrender.com" target="_blank" rel="noopener">Try it live <span aria-hidden="true">↗</span></a>
         <a href="#simple-example">See how it works <span aria-hidden="true">↓</span></a>
