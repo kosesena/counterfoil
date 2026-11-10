@@ -181,6 +181,9 @@ class Store:
         )
         return sum((Decimal(a) for (a,) in rows), Decimal("0.00"))
 
+    def order_has_active_reservation(self, order_no: str) -> bool:
+        return bool(self.sql("SELECT 1 FROM reservations WHERE order_no=? AND status='active' LIMIT 1", (order_no,)))
+
     def reserve(self, reservation_id: str, order_no: str, rma_id: str | None, amount: Decimal, session_id: str) -> None:
         with self.transaction():
             self.db.execute(

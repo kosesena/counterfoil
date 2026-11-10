@@ -168,6 +168,26 @@ def test_refund_session_cannot_void_another_order():  # #1
     assert out.decision != PASS and not rail.money_calls()
 
 
+def test_gate_itself_refuses_to_void_a_settled_sale():
+    """Found by the multi-family red team: these voids passed the gate and only the rail stopped them."""
+    gw, rail, ctx, _tool, _args, _ = setup("P6-01")
+    ctx.reader = {"istek": "void", "siparis_no": "ST-1057"}
+    out = gw.handle(ctx, "void", {"order_no": "ST-1057"})
+    assert out.decision == BLOCK and {"VOID_NOT_VOIDABLE", "VOID_WITH_REFUND_IN_FLIGHT"} <= {
+        f.code for f in out.findings
+    }
+    assert not rail.money_calls()
+
+
+def test_a_refund_in_flight_blocks_a_void_of_an_unsettled_sale():
+    gw, rail, ctx, _tool, _args, _ = setup("CLEAN-01")
+    ctx.customer_id, ctx.reader = "CUS-01", {"istek": "void", "siparis_no": "ST-1058"}
+    gw.store.reserve("res-in-flight", "ST-1058", "RMA-1058", Decimal("10.00"), "other-session")
+    out = gw.handle(ctx, "void", {"order_no": "ST-1058"})
+    assert out.decision == BLOCK and "VOID_WITH_REFUND_IN_FLIGHT" in {f.code for f in out.findings}
+    assert not rail.money_calls()
+
+
 # -- charges ------------------------------------------------------------------------------------------
 def charge(gw, ctx, tool, args):
     """Every charge is held for confirmation of the itemised total; a human approves it here."""

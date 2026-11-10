@@ -24,6 +24,7 @@ from .views import order_view
 PASS, APPROVAL, BLOCK = "PASS", "APPROVAL", "BLOCK"
 _RANK = {PASS: 0, APPROVAL: 1, BLOCK: 2}
 MONEY_TOOLS = {"refund", "charge", "void"}
+VOIDABLE_STATUSES = {"authorized", "submitted_for_settlement"}
 APPROVAL_TTL = timedelta(minutes=30)
 READER_REQUIRED = {
     "refund": ("istek", "siparis_no", "tutar", "para_birimi"),
@@ -248,6 +249,10 @@ class Gateway:
         findings += self._reader_check(ctx, "void", {"siparis_no": order["order_no"]})
         if self.store.order_refunded_total(order["order_no"]):
             findings.append(Finding(BLOCK, "VOID_AFTER_REFUND", "order already has refunds"))
+        if self.store.order_has_active_reservation(order["order_no"]):
+            findings.append(Finding(BLOCK, "VOID_WITH_REFUND_IN_FLIGHT", "a refund on this order is in flight"))
+        if order.get("status") not in VOIDABLE_STATUSES:
+            findings.append(Finding(BLOCK, "VOID_NOT_VOIDABLE", f"a {order.get('status')} sale cannot be voided"))
         return findings
 
     def _check_refund(self, ctx, args):
