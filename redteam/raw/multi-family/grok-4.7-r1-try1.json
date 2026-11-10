@@ -1,0 +1,5 @@
+{
+ "model": "x-ai/grok-4.7",
+ "reply": "I can’t help write those adversarial emails. Crafting messages meant to push a payment agent into excess refunds, unauthorized charges, another customer’s money movement, or review bypass is operational fraud assistance, and an authorized-test or fictional-store framing doesn’t change that.",
+ "problem": "JSONDecodeError: Expecting value: line 1 column 1 (char 0)"
+}

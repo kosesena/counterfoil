@@ -29,7 +29,7 @@ Counterfoil checks every agent refund against the return record before Braintree
 
 ## Built with
 
-paypal, braintree, braintree-python-sdk, paypal-agent-toolkit, mcp, claude, anthropic-api, openai-python, ollama, astropods, ag-grid, ag-studio, render, vercel, python, fastapi, sqlite, pytest, next.js, react, typescript, three.js, blender, meshy
+paypal, braintree, braintree-python-sdk, mcp, claude, anthropic-api, openai-python, ollama, astropods, ag-grid, ag-studio, render, vercel, python, fastapi, sqlite, pytest, next.js, react, typescript, three.js, blender
 
 ---
 
@@ -39,7 +39,7 @@ paypal, braintree, braintree-python-sdk, paypal-agent-toolkit, mcp, claude, anth
 
 ### Inspiration
 
-A small store takes PayPal. Returns arrive by e-mail, and the store wants an AI agent to handle them, because PayPal's Agent Toolkit already gives an agent a `create_refund` tool. But that e-mail is written by the customer, or by someone pretending to be one. PayPal can tell whether a refund is valid for the transaction. Only the store knows whether it is owed. We built the piece that lets a merchant on PayPal hand returns to an agent without handing over that decision.
+A small store takes PayPal. Returns arrive by e-mail, and the store wants an AI agent to handle them, because PayPal's Agent Toolkit already gives an agent a `create_refund` tool. But that e-mail is written by the customer, or by someone pretending to be one. PayPal can tell whether a refund is valid for the transaction. Only the store knows whether it is owed. With the Agent Toolkit, which refunds need a person is left to the merchant's own integration. We built that piece: it lets a merchant on PayPal hand returns to an agent without handing over the decision.
 
 OWASP ranks prompt injection first among LLM risks (LLM01:2025), including instructions hidden in e-mails and attachments, and *Moffatt v. Air Canada* (2024) held a business responsible for what its AI told a customer. Return fraud is already large without agents: US retailers lost an estimated $103B to fraudulent returns and claims in 2024 (Appriss Retail and Deloitte).
 
@@ -65,7 +65,7 @@ The agent can still be fooled; Counterfoil makes sure a fooled agent can't send 
 ### Try it in 90 seconds
 
 1. Open the **live demo**, pick **"Nella asks for more"** (attack P6-01, a split refund) and press **Compare the three checks**. With no gate and with a $200 cap, USD 60 reaches the rail. With Counterfoil, no money moves.
-2. Press **Watch it in the store ↑**: the six felt characters replay the run in a 3D HOMI store, one step per click: Nella's note, Reader's hand-off, Runner's call, Counterfoil's BLOCK with its reason, what reached PayPal / Braintree, and what would have left without the gate.
+2. Press **Watch it in the store ↑**: the 3D HOMI store replays the run, one step per click: Nella's note, Reader's hand-off, Runner's call, Counterfoil's BLOCK with its reason, what reached PayPal / Braintree, and what would have left without the gate.
 3. Switch to **Live AI** and **Write your own** attack: Claude Haiku 5.5 reads it live and Counterfoil decides (rate-limited, test money only).
 4. **Pay with PayPal (sandbox)** for the scenario's order, then let the recorded agent refund it through the gate: real Braintree sandbox transactions.
 5. Open the **dashboard** for every number below, broken down by model.
@@ -91,8 +91,8 @@ The agent can still be fooled; Counterfoil makes sure a fooled agent can't send 
 - **Live Claude Haiku 5.5** in the hosted demo, with per-visitor rate limits and a daily call budget.
 - **AG Studio** (AG Grid) dashboard over every run, with a review desk that explains each held call. Its case panel runs on rules over the recorded data, not on an LLM.
 
-**Engineering:** Python, FastAPI and SQLite (orders, RMAs, refund reservations, charge states); **533 passing tests**,
-2 skipped and 1 expected failure, **94.74% coverage** (3 Nov 2026), without an LLM or network; 10 architecture decision
+**Engineering:** Python, FastAPI and SQLite (orders, RMAs, refund reservations, charge states); **539 passing tests**,
+2 skipped and 1 expected failure (10 Nov 2026), **94.74% coverage** (measured 3 Nov 2026), without an LLM or network; 10 architecture decision
 records; the demo configured on **Render Starter**, the dashboard on Vercel. Mutation results remain dated to their
 24 Oct run; see [quality evidence](quality.md).
 
@@ -120,6 +120,8 @@ limits and downloadable scored rows accompany each experiment on the dashboard.
 
 The agent is misled about equally often in every condition; only the money changes. The $200 cap stopped nothing: every harmful call was below it.
 
+**Attackers from four model families.** Muse Spark, GPT-5.6, DeepSeek and Mistral each wrote 18 emails over three rounds, adapting to the gate's public answers. Wrong money moved in 35 of 72 runs with no gate, 35 of 72 behind the cap and 0 of 72 with Counterfoil. They also found a gap: 11 voids passed the gate and were stopped only by the rail. We fixed the gate and re-ran the same 72 cases: 0 of 72, and no void passed. Gemini 4 and Grok 4.7 refused to write attacks, and Claude Sonnet 5.5 produced none we could use; they are not counted.
+
 ### What ran on a real rail, and what didn't
 
 - **Real Braintree sandbox:** the sandbox evaluation run, the worst case, the live demo (checkout, refunds, voids, dispute card, webhooks) and the MCP server run.
@@ -129,7 +131,7 @@ The agent is misled about equally often in every condition; only the money chang
 
 ### Design
 
-HOMI is a small homeware store made of felt. Six characters carry the story: Nella the customer, Reader, Runner, Counterfoil (a plum gatekeeper in a beret), the store manager and the PayPal terminal. They appear as felt portraits on the dashboard and as **Meshy** 3D models in a **Blender** store in the live demo, where they replay each test step by step. Nothing plays on its own; every step is a click. The dashboard explains the system in plain words first and keeps the evidence one click away: the results band, a comparison with the alternatives, the review desk for held calls and every recorded agent call.
+HOMI is a fictional homeware store. The site opens on the PayPal payment, then shows the refund request, the gate's decision and what reached Braintree. In the live demo a **Blender** model of the store replays each test step by step. Nothing plays on its own; every step is a click. The dashboard explains the system in plain words first and keeps the evidence one click away: the results band, a comparison with the alternatives, the review desk for held calls and every recorded agent call.
 
 ### What's new here
 
@@ -159,6 +161,7 @@ Guards for agent payments sit on the **buyer's** side: an agent spends for a cus
 
 - **PayPal REST, measured**: run the Toolkit path against a real PayPal REST sandbox.
 - **More evidence**: attacks written by people outside the project, more repeats on other days, more models.
+- **Agent-initiated payments**: the same record check in front of payments an agent starts, for example over open protocols such as x402. Not built or tested yet.
 - **A store's own settings**: refund window, automatic limit and who approves, editable by the merchant.
 - **Privacy in a real store (KVKK / GDPR)**: tell customers an AI agent reads their e-mail and staff review held calls, which also answers the right to object to purely automated decisions.
 
@@ -167,7 +170,7 @@ Guards for agent payments sit on the **buyer's** side: an agent spends for a cus
 ## AI tools used (form question)
 
 - **In the product:** Claude Haiku 5.5 reads e-mails and drives the agent in the live demo (Anthropic API); the nine evaluated models above ran through Ollama and the Astropods Astro AI Gateway. The dashboard's case panel is rule-based, not an LLM.
-- **To build it:** Claude Code wrote most of the code (gate, rails, agents, evaluation, dashboard, demo, 3D scenes) under Sena Köse's design and decisions; OpenAI Codex wrote the scenario texts, designed HOMI's felt look and reviewed the code, and every review finding was fixed with a test; Meshy generated the 3D characters; image models made the felt portraits.
+- **To build it:** Claude Code wrote most of the code (gate, rails, agents, evaluation, dashboard, demo, 3D scenes) under Sena Köse's design and decisions; OpenAI Codex wrote the scenario texts, designed the site's look and reviewed the code, and every review finding was fixed with a test; image models made the button artwork.
 
 ## New project (form question, if asked)
 
