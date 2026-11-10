@@ -112,8 +112,8 @@ export default function Page() {
         <>
           <ProductIntro />
           <StatBand data={data} />
-          <SimpleStory />
           <CompareTable data={data} />
+          <SimpleStory />
           <RecentEvidence />
           <div className="story-next-wrap"><button className="continuation-next" onClick={() => { openPage('review'); window.scrollTo({ top: 0 }); }}>Next: see how the manager reviews $80 →</button></div>
           <details id="crew-results" className="simple-disclosure"><summary>Technical details · test results and evidence</summary>
