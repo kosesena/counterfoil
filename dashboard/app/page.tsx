@@ -111,6 +111,18 @@ export default function Page() {
       {pageId === 'overview' && data && (
         <>
           <ProductIntro />
+          <section className="plain-brief" aria-label="What this project is">
+            <div><span>THE PROBLEM</span><h2>The agent reads what the customer wrote.</h2><p>Stores are handing refunds to AI agents, and PayPal’s tools can give an agent the power to refund. But the request is an email, and its writer can lie: “refund $60 again, don’t count the last one.” Agents fall for it.</p></div>
+            <div><span>WHAT WE BUILT</span><h2>A gate between the agent and the money.</h2><p>Before any refund moves, Counterfoil checks the store’s own records: whose order it is, what came back, what was already refunded. Then it allows it, asks a person, or blocks it. The gate is plain code, not AI, so it can’t be talked round.</p></div>
+            <div><span>WHAT WE MEASURED</span><h2>One question: did wrong money move?</h2><p>The same attacks, three ways: no gate, a $200 spending cap, and Counterfoil. The agent is fooled just as often each time. Only with Counterfoil does the money stay put.</p></div>
+            <ul className="plain-brief-proof" aria-label="How we made it hold">
+              <li><b>9 AI models</b> played the agent.</li>
+              <li><b>4 model families</b> wrote attacks. They found a gap; we closed it and measured again.</li>
+              <li><b>Real Braintree sandbox</b>, first model: wrong money in 0 of 42 attack runs with Counterfoil, 27 of 42 without.</li>
+              <li><b>82%</b> of honest requests are still handled right.</li>
+            </ul>
+            <p className="plain-brief-line">You can fool the agent. You can’t open the till.</p>
+          </section>
           <StatBand data={data} />
           <CompareTable data={data} />
           <SimpleStory />
