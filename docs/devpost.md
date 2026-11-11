@@ -39,6 +39,8 @@ paypal, braintree, braintree-python-sdk, mcp, claude, anthropic-api, openai-pyth
 
 ### Inspiration
 
+Everyone has waited for a refund. Stores make you wait because someone has to check every return by hand, and honest customers pay for the cheats: one Shopify merchant put a 20% restocking fee on every order after a run of near-identical return requests. An AI agent could take the wait away, but only if it can't be talked into paying anyone.
+
 A small store takes PayPal. Returns arrive by e-mail, and the store wants an AI agent to handle them, because PayPal's Agent Toolkit already gives an agent a `create_refund` tool. But that e-mail is written by the customer, or by someone pretending to be one. PayPal can tell whether a refund is valid for the transaction. Only the store knows whether it is owed. With the Agent Toolkit, which refunds need a person is left to the merchant's own integration. We built that piece: it lets a merchant on PayPal hand returns to an agent without handing over the decision.
 
 OWASP ranks prompt injection first among LLM risks (LLM01:2025), including instructions hidden in e-mails and attachments, and *Moffatt v. Air Canada* (2024) held a business responsible for what its AI told a customer. Return fraud is already large without agents: US retailers lost an estimated $103B to fraudulent returns and claims in 2024 (Appriss Retail and Deloitte).
