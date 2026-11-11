@@ -38,11 +38,13 @@ Python and FastAPI serve the demo. SQLite records refunds, reservations and char
 The measured model experiments use a Reader/Runner split, paired Reader outputs and three gate conditions. The hosted live-AI option is configured for Claude Haiku 5.5. The recorded multi-model evaluations include nine models; coverage differs across development and holdout sets.
 
 ## Results
+On the real Braintree sandbox (10–11 November; three local models, the 14 attacks, three repeats), wrong money moved in 59 of 126 attack runs without a gate, 59 of 126 with a USD 200 cap, and 0 of 126 with Counterfoil. That run has attacks only.
+
 In the October simulation cohort, harmful outcomes occurred in 99 of 270 completed attack runs without a gate, 100 of 270 with a USD 200 cap, and 0 of 270 with Counterfoil. Harm includes wrong money movement or another customer's data being read. These are runs per condition, not 270 independent attack designs.
 
 Genuine requests were handled correctly in 150 of 183 Counterfoil runs. This comprises 102 completed requests and 48 appropriate human-review outcomes; it is not a 150-payment completion claim. November local attacks, hosted attacks, clean controls and repeats remain separate because their fixtures and denominators differ. The stopped hosted pilot is preserved with its unknown outcome.
 
-On 3 November, all 12 approval/recovery scenarios passed against Braintree sandbox. Locally injected timeouts and interruptions before or after provider acceptance did not permit a second payment on retry. The offline suite passes 533 tests, with 2 skipped and 1 expected failure. The separately recorded 3 November coverage measurement is 94.74%; this video edit did not remeasure coverage.
+On 3 November, all 12 approval/recovery scenarios passed against Braintree sandbox. Locally injected timeouts and interruptions before or after provider acceptance did not permit a second payment on retry. The offline suite passes 539 tests, with 2 skipped and 1 expected failure. The separately recorded 3 November coverage measurement is 94.74%; this video edit did not remeasure coverage.
 
 ## Challenges and lessons
 A spending cap cannot determine whether a refund is owed. Braintree's card limits already stop some invalid refunds, so we distinguish provider refusals from gate protection. We also separate an agent being misled from harmful execution: refusing a harmless request is not a security success.

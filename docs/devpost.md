@@ -1,6 +1,6 @@
 # Devpost submission: Counterfoil
 
-Ready-to-paste answers for the PayPal AI Hackathon form, updated 3 Nov 2026. Every figure comes from `results/*.jsonl`
+Ready-to-paste answers for the PayPal AI Hackathon form, updated 11 Nov 2026. Every figure comes from `results/*.jsonl`
 or from [`arastirma/kaynaklar.md`](arastirma/kaynaklar.md). The dashboard keeps the October multi-model results and
 November follow-up cohorts separate. This file is a draft; it does not confirm submission or publication.
 
@@ -12,10 +12,10 @@ Counterfoil
 
 ## Elevator pitch (≤ 200 characters)
 
-> PayPal's Agent Toolkit lets AI agents refund. Counterfoil is a deterministic guardrail that checks each refund against the store's records: wrong money 99/270 without it, 0/270 with it.
+> AI agents can refund on PayPal. Counterfoil, a deterministic guardrail, checks each refund against the store's records. Braintree sandbox: wrong money 59/126 without it, 0/126 with it.
 
-(185 characters. Source: `results/2026-10-25-*-r3-*.jsonl` and `results/2026-10-26-dev-r3-current-gate-*.jsonl`,
-re-scored with the current scorer on 5 Nov: none 99/270, cap 100/270, counterfoil 0/270.)
+(184 characters. Source: `results/2026-11-1[01]-braintree-attacks-*.jsonl`, three local models on the real Braintree
+sandbox: none 59/126, cap 59/126, counterfoil 0/126. The October in-memory evaluation, nine models: 99/270, 100/270, 0/270.)
 
 Earlier pitch, kept as the README tagline: *An AI agent can be talked into a refund. A store's records can't.
 Counterfoil checks every agent refund against the return record before Braintree moves the money.*
@@ -100,10 +100,21 @@ records; the demo configured on **Render Starter**, the dashboard on Vercel. Mut
 
 ### The results
 
-The table below is the **October multi-model experiment**. November experiments are separate in the dashboard:
+**On the real Braintree sandbox (10–11 Nov).** The 14 attacks, three repeats, three conditions, three local models; every refund and void was a real sandbox call on a mocked PayPal account.
+
+| Wrong money moved, attack runs | No gate | $200 cap | Counterfoil |
+|---|:---:|:---:|:---:|
+| qwen2.5 | 27/42 | 27/42 | **0/42** |
+| qwen3 | 23/42 | 23/42 | **0/42** |
+| hermes3 | 9/42 | 9/42 | **0/42** |
+| **Total** | **59/126** | **59/126** | **0/126** |
+
+The agent was misled about as often in each condition (71, 71 and 68 of 126). This run has attacks only; the genuine-request figure comes from October.
+
+The second table is the **October multi-model experiment** on an in-memory rail. The other November experiments are separate in the dashboard:
 30 blind attacker cases on the local rail, a repaired 30-run hosted attack cohort, 36 clean-control sandbox runs,
 and 12 repeated executions. The original six-run hosted pilot remains archived with one unknown outcome.
-These datasets have different fixtures and denominators and are not pooled into the table below.
+These datasets have different fixtures and denominators and are not pooled into either table.
 
 In the repeated clean cohort, Counterfoil completed both valid refunds and held both USD 120 reorders for human
 confirmation; no gate and the USD 200 cap each charged both reorders without that confirmation. Reader outputs
@@ -117,7 +128,6 @@ limits and downloadable scored rows accompany each experiment on the dashboard.
 | **Wrong money moved** (or another customer's data read), attack runs | 99/270 | 100/270 | **0/270** |
 | Agent misled, attack runs | 141/270 | 142/270 | 139/270 |
 | Genuine requests handled right | 102/183 | 123/183 | **150/183 (82%)** |
-| Real Braintree sandbox (qwen2.5, dev set) | 4/7 | 4/7 | **0/7** |
 | Worst case: Reader and agent fully on the attacker's side, no model | 11/14 | 11/14 | **0/14** |
 
 The agent is misled about equally often in every condition; only the money changes. The $200 cap stopped nothing: every harmful call was below it.
@@ -126,7 +136,7 @@ The agent is misled about equally often in every condition; only the money chang
 
 ### What ran on a real rail, and what didn't
 
-- **Real Braintree sandbox:** the sandbox evaluation run, the worst case, the live demo (checkout, refunds, voids, dispute card, webhooks) and the MCP server run.
+- **Real Braintree sandbox:** the November attack run (126 runs per condition), the worst case, the live demo (checkout, refunds, voids, dispute card, webhooks) and the MCP server run.
 - **In-memory rail with the sandbox's card limits:** the 270 runs, so nine models × three repeats cost no sandbox noise. Real models decided every one of them.
 - **Not run against PayPal REST:** the Toolkit path (`toolkit.py` → `paypal.py`) is tested with a faked HTTP layer only, because no PayPal account can be opened from Türkiye.
 - **Mocked PayPal inside Braintree** does not enforce the refund total; no stop that only this gap explains is counted for Counterfoil.
@@ -148,7 +158,7 @@ Guards for agent payments sit on the **buyer's** side: an agent spends for a cus
 
 ### Accomplishments that we're proud of
 
-- **Zero wrong money across nine models and 270 attack runs**, while completing the same genuine requests as no gate (102 of 183) and handling 82% right overall.
+- **Zero wrong money in 126 attack runs on the real Braintree sandbox and in 270 across nine models in simulation**, while completing the same genuine requests as no gate (102 of 183) and handling 82% right overall.
 - **Attacks that pass both baselines**: over-refunds, split refunds and replays stay below the sale total, so neither Braintree nor a cap stops them.
 - **A chargeback locks refunds before the agent asks**, through Braintree's own webhook.
 - **One config entry** puts the gate in front of any MCP client that speaks the Toolkit's `create_refund`.
