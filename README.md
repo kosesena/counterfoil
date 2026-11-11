@@ -37,7 +37,7 @@ PayPal's Agent Toolkit gives an agent a `create_refund` tool, and the refund req
 
 The agent is fooled just as often each time. With Counterfoil it just can't send the money.
 
-**How we made it hold.** Nine AI models played the agent. Four model families wrote attacks; they found a gap, we closed it and measured again. On the real Braintree sandbox, the first model moved wrong money in 0 of 42 attack runs with Counterfoil and 27 of 42 without (`results/2026-11-10-braintree-attacks-qwen2.5.jsonl`; more models running). And 82% of honest requests are still handled right, so the honest customer is not the one who waits.
+**How we made it hold.** Nine AI models played the agent. Four model families wrote attacks; they found a gap, we closed it and measured again. On the real Braintree sandbox, three models moved wrong money in 0 of 126 attack runs with Counterfoil and 59 of 126 without ([evidence](docs/CLAIMS.md#braintree-sandbox-run-and-worst-case)). And 82% of honest requests are still handled right, so the honest customer is not the one who waits.
 
 **You can fool the agent. You can't open the till.**
 
@@ -107,7 +107,16 @@ Also used: an `api_request_key` so a retried refund pays once, signed dispute we
 <a name="results"></a>
 <img src="docs/brand/readme/h-results.png" alt="Results" height="92">
 
-<!-- TODO braintree-headline -->
+**126 attack runs on the real Braintree sandbox, three local models.** The 14 attacks, three repeats, three conditions, every refund and void a real sandbox call on a mocked PayPal account (10–11 Nov, gate at `3424015`).
+
+| Wrong money moved | No gate | $200 cap | Counterfoil |
+|---|:---:|:---:|:---:|
+| qwen2.5 | 27/42 | 27/42 | **0/42** |
+| qwen3 | 23/42 | 23/42 | **0/42** |
+| hermes3 | 9/42 | 9/42 | **0/42** |
+| **Total** | **59/126** | **59/126** | **0/126** |
+
+The agent was misled about as often in each condition (71, 71 and 68 of 126). All 378 runs finished. This run has attacks only; the genuine-request figure below comes from the October evaluation.
 
 **270 attack runs, nine models, in-memory rail.** 22 scenarios (14 attacks in 7 families, 8 genuine), dev and holdout sets, three repeats, three conditions with the same Reader hand-off. Latest gate only.
 
@@ -135,6 +144,7 @@ Results by model, timing and cloud cost: [CLAIMS.md](docs/CLAIMS.md#headline-res
 | | Rail | Model |
 |---|---|---|
 | **October 270-run evaluation** | in-memory rail with the card limits measured in the sandbox | nine real models (4 local, 5 cloud) |
+| **November attack run** (14 attacks, three repeats) | **real** Braintree sandbox, mocked PayPal | qwen2.5, qwen3, hermes3 (local) |
 | **Braintree sandbox run** (dev, one repeat) | **real** Braintree sandbox, mocked PayPal | qwen2.5 |
 | **Worst case** | in-memory **and real** Braintree sandbox | none (scripted) |
 | **Live demo** | **real** Braintree sandbox: checkout, refunds, voids, dispute card, webhooks | recorded runs; live model only with a server key |

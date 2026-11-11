@@ -118,7 +118,7 @@ export default function Page() {
             <ul className="plain-brief-proof" aria-label="How we made it hold">
               <li><b>9 AI models</b> played the agent.</li>
               <li><b>4 model families</b> wrote attacks. They found a gap; we closed it and measured again.</li>
-              <li><b>Real Braintree sandbox</b>First model: wrong money in 0 of 42 attack runs with Counterfoil, 27 of 42 without.</li>
+              <li><b>Real Braintree sandbox</b>Three models: wrong money in 0 of 126 attack runs with Counterfoil, 59 of 126 without.</li>
               <li><b>82%</b> of honest requests are still handled right.</li>
             </ul>
             <p className="plain-brief-line">You can fool the agent. You can’t open the till.</p>
