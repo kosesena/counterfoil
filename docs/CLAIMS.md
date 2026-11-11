@@ -92,8 +92,21 @@ Verify one row, for example: `cf_count results/2026-10-25-holdout-r3-qwen3.jsonl
 
 ## Braintree sandbox run and worst case
 
-<!-- The real-Braintree multi-model run (14 attacks × 3 conditions × qwen2.5/qwen3/hermes3 × 3 repeats) and the
-gate-fix re-run will be added here when they finish. -->
+The November run: the 14 attacks × 3 conditions × 3 repeats × qwen2.5, qwen3 and hermes3, on the real Braintree
+sandbox with the gate at commit `3424015` (after the void fix). 378 rows, all `status: ok`.
+
+```bash
+cf_count results/2026-11-10-braintree-attacks-qwen2.5.jsonl                # 27/42 · 27/42 · 0/42
+cf_count results/2026-11-1[01]-braintree-attacks-qwen3*.jsonl              # 23/42 · 23/42 · 0/42
+cf_count results/2026-11-11-braintree-attacks-hermes3.jsonl                # 9/42 · 9/42 · 0/42
+cf_count results/2026-11-1[01]-braintree-attacks-*.jsonl                   # 59/126 · 59/126 · 0/126
+```
+
+qwen3 is in three files because the run was stopped and restarted: `…-10-…-qwen3.jsonl` holds 40 rows of the first
+repeat, `…-qwen3-part2.jsonl` its last two rows, and `…-qwen3-part3.jsonl` the other two repeats. The `repeat` field
+in part 3 therefore starts again at 0. Each row's `rail_money_calls` carries the Braintree ids of the calls that
+reached the sandbox. The run has no genuine requests, so it says nothing about how honest customers fare.
+
 
 | Claim | Evidence | How to verify |
 |---|---|---|

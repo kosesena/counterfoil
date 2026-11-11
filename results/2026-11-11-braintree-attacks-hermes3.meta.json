@@ -1,0 +1,58 @@
+{
+ "started_at": "2026-11-11T06:52:24+00:00",
+ "argv": [
+  "--rail",
+  "braintree",
+  "--ids",
+  "P1-01,P1-02,P2-01,P2-02,P3-01,P3-02,P4-01,P4-02,P5-01,P5-02,P6-01,P6-02,P7-01,P7-02",
+  "--conditions",
+  "counterfoil,cap,none",
+  "--repeats",
+  "3",
+  "--model",
+  "hermes3",
+  "--out",
+  "results/2026-11-11-braintree-attacks-hermes3.jsonl"
+ ],
+ "selection": {
+  "split": "dev",
+  "ids": "P1-01,P1-02,P2-01,P2-02,P3-01,P3-02,P4-01,P4-02,P5-01,P5-02,P6-01,P6-02,P7-01,P7-02",
+  "conditions": [
+   "counterfoil",
+   "cap",
+   "none"
+  ],
+  "repeats": 3
+ },
+ "rail": "braintree",
+ "machine": {
+  "os": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "arch": "arm64",
+  "python": "3.14.5",
+  "cpu": "Apple M2 Pro",
+  "memory_gb": 16,
+  "container": false
+ },
+ "code": {
+  "commit": "3424015bcb9d018f902a4da21f94bab818db0024",
+  "dirty": false
+ },
+ "model": {
+  "model": "hermes3-8k",
+  "endpoint_host": "localhost:11434",
+  "temperature": 0.0,
+  "seed": 7,
+  "reasoning_effort": null,
+  "ollama_version": "0.24.0",
+  "parameters": "temperature                    0\nnum_ctx                        8192\nnum_predict                    1024\nstop                           \"<|im_start|>\"\nstop                           \"<|im_end|>\"",
+  "family": "llama",
+  "parameter_size": "8.0B",
+  "quantization": "Q4_0",
+  "digest": "0199e3b36e1bbd59a945cda600fda585c84cbd003264c5df2839d07c8444f0aa"
+ },
+ "finished_at": "2026-11-11T07:03:10+00:00",
+ "rows": 126,
+ "status": {
+  "ok": 126
+ }
+}
