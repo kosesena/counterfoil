@@ -1,6 +1,7 @@
 // The HOMI store, built in tools/build_homi_store.py: loads the model, lights it, and keeps its people moving.
 // A person is a tree of joints (hip, knee, shoulder, elbow, spine, head) driven here, so a step can make someone walk,
 // wave, nod or stamp. Nothing here advances the story; only the ambient life runs by itself.
+import { mountStoreSigns } from "./signs.js";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
@@ -15,7 +16,14 @@ const FOV = 30;
 export const fitDistance = (aspect) => Math.max(VIEW.width / aspect, 8.6) / (2 * Math.tan((FOV / 2) * Math.PI / 180));
 
 export async function loadModel(onProgress) {
-  return new GLTFLoader().loadAsync("/static/world/homi-store.glb", (e) => { if (e.total) onProgress?.(Math.round((e.loaded / e.total) * 100)); });
+  const [model, wordmark] = await Promise.all([
+    new GLTFLoader().loadAsync("/static/world/homi-store.glb", (e) => {
+      if (e.total) onProgress?.(Math.round((e.loaded / e.total) * 100));
+    }),
+    new THREE.TextureLoader().loadAsync("/static/crew/homi-wordmark.webp"),
+  ]);
+  mountStoreSigns(model.scene, wordmark);
+  return model;
 }
 
 export function makeView(canvasW, canvasH) {
